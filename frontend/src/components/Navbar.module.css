@@ -1,0 +1,155 @@
+.navbar,
+.navbar * {
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+/* ชนะ global css เฉพาะใน navbar */
+.navbar a {
+  color: #0f172a !important;
+  text-decoration: none !important;
+}
+.navbar a:visited {
+  color: #0f172a !important;
+}
+
+.container {
+  width: 100%;
+  background: #ffffff;
+  border-bottom: 1px solid #eef2ff;
+}
+
+.inner {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 40px;
+  height: 120px;
+
+  /* 2 rows */
+  display: grid;
+  grid-template-rows: 64px 56px; /* แถวบน/แถวล่าง รวม = 120 */
+  align-items: center;
+}
+
+/* ===== Top row ===== */
+.topRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  height: 100px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+
+  margin-top: 30px;
+}
+
+
+/* Right (search + lang) */
+.right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.search {
+  height: 40px;
+  width: 320px;
+  border-radius: 999px;
+  background: #eef2ff;
+  border: 1px solid #e0e7ff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+}
+
+.searchIcon {
+  color: rgba(15, 23, 42, 0.55);
+  font-size: 14px;
+}
+
+.searchInput {
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  width: 100%;
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.lang {
+  height: 40px;
+  border-radius: 999px;
+  background: #eef2ff;
+  border: 1px solid #e0e7ff;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.langBtn {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  color: rgba(15, 23, 42, 0.55);
+  cursor: pointer;
+}
+
+.langBtnActive {
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
+  color: #0f172a;
+}
+
+/* ===== Bottom row ===== */
+.bottomRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.menu {
+  list-style: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex;
+  align-items: center;
+  gap: 34px;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 4px;
+  border-radius: 10px;
+  transition: background 0.15s ease;
+}
+
+.item:hover {
+  background: rgba(15, 23, 42, 0.04);
+}
+
+.caret {
+  font-size: 11px;
+  color: rgba(15, 23, 42, 0.35);
+  transform: translateY(1px);
+}
+
