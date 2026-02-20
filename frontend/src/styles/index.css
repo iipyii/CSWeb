@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: 'THSarabun';
+  src: url('/fonts/THSarabunNew.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+:root {
+  font-family: 'THSarabun', sans-serif;
+}
+
+body {
+  font-family: 'THSarabun', sans-serif;
+  font-size: 20px; /* Sarabun จะดูเล็กกว่าปกติ แนะนำเริ่มที่ 20px */
+  margin: 0;
+  background-color: #fff;
+}
+
+/* ป้องกันสีม่วง visited และลบเส้นใต้ลิงก์ */
+a {
+  text-decoration: none !important;
+  color: inherit;
+}
+a:visited {
+  color: inherit !important;
+}
