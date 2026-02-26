@@ -4,6 +4,7 @@ import pool from "./config/db.js";
 import usersRoutes from "./routes/users.routes.js";
 import newsRoutes from "./routes/news.routes.js";
 import faqRoutes from "./routes/faq.routes.js";
+import chatRoutes from "./routes/chat.routes.js";
 
 const app = express();
 
@@ -25,6 +26,6 @@ app.use((req, res, next) => {
 app.use("/api/news", newsRoutes);
 app.use("/api/users", usersRoutes);
 app.use("/api/faq", faqRoutes);
-
+app.use("/api/chat", chatRoutes);
 
 export default app;

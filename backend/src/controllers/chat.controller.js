@@ -1,7 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import pool from "../config/db.js";
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 export const chatWithAI = async (req, res) => {
   try {
@@ -32,26 +29,45 @@ export const chatWithAI = async (req, res) => {
       `;
     });
 
-    // 🧠 เรียก Gemini
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
     const prompt = `
-    คุณคือผู้ช่วยของภาควิชาคอมพิวเตอร์และสารสนเทศ
-    ให้ตอบจากข้อมูลด้านล่างเท่านั้น
-    ถ้าไม่มีข้อมูลให้ตอบว่า "ไม่พบข้อมูลที่เกี่ยวข้อง"
+คุณคือผู้ช่วยของภาควิชาคอมพิวเตอร์และสารสนเทศ
+ให้ตอบจากข้อมูลด้านล่างเท่านั้น
+ถ้าไม่มีข้อมูลให้ตอบว่า "ไม่พบข้อมูลที่เกี่ยวข้อง"
 
-    ข้อมูล:
-    ${contextText}
+ข้อมูล:
+${contextText}
 
-    คำถาม:
-    ${message}
-    `;
+คำถาม:
+${message}
+`;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    // 🔥 เรียก Gemini ผ่าน REST
+    const response = await fetch(
+  `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: prompt }]
+            }
+          ]
+        })
+      }
+    );
 
-    res.json({ reply: text });
+    const data = await response.json();
+
+    if (!data.candidates) {
+      return res.status(500).json({ error: data });
+    }
+
+    const reply = data.candidates[0].content.parts[0].text;
+
+    res.json({ reply });
 
   } catch (error) {
     console.error(error);

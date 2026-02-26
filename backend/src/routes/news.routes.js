@@ -9,8 +9,6 @@ import {
     getArchivedNews } from "../controllers/news.controller.js";
 import { checkRole } from "../middlewares/role.middleware.js";
 
-console.log("PUT ROUTE REGISTERED");
-
 const router = express.Router();
 
 router.get("/", getActiveNews);
