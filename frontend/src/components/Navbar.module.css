@@ -1,0 +1,275 @@
+/* ===============================
+   NAVBAR — CS WEB (University Style)
+   Font: Prompt (Sans Thai)
+================================ */
+
+.navbar,
+.navbar * {
+  box-sizing: border-box;
+  font-family: 'Prompt', sans-serif;
+}
+
+/* ===== Wrapper ===== */
+.navbar {
+  width: 100%;
+  height: 120px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #eef2ff;
+  display: flex;
+  justify-content: center;
+  position: relative;
+  z-index: 1000; /* ให้อยู่เหนือ Banner เสมอ */
+}
+
+/* ===== Container ===== */
+.container {
+  width: 1440px;
+  height: 100%;
+  padding: 0 40px;
+  display: flex;
+  align-items: center;
+  gap: 40px;
+}
+
+/* ===== Logo ===== */
+.logoSection {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.logo {
+  height: 96px;
+  width: auto;
+  object-fit: contain;
+  margin-top: 6px;
+}
+
+/* ===== Right content (2 Rows) ===== */
+.navContent {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 12px 0;
+}
+
+/* ===============================
+   TOP ROW (Search & Lang)
+================================ */
+.topRow {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 14px;
+}
+
+.searchBar {
+  display: flex;
+  align-items: center;
+  width: 220px;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background-color: #f1f5ff;
+  border: 1px solid #e0e7ff;
+}
+
+.searchIcon {
+  font-size: 14px;
+  color: rgba(15, 23, 42, 0.55);
+  margin-right: 8px;
+}
+
+.searchInput {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.langSwitcher {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background-color: #f1f5ff;
+  border-radius: 999px;
+  border: 1px solid #e0e7ff;
+  padding: 4px;
+}
+
+.langBtn {
+  border: none;
+  background: transparent;
+  padding: 4px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  color: rgba(15, 23, 42, 0.55);
+}
+
+.langBtn.active {
+  background: #ffffff;
+  color: #1e3a8a;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.15);
+}
+
+/* ===============================
+   BOTTOM ROW — MENU & DROPDOWN
+================================ */
+.bottomRow {
+  display: flex;
+  align-items: center;
+}
+
+.menuList {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 34px;
+  margin: 0;
+  padding: 0;
+}
+
+.menuItem {
+  position: relative; /* สำคัญ: เพื่อให้ Dropdown อ้างอิงตำแหน่ง */
+}
+
+.menuLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 500;
+  color: #0f172a;
+  padding: 8px 10px;
+  transition: color 0.2s ease;
+}
+
+.menuLink:hover {
+  color: #1e3a8a;
+}
+
+.caret {
+  font-size: 11px;
+  color: rgba(15, 23, 42, 0.45);
+}
+
+/* --- Dropdown ชั้นที่ 1 --- */
+.dropdownMenu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 220px;
+  background-color: #c9999e; /* สีชมพูหม่นตามรูปตัวอย่าง */
+  list-style: none;
+  padding: 8px 0;
+  margin: 0;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  
+  /* ซ่อนไว้เริ่มต้น */
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+  transition: all 0.2s ease;
+}
+
+.menuItem:hover .dropdownMenu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* --- รายการใน Dropdown --- */
+.dropdownItem {
+  position: relative; /* เพื่อให้ Sub-dropdown ชั้นที่ 2 อ้างอิงตำแหน่ง */
+}
+
+.dropdownLink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  text-decoration: none;
+  color: #000000;
+  font-size: 14px;
+  transition: background 0.2s ease;
+}
+
+.dropdownLink:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* ลูกศรชี้ข้างสำหรับ Submenu */
+.sideCaret {
+  transform: rotate(-90deg);
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+/* --- Sub-dropdown ชั้นที่ 2 (เด้งออกขวา) --- */
+.subDropdownMenu {
+  position: absolute;
+  top: 0;
+  left: 100%; /* เด้งออกทางขวา */
+  min-width: 200px;
+  background-color: #c9999e; /* สีเดียวกับชั้นแรก */
+  list-style: none;
+  padding: 8px 0;
+  margin: 0;
+  border-radius: 0 4px 4px 4px;
+  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.1);
+
+  /* ซ่อนไว้เริ่มต้น */
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+}
+
+.dropdownItem:hover > .subDropdownMenu {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ไอเทมที่มีลูกเล่นซ้อน */
+.nestedDropdownItem {
+  position: relative; /* เพื่อให้ลูกชั้นที่ 3 อ้างอิงตำแหน่ง */
+}
+
+/* === Sub-dropdown ชั้นที่ 3 === */
+.nestedSubMenu {
+  position: absolute;
+  top: 0;
+  left: 100%; /* เด้งออกทางขวาต่อจากขอบของชั้นที่ 2 */
+  min-width: 200px;
+  background-color: #c9999e; /* สีชมพูหม่นตามรูป */
+  list-style: none;
+  padding: 8px 0;
+  margin: 0;
+  border-radius: 0 4px 4px 4px;
+  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.1);
+  
+  /* ซ่อนไว้เริ่มต้น */
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+}
+
+/* แสดงผลเมื่อ Hover ไอเทมในชั้นที่ 2 */
+.nestedDropdownItem:hover > .nestedSubMenu {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ปรับ Caret ชี้ข้างในเมนูย่อย */
+.sideCaret {
+  transform: rotate(-90deg);
+  margin-left: auto;
+  opacity: 0.6;
+}
