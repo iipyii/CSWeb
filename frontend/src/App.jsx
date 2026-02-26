@@ -11,40 +11,42 @@ import CourseSections from './pages/CourseSections';
 import CourseDetail from './pages/CourseDetail';
 import CourseDescription from "./pages/CourseDescription";
 import StudentDownloads from "./pages/StudentDownloads";
+import History from './pages/History'; // นำเข้าหน้าประวัติที่สร้างใหม่
 
 export default function App() {
   return (
     <div className="min-h-screen flex flex-col font-['Prompt']">
-      {/* จัดการเรื่อง Scroll เมื่อเปลี่ยนหน้า */}
+      {/* จัดการเรื่อง Scroll เมื่อเปลี่ยนหน้าให้ไปที่จุดบนสุดเสมอ */}
       <ScrollToTop /> 
       
-      {/* ส่วนหัวของเว็บไซต์ */}
+      {/* ส่วนหัวของเว็บไซต์ (แสดงทุกหน้า) */}
       <Navbar />
 
-      {/* เนื้อหาหลักที่จะเปลี่ยนไปตาม Route */}
+      {/* เนื้อหาหลักที่จะเปลี่ยนไปตาม URL (Route) */}
       <main className="flex-grow">
         <Routes>
+          
           {/* 🏠 หน้าหลักของเว็บไซต์ */}
           <Route path="/" element={<Home />} />
 
-          {/* 📰 หน้าข่าวสารและประชาสัมพันธ์ (แยกออกมาใหม่) */}
+          {/* 🏛️ เกี่ยวกับภาควิชา */}
+          <Route path="/history" element={<History />} />
+
+          {/* 📰 หน้าข่าวสารและประชาสัมพันธ์ */}
           <Route path="/news" element={<News />} />
           <Route path="/news/:id" element={<NewsDetail />} />
 
-          {/* 🎓 หมวดหมู่หลักสูตร (เช่น bachelor, master, doctor) */}
+          {/* 🎓 หลักสูตรและการศึกษา */}
           <Route path="/course-sections/:level" element={<CourseSections />} />
-
-          {/* 📄 รายละเอียดวิชาหรือหลักสูตรรายบุคคล */}
           <Route path="/course-detail/:id" element={<CourseDetail />} />
-
-          {/* 📝 คำอธิบายรายวิชา */}
           <Route path="/course-description" element={<CourseDescription />} />
 
-          {/* 📥 เอกสารดาวน์โหลดสำหรับนักศึกษา */}
+          {/* 📥 บริการนักศึกษาและดาวน์โหลด */}
           <Route path="/student-downloads" element={<StudentDownloads />} />
 
-          {/* ⚠️ กรณีเข้า URL ที่ไม่ถูกต้อง ให้กลับไปที่หน้า Home */}
+          {/* ⚠️ Page Not Found: กรณีเข้า URL ที่ไม่มีในระบบ ให้ตีกลับไปหน้า Home */}
           <Route path="*" element={<Home />} />
+          
         </Routes>
       </main>
     </div>

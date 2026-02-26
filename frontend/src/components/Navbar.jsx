@@ -1,19 +1,18 @@
 import { useState } from "react";
-import { Link } from "react-router-dom"; // นำเข้า Link เพื่อใช้ระบบ Routing
+import { Link } from "react-router-dom";
 import { Search, ChevronDown } from "lucide-react";
 import styles from "./Navbar.module.css";
 
 export default function Navbar() {
   const [lang, setLang] = useState("TH");
 
-  // โครงสร้างข้อมูลเมนู ปรับปรุง href ให้ส่งพารามิเตอร์ level ไปยังหน้า CourseSections
   const navItems = [
     { label: "หน้าหลัก", href: "/" },
     { 
       label: "แนะนำภาควิชาฯ", 
       href: "#", 
       dropdown: [
-        { label: "ประวัติภาควิชาฯ", href: "#" },
+        { label: "ประวัติภาควิชาฯ", href: "/history" }, // เชื่อมไปหน้า History ที่สร้างใหม่
         { label: "วิสัยทัศน์ / พันธกิจ", href: "#" },
         { label: "โครงสร้างการบริหาร", href: "#" },
         { label: "ติดต่อภาควิชาฯ", href: "#" },
@@ -41,7 +40,6 @@ export default function Navbar() {
               label: "หลักสูตรปริญญาตรี", 
               href: "#",
               nestedSubmenu: [
-                // เชื่อมโยงไปยัง bachelor (ภาคปกติ) และ cs-english (โครงการพิเศษ)
                 { label: "ภาคปกติ", href: "/course-sections/bachelor" },
                 { label: "โครงการพิเศษ/สองภาษา", href: "/course-sections/cs-english" },
               ]
@@ -50,12 +48,10 @@ export default function Navbar() {
               label: "หลักสูตรปริญญาโท", 
               href: "#",
               nestedSubmenu: [
-                // เชื่อมโยงไปยังสาขาเฉพาะทางของ ป.โท
                 { label: "สาขาวิชาวิทยาการคอมพิวเตอร์", href: "/course-sections/cs-master" },
                 { label: "สาขาวิชาวิศวกรรมซอฟต์แวร์", href: "/course-sections/se-master" },
               ]
             },
-            // เชื่อมโยงไปยัง doctor (ป.เอก)
             { label: "หลักสูตรปริญญาเอก", href: "/course-sections/doctor" },
             { label: "คำอธิบายรายวิชา", href: "/course-description" },
           ]
@@ -77,12 +73,12 @@ export default function Navbar() {
       ] 
     },
     { label: "ข่าวสารและกิจกรรม", 
-      href: "#", 
+      href: "/news", // เชื่อมไปหน้า News หลัก
       dropdown: [
-        { label: "ข่าวภาควิชาฯ", href: "#" },
-        { label: "ข่าวคณะ/มหาวิทยาลัย", href: "#" },
-        { label: "ข่าวทุนการศึกษา", href: "#" },
-        { label: "ข่าวรับสมัคร/ประชาสัมพันธ์", href: "#" },
+        { label: "ข่าวทั้งหมด", href: "/news" },
+        { label: "ข่าวภาควิชาฯ", href: "/news" },
+        { label: "ข่าวคณะ/มหาวิทยาลัย", href: "/news" },
+        { label: "ข่าวทุนการศึกษา", href: "/news" },
       ] 
     },
     { label: "ระเบียบ/ประกาศ", 
@@ -104,6 +100,7 @@ export default function Navbar() {
   return (
     <header className={styles.navbar}>
       <div className={styles.container}>
+        {/* Logo Section */}
         <div className={styles.logoSection}>
           <Link to="/">
             <img src="/cis-logo.svg" alt="CIS KMUTNB" className={styles.logo} />
@@ -111,6 +108,7 @@ export default function Navbar() {
         </div>
 
         <div className={styles.navContent}>
+          {/* Top Row: Search & Lang */}
           <div className={styles.topRow}>
             <div className={styles.searchBar}>
               <Search size={14} className={styles.searchIcon} />
@@ -128,16 +126,17 @@ export default function Navbar() {
             </div>
           </div>
 
+          {/* Bottom Row: Main Navigation */}
           <nav className={styles.bottomRow}>
             <ul className={styles.menuList}>
               {navItems.map((item, idx) => (
                 <li key={idx} className={styles.menuItem}>
-                  {/* เปลี่ยนเป็น Link เพื่อใช้ระบบนำทางภายใน App */}
                   <Link to={item.href} className={styles.menuLink}>
                     {item.label}
                     {item.dropdown && <ChevronDown size={12} className={styles.caret} />}
                   </Link>
                   
+                  {/* First Level Dropdown */}
                   {item.dropdown && (
                     <ul className={styles.dropdownMenu}>
                       {item.dropdown.map((sub, sIdx) => (
@@ -147,6 +146,7 @@ export default function Navbar() {
                             {sub.submenu && <ChevronDown size={12} className={styles.sideCaret} />}
                           </Link>
                           
+                          {/* Second Level Dropdown (Submenu) */}
                           {sub.submenu && (
                             <ul className={styles.subDropdownMenu}>
                               {sub.submenu.map((deepSub, dIdx) => (
@@ -156,6 +156,7 @@ export default function Navbar() {
                                     {deepSub.nestedSubmenu && <ChevronDown size={12} className={styles.sideCaret} />}
                                   </Link>
 
+                                  {/* Third Level Dropdown (Nested Submenu) */}
                                   {deepSub.nestedSubmenu && (
                                     <ul className={styles.nestedSubMenu}>
                                       {deepSub.nestedSubmenu.map((lastSub, lIdx) => (
