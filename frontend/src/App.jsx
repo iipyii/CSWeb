@@ -11,7 +11,10 @@ import CourseSections from './pages/CourseSections';
 import CourseDetail from './pages/CourseDetail';
 import CourseDescription from "./pages/CourseDescription";
 import StudentDownloads from "./pages/StudentDownloads";
-import History from './pages/History'; // นำเข้าหน้าประวัติที่สร้างใหม่
+import History from './pages/History'; 
+import Organization from './pages/Organization';
+import Contact from './pages/Contact';
+
 
 export default function App() {
   return (
@@ -31,6 +34,8 @@ export default function App() {
 
           {/* 🏛️ เกี่ยวกับภาควิชา */}
           <Route path="/history" element={<History />} />
+          <Route path="/organization" element={<Organization />} />
+          <Route path="/contact" element={<Contact />} />
 
           {/* 📰 หน้าข่าวสารและประชาสัมพันธ์ */}
           <Route path="/news" element={<News />} />

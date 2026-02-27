@@ -12,10 +12,10 @@ export default function Navbar() {
       label: "แนะนำภาควิชาฯ", 
       href: "#", 
       dropdown: [
-        { label: "ประวัติภาควิชาฯ", href: "/history" }, // เชื่อมไปหน้า History ที่สร้างใหม่
+        { label: "ประวัติภาควิชาฯ", href: "/history" }, 
         { label: "วิสัยทัศน์ / พันธกิจ", href: "#" },
-        { label: "โครงสร้างการบริหาร", href: "#" },
-        { label: "ติดต่อภาควิชาฯ", href: "#" },
+        { label: "โครงสร้างการบริหาร", href: "/organization" },
+        { label: "ติดต่อภาควิชาฯ", href: "/contact" },
       ] 
     },
     { 
