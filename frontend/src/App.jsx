@@ -15,6 +15,7 @@ import History from './pages/History';
 import Organization from './pages/Organization';
 import Contact from './pages/Contact';
 
+import GreenOffice from './pages/GreenOffice';
 
 export default function App() {
   return (
@@ -48,6 +49,8 @@ export default function App() {
 
           {/* 📥 บริการนักศึกษาและดาวน์โหลด */}
           <Route path="/student-downloads" element={<StudentDownloads />} />
+
+          <Route path="/green-office" element={<GreenOffice />} />
 
           {/* ⚠️ Page Not Found: กรณีเข้า URL ที่ไม่มีในระบบ ให้ตีกลับไปหน้า Home */}
           <Route path="*" element={<Home />} />

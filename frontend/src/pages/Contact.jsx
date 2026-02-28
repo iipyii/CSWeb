@@ -145,14 +145,7 @@ export default function Contact() {
             </div>
             <div className="mt-4 flex items-center justify-between px-2">
                <span className="text-[10px] text-slate-400 italic">* คลิกที่แผนที่เพื่อนำทางด้วย Google Maps</span>
-               <a 
-                 href="https://maps.app.goo.gl/uX3L9Gf7Z9p8a783" 
-                 target="_blank" 
-                 rel="noreferrer"
-                 className="text-xs text-[#3F51B5] font-bold hover:underline"
-               >
-                 เปิดในแอป Maps
-               </a>
+               
             </div>
           </motion.div>
         </div>

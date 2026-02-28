@@ -93,7 +93,7 @@ export default function Navbar() {
         { label: "งานทุนการศึกษา", href: "#" },
       ] 
     },
-    { label: "CS Greenoffice", href: "#" },
+    { label: "CS Greenoffice", href: "/green-office" },
     { label: "FAQ", href: "#" },
   ];
 
