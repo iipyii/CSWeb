@@ -41,9 +41,8 @@ ${contextText}
 ${message}
 `;
 
-    // 🔥 เรียก Gemini ผ่าน REST
     const response = await fetch(
-  `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: {
@@ -68,6 +67,74 @@ ${message}
     const reply = data.candidates[0].content.parts[0].text;
 
     res.json({ reply });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// เพิ่มฟังก์ชันสำหรับขอ Vector จาก Google
+async function getEmbedding(text) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`;
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "models/text-embedding-004",
+      content: { parts: [{ text: text }] }
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Gemini API Error: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return data.embedding.values; // คืนค่าเป็น Array ตัวเลข
+}
+
+// 📌 สร้าง Controller สำหรับกด update vector
+export const updateFaqVectors = async (req, res) => {
+  try {
+    // 1. ดึง FAQ ทั้งหมดที่ยังไม่มี Vector
+    const result = await pool.query("SELECT id, question, answer FROM faq");
+
+    let count = 0;
+
+    // 2. วนลูปสร้าง Vector ทีละข้อ
+    for (const row of result.rows) {
+      console.log("==== เริ่มทำ ID:", row.id);
+
+      const textToEmbed = `คำถาม: ${row.question} คำตอบ: ${row.answer}`;
+
+      try {
+        console.log("กำลังขอ embedding...");
+        const vector = await getEmbedding(textToEmbed);
+
+        console.log("Vector length:", vector.length);
+
+        const vectorString = `[${vector.join(",")}]`;
+
+        console.log("กำลัง UPDATE DB...");
+
+        const updateResult = await pool.query(
+          "UPDATE faq SET embedding = $1::vector WHERE id = $2",
+          [vectorString, row.id]
+        );
+
+        console.log("Update rowCount:", updateResult.rowCount);
+
+        count++;
+
+      } catch (err) {
+        console.error("❌ Error ID", row.id, ":", err.message);
+      }
+    }
+
+    res.json({ message: `อัปเดต Vector สำเร็จทั้งหมด ${count} รายการ!` });
 
   } catch (error) {
     console.error(error);
