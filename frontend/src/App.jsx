@@ -14,6 +14,8 @@ import StudentDownloads from "./pages/StudentDownloads";
 import History from './pages/History'; 
 import Organization from './pages/Organization';
 import Contact from './pages/Contact';
+import Administrator from './pages/Administrator';
+import Staff from './pages/Staff';
 
 import GreenOffice from './pages/GreenOffice';
 
@@ -37,6 +39,9 @@ export default function App() {
           <Route path="/history" element={<History />} />
           <Route path="/organization" element={<Organization />} />
           <Route path="/contact" element={<Contact />} />
+
+          <Route path="/administrator" element={<Administrator />} />
+          <Route path="/staff" element={<Staff />} />
 
           {/* 📰 หน้าข่าวสารและประชาสัมพันธ์ */}
           <Route path="/news" element={<News />} />
