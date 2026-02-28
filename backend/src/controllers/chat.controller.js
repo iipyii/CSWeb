@@ -1,4 +1,5 @@
 import pool from "../config/db.js";
+import { getLocalEmbedding } from "../services/embedding.service.js";
 
 export const chatWithAI = async (req, res) => {
   try {
@@ -9,16 +10,23 @@ export const chatWithAI = async (req, res) => {
     }
 
     // 🔎 ดึง FAQ ที่เกี่ยวข้อง
+    const messageVector = await getLocalEmbedding(message);
+    const vectorString = `[${messageVector.join(",")}]`;
+
     const faqResult = await pool.query(
       `
-      SELECT question, answer 
-      FROM faq 
-      WHERE status='active'
-      AND question ILIKE $1
+      SELECT question,
+            answer,
+            embedding <-> $1::vector AS distance
+      FROM faq
+      ORDER BY distance
       LIMIT 5
       `,
-      [`%${message}%`]
+      [vectorString]
     );
+
+    // กรองเฉพาะ distance < 0.8
+    const filtered = faqResult.rows.filter(row => row.distance < 0.8);
 
     let contextText = "";
 
@@ -74,58 +82,27 @@ ${message}
   }
 };
 
-// เพิ่มฟังก์ชันสำหรับขอ Vector จาก Google
-async function getEmbedding(text) {
-  const apiKey = process.env.GEMINI_API_KEY;
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`;
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "models/text-embedding-004",
-      content: { parts: [{ text: text }] }
-    })
-  });
-
-  if (!response.ok) {
-    throw new Error(`Gemini API Error: ${response.statusText}`);
-  }
-
-  const data = await response.json();
-  return data.embedding.values; // คืนค่าเป็น Array ตัวเลข
-}
-
-// 📌 สร้าง Controller สำหรับกด update vector
 export const updateFaqVectors = async (req, res) => {
   try {
-    // 1. ดึง FAQ ทั้งหมดที่ยังไม่มี Vector
-    const result = await pool.query("SELECT id, question, answer FROM faq");
+    const result = await pool.query(
+      "SELECT id, question, answer FROM faq"
+    );
 
     let count = 0;
 
-    // 2. วนลูปสร้าง Vector ทีละข้อ
     for (const row of result.rows) {
       console.log("==== เริ่มทำ ID:", row.id);
 
       const textToEmbed = `คำถาม: ${row.question} คำตอบ: ${row.answer}`;
 
       try {
-        console.log("กำลังขอ embedding...");
-        const vector = await getEmbedding(textToEmbed);
-
-        console.log("Vector length:", vector.length);
-
+        const vector = await getLocalEmbedding(textToEmbed);
         const vectorString = `[${vector.join(",")}]`;
 
-        console.log("กำลัง UPDATE DB...");
-
-        const updateResult = await pool.query(
+        await pool.query(
           "UPDATE faq SET embedding = $1::vector WHERE id = $2",
           [vectorString, row.id]
         );
-
-        console.log("Update rowCount:", updateResult.rowCount);
 
         count++;
 
