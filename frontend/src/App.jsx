@@ -28,6 +28,8 @@ import Login from './pages/admin/Login';
 import ManageNews from './pages/admin/ManageNews';
 import CreateNews from './pages/admin/CreateNews';
 import EditNews from './pages/admin/EditNews';
+import NewsArchive from './pages/admin/NewsArchive';
+import ManageCurriculum from './pages/admin/ManageCurriculum';
 import AdminDashboard from './pages/admin/AdminDashboard';
 
 // 🟢 Layout สำหรับหน้าบ้าน (Public)
@@ -102,6 +104,9 @@ export default function App() {
         <Route path="news" element={<ManageNews />} />
         <Route path="news/create" element={<CreateNews />} />
         <Route path="news/edit/:id" element={<EditNews />} />
+        <Route path="news/archive" element={<NewsArchive />} />
+
+        <Route path="curriculum" element={<ManageCurriculum />} />
       </Route>
     </Routes>
   );
