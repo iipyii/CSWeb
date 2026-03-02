@@ -79,7 +79,7 @@ export default function App() {
         <Route path="/organization" element={<Organization />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/administrator" element={<Administrator />} />
-        <Route path="/administrator/:id" element={<AdministratorDetail />} />
+        <Route path="/administrator/:code" element={<AdministratorDetail />} />
         <Route path="/staff" element={<Staff />} />
         <Route path="/staff-download" element={<StaffDownloads />} />
         <Route path="/news" element={<News />} />
@@ -91,6 +91,7 @@ export default function App() {
         <Route path="/personnel-links" element={<PersonnelLinks />} />
         <Route path="/green-office" element={<GreenOffice />} />
         <Route path="*" element={<Home />} />
+        
       </Route>
 
       {/* 🔐 Admin Login */}
