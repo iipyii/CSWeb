@@ -2,7 +2,8 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Newspaper, Archive, GraduationCap, 
-  FileText, Users, BookOpen, FolderGit2, LogOut, UserCircle 
+  FileText, Users, BookOpen, FolderGit2, LogOut, UserCircle,
+  MessageSquare 
 } from 'lucide-react';
 
 export default function AdminSidebar() {
@@ -10,30 +11,31 @@ export default function AdminSidebar() {
   // ในอนาคตดึง Role จาก Auth Context
   const userRole = 'admin'; // 'admin' หรือ 'teacher'
 
-  // ✅ ปรับปรุงรายการเมนูและ Path ให้ตรงตามโครงสร้างระบบจัดการ
+  // ✅ ปรับลำดับเมนูใหม่ โดยย้าย AI Chatbot ไปไว้ลำดับสุดท้าย
   const menuItems = [
     { label: 'แดชบอร์ด', icon: <LayoutDashboard size={22} />, path: '/admin', roles: ['admin', 'teacher'] },
     { label: 'จัดการข่าวสาร', icon: <Newspaper size={22} />, path: '/admin/news', roles: ['admin', 'teacher'] },
-    { label: 'คลังข่าว', icon: <Archive size={22} />, path: '/admin/news/archive', roles: ['admin'] }, // 👈 อัปเดต Path ให้ตรงกับ NewsArchive
+    { label: 'คลังข่าว', icon: <Archive size={22} />, path: '/admin/news/archive', roles: ['admin'] }, 
     { label: 'ข้อมูลส่วนตัวอาจารย์', icon: <UserCircle size={22} />, path: '/admin/profile', roles: ['teacher'] },
     { label: 'หลักสูตร', icon: <GraduationCap size={22} />, path: '/admin/curriculum', roles: ['admin'] },
     { label: 'เอกสาร/ดาวน์โหลด', icon: <FileText size={22} />, path: '/admin/downloads', roles: ['admin'] },
     { label: 'จัดการผู้ใช้งาน', icon: <Users size={22} />, path: '/admin/users', roles: ['admin'] },
     { label: 'ข้อมูลรายวิชา', icon: <BookOpen size={22} />, path: '/admin/subjects', roles: ['admin'] },
     { label: 'โครงงานนักศึกษา', icon: <FolderGit2 size={22} />, path: '/admin/projects', roles: ['admin'] },
+    { label: 'จัดการ AI Chatbot', icon: <MessageSquare size={22} />, path: '/admin/chatbot', roles: ['admin'] }, // 👈 ย้ายมาอยู่แถบล่างสุด
   ];
 
   return (
     <div className="w-full h-full bg-white flex flex-col font-['Prompt'] border-r border-slate-50">
       <div className="p-8 flex-1 overflow-y-auto no-scrollbar">
         {/* Header Section */}
-        <h3 className="text-[#3F51B5] font-black text-[11px] uppercase tracking-[0.25em] mb-8 opacity-50 ml-2">
+        <h3 className="text-[#3F51B5] font-black text-[11px] uppercase tracking-[0.25em] mb-8 opacity-50 ml-2 text-left">
           Main Management
         </h3>
         
         <nav className="space-y-1.5">
           {menuItems.filter(item => item.roles.includes(userRole)).map((item) => {
-            // ตรวจสอบว่า Path ปัจจุบันตรงกับเมนูหรือไม่ (รองรับ Nested Route เช่น news/archive)
+            // ตรวจสอบสถานะการเลือกเมนู (Active State)
             const isActive = location.pathname === item.path || (item.path !== '/admin' && location.pathname.startsWith(item.path));
             
             return (
@@ -65,7 +67,7 @@ export default function AdminSidebar() {
 
       {/* Logout Section */}
       <div className="p-8 border-t border-slate-50 bg-slate-50/30">
-        <button className="flex items-center gap-4 px-6 py-4 w-full text-rose-500 hover:bg-rose-50 rounded-[1.5rem] transition-all duration-300 font-black text-sm group">
+        <button className="flex items-center gap-4 px-6 py-4 w-full text-rose-500 hover:bg-rose-50 rounded-[1.5rem] transition-all duration-300 font-black text-sm group text-left">
           <div className="p-2 bg-rose-100/50 rounded-xl group-hover:bg-rose-500 group-hover:text-white transition-all">
             <LogOut size={18} />
           </div>
