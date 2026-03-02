@@ -1,6 +1,5 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Leaf, Target } from 'lucide-react';
 import Footer from '../components/Footer';
 
 // รูปภาพจากสื่อประชาสัมพันธ์
@@ -51,8 +50,9 @@ export default function GreenOffice() {
             variants={fadeInUp}
             className="bg-slate-50 p-8 md:p-12 rounded-[2.5rem] border border-slate-100 shadow-sm"
           >
-            <h2 className="text-2xl md:text-2xl font-bold mb-8 text-[#3F51B5] flex items-center gap-3">
-              <Target className="text-[#3F51B5]" /> CS Green Office :
+            {/* นำ Target Icon ออกแล้ว เหลือเพียงข้อความหัวข้อ */}
+            <h2 className="text-2xl md:text-2xl font-bold mb-8 text-[#3F51B5]">
+              CS Green Office :
             </h2>
             <div className="grid grid-cols-1 gap-8 text-emerald-700 font-light leading-relaxed text-base md:text-lg">
               <p>
