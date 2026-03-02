@@ -3,7 +3,7 @@ import { Routes, Route, Outlet } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import ScrollToTop from './components/ScrollToTop';
 import AdminSidebar from './components/admin/AdminSidebar';
-import AdminNavbar from './components/admin/AdminNavbar'; // นำเข้า Navbar ที่มีโปรไฟล์ผู้ใช้
+import AdminNavbar from './components/admin/AdminNavbar'; 
 
 // Pages - General
 import Home from './pages/Home';
@@ -26,6 +26,8 @@ import GreenOffice from './pages/GreenOffice';
 // Pages - Admin
 import Login from './pages/admin/Login';
 import ManageNews from './pages/admin/ManageNews';
+import CreateNews from './pages/admin/CreateNews';
+import EditNews from './pages/admin/EditNews';
 import AdminDashboard from './pages/admin/AdminDashboard';
 
 // 🟢 Layout สำหรับหน้าบ้าน (Public)
@@ -96,7 +98,10 @@ export default function App() {
       <Route path="/admin" element={<AdminLayout />}>
         {/* แก้ไขบรรทัดที่เคย Error: ใช้ <Route index ... /> เพียงบรรทัดเดียว */}
         <Route index element={<AdminDashboard />} /> 
+
         <Route path="news" element={<ManageNews />} />
+        <Route path="news/create" element={<CreateNews />} />
+        <Route path="news/edit/:id" element={<EditNews />} />
       </Route>
     </Routes>
   );
