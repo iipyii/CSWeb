@@ -24,7 +24,7 @@ export default function Navbar() {
       dropdown: [
         { label: "บุคลากรสายวิชาการ", href: "/administrator" },
         { label: "บุคลากรสายสนับสนุน", href: "/staff" },
-        { label: "ดาวน์โหลดเอกสารสำหรับบุคลากร", href: "#" },
+        { label: "ดาวน์โหลดเอกสารสำหรับบุคลากร", href: "/staff-download" },
         { label: "ลิงก์สำหรับบุคลากร", href: "#" },
       ] 
     },

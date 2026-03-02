@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Outlet } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import ScrollToTop from './components/ScrollToTop'; 
+import AdminSidebar from './components/admin/AdminSidebar';
 
 // Pages - General
 import Home from './pages/Home';
@@ -17,11 +18,13 @@ import Contact from './pages/Contact';
 import Administrator from './pages/Administrator';
 import AdministratorDetail from './pages/AdministratorDetail';
 import Staff from './pages/Staff';
+import StaffDownloads from "./pages/StaffDownloads";
 import GreenOffice from './pages/GreenOffice';
 
 // Pages - Admin
 import Login from './pages/admin/Login';
-// import AdminDashboard from './pages/admin/AdminDashboard'; // ถ้ามีหน้า Dashboard
+import ManageNews from './pages/admin/ManageNews';
+import AdminDashboard from './pages/admin/AdminDashboard';
 
 // 🟢 Component สำหรับจัด Layout หน้าบ้าน (มี Navbar)
 const MainLayout = () => (
@@ -38,7 +41,7 @@ const MainLayout = () => (
 const AdminLayout = () => (
   <div className="min-h-screen font-['Prompt'] bg-slate-50">
     <ScrollToTop />
-    {/* คุณสามารถใส่ Sidebar สำหรับ Admin ตรงนี้ได้ในอนาคต */}
+    <AdminSidebar />
     <main>
       <Outlet />
     </main>
@@ -49,7 +52,7 @@ export default function App() {
   return (
     <Routes>
       
-      {/* 🏡 กลุ่มหน้าบ้าน (แสดง Navbar ทั้งหมด) */}
+      {/* 🏡 กลุ่มหน้าบ้าน  */}
       <Route element={<MainLayout />}>
         <Route path="/" element={<Home />} />
         <Route path="/history" element={<History />} />
@@ -58,6 +61,7 @@ export default function App() {
         <Route path="/administrator" element={<Administrator />} />
         <Route path="/administrator/:id" element={<AdministratorDetail />} />
         <Route path="/staff" element={<Staff />} />
+        <Route path="/staff-download" element={<StaffDownloads />} />
         <Route path="/news" element={<News />} />
         <Route path="/news/:id" element={<NewsDetail />} />
         <Route path="/course-sections/:level" element={<CourseSections />} />
@@ -70,13 +74,13 @@ export default function App() {
         <Route path="*" element={<Home />} />
       </Route>
 
-      {/* 🔐 กลุ่มหน้า Admin (ไม่มี Navbar ของหน้าบ้าน) */}
-      <Route element={<AdminLayout />}>
-        {/* หน้า Login จะโล่งๆ ตามโค้ดที่คุณเขียนไว้ */}
+      {/* 🔐 กลุ่มหน้า Admin */}
         <Route path="/admin/login" element={<Login />} />
+      <Route element={<AdminLayout />}>
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/news" element={<ManageNews />} />
+
         
-        {/* คุณสามารถเพิ่มหน้าอื่นๆ ของ Admin ต่อได้ที่นี่ */}
-        {/* <Route path="/admin/dashboard" element={<AdminDashboard />} /> */}
       </Route>
 
     </Routes>
