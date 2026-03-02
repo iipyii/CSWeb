@@ -1,24 +1,26 @@
 import React from 'react';
 import { Routes, Route, Outlet } from 'react-router-dom';
 import Navbar from './components/Navbar';
-import ScrollToTop from './components/ScrollToTop'; 
+import ScrollToTop from './components/ScrollToTop';
 import AdminSidebar from './components/admin/AdminSidebar';
+import AdminNavbar from './components/admin/AdminNavbar'; // นำเข้า Navbar ที่มีโปรไฟล์ผู้ใช้
 
 // Pages - General
 import Home from './pages/Home';
-import News from './pages/News'; 
+import News from './pages/News';
 import NewsDetail from './pages/NewsDetail';
-import CourseSections from './pages/CourseSections'; 
+import CourseSections from './pages/CourseSections';
 import CourseDetail from './pages/CourseDetail';
-import CourseDescription from "./pages/CourseDescription";
-import StudentDownloads from "./pages/StudentDownloads";
-import History from './pages/History'; 
+import CourseDescription from './pages/CourseDescription';
+import StudentDownloads from './pages/StudentDownloads';
+import History from './pages/History';
 import Organization from './pages/Organization';
 import Contact from './pages/Contact';
 import Administrator from './pages/Administrator';
 import AdministratorDetail from './pages/AdministratorDetail';
 import Staff from './pages/Staff';
-import StaffDownloads from "./pages/StaffDownloads";
+import StaffDownloads from './pages/StaffDownloads';
+import PersonnelLinks from './pages/PersonnelLinks';
 import GreenOffice from './pages/GreenOffice';
 
 // Pages - Admin
@@ -26,33 +28,47 @@ import Login from './pages/admin/Login';
 import ManageNews from './pages/admin/ManageNews';
 import AdminDashboard from './pages/admin/AdminDashboard';
 
-// 🟢 Component สำหรับจัด Layout หน้าบ้าน (มี Navbar)
+// 🟢 Layout สำหรับหน้าบ้าน (Public)
 const MainLayout = () => (
   <div className="min-h-screen flex flex-col font-['Prompt']">
     <ScrollToTop />
     <Navbar />
     <main className="flex-grow">
-      <Outlet /> {/* เนื้อหาแต่ละหน้าจะมาแสดงตรงนี้ */}
+      <Outlet />
     </main>
   </div>
 );
 
-// 🔴 Component สำหรับจัด Layout หน้า Admin (ไม่มี Navbar หลัก)
+// 🔴 Layout สำหรับหน้า Admin (จัดวาง Sidebar และ Navbar)
 const AdminLayout = () => (
-  <div className="min-h-screen font-['Prompt'] bg-slate-50">
+  <div className="flex h-screen w-full bg-slate-50 font-['Prompt'] overflow-hidden">
     <ScrollToTop />
-    <AdminSidebar />
-    <main>
-      <Outlet />
-    </main>
+
+    {/* Sidebar (ซ้าย): ล็อกความกว้างคงที่ */}
+    <aside className="w-72 flex-shrink-0 bg-white border-r border-slate-100 z-20">
+      <AdminSidebar />
+    </aside>
+
+    {/* พื้นที่ทางขวา: รวม Navbar และ Content */}
+    <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+      
+      {/* ส่วนหัวแอดมิน: ช่องค้นหาและโปรไฟล์ */}
+      <AdminNavbar />
+
+      {/* พื้นที่แสดงผล Dashboard: เลื่อนขึ้นลงได้ */}
+      <main className="flex-1 overflow-y-auto p-10 bg-[#FDF8F4]/30">
+        <div className="max-w-[1600px] mx-auto pb-10">
+          <Outlet />
+        </div>
+      </main>
+    </div>
   </div>
 );
 
 export default function App() {
   return (
     <Routes>
-      
-      {/* 🏡 กลุ่มหน้าบ้าน  */}
+      {/* 🏡 กลุ่มหน้าบ้าน */}
       <Route element={<MainLayout />}>
         <Route path="/" element={<Home />} />
         <Route path="/history" element={<History />} />
@@ -68,21 +84,20 @@ export default function App() {
         <Route path="/course-detail/:id" element={<CourseDetail />} />
         <Route path="/course-description" element={<CourseDescription />} />
         <Route path="/student-downloads" element={<StudentDownloads />} />
+        <Route path="/personnel-links" element={<PersonnelLinks />} />
         <Route path="/green-office" element={<GreenOffice />} />
-        
-        {/* กรณีพิมพ์ URL มั่ว ให้เด้งกลับหน้า Home ภายใต้ Layout ปกติ */}
         <Route path="*" element={<Home />} />
       </Route>
 
+      {/* 🔐 Admin Login */}
+      <Route path="/admin/login" element={<Login />} />
+
       {/* 🔐 กลุ่มหน้า Admin */}
-        <Route path="/admin/login" element={<Login />} />
-      <Route element={<AdminLayout />}>
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/news" element={<ManageNews />} />
-
-        
+      <Route path="/admin" element={<AdminLayout />}>
+        {/* แก้ไขบรรทัดที่เคย Error: ใช้ <Route index ... /> เพียงบรรทัดเดียว */}
+        <Route index element={<AdminDashboard />} /> 
+        <Route path="news" element={<ManageNews />} />
       </Route>
-
     </Routes>
   );
 }

@@ -25,7 +25,7 @@ export default function Navbar() {
         { label: "บุคลากรสายวิชาการ", href: "/administrator" },
         { label: "บุคลากรสายสนับสนุน", href: "/staff" },
         { label: "ดาวน์โหลดเอกสารสำหรับบุคลากร", href: "/staff-download" },
-        { label: "ลิงก์สำหรับบุคลากร", href: "#" },
+        { label: "ลิงก์สำหรับบุคลากร", href: "/personnel-links" },
       ] 
     },
     { 

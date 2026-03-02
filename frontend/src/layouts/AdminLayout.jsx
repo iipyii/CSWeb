@@ -1,32 +1,31 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import AdminSidebar from '../components/admin/AdminSidebar';
+import AdminNavbar from '../components/admin/AdminNavbar'; // นำเข้า Navbar ที่มีโปรไฟล์และช่องค้นหา
 
 export default function AdminLayout() {
   return (
-    /* 1. ใช้ flex เพื่อให้ Sidebar และ Main จัดเรียงต่อกันในแนวนอน */
-    <div className="flex min-h-screen bg-slate-50 font-['Prompt']">
+    /**
+     * 1. ใช้ flex และ h-screen เพื่อแบ่งพื้นที่ซ้าย (Sidebar) และขวา (Content) 
+     * บังคับให้ความสูงเท่าหน้าจอพอดีเพื่อป้องกัน Dashboard ต่อท้ายด้านล่าง
+     */
+    <div className="flex h-screen w-full bg-slate-50 font-['Prompt'] overflow-hidden">
       
-      {/* 2. Sidebar: กำหนดความกว้างให้คงที่ (w-72) และไม่ให้หดตัว (shrink-0) */}
-      <div className="w-72 shrink-0 border-r border-slate-200 sticky top-0 h-screen overflow-y-auto bg-white">
+      {/* 2. Sidebar Area: ล็อกความกว้างคงที่และไม่ให้หดตัว */}
+      <aside className="w-72 flex-shrink-0 h-full border-r border-slate-100 bg-white z-20 shadow-sm">
         <AdminSidebar />
-      </div>
+      </aside>
 
-      {/* 3. Main Content: ใช้ flex-grow เพื่อให้พื้นที่ที่เหลือทั้งหมดเป็นของเนื้อหา */}
-      <div className="flex-grow flex flex-col min-w-0 h-screen overflow-hidden">
+      {/* 3. Main Area: พื้นที่ส่วนขวาที่รวม Navbar และ Content */}
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         
-        {/* Header ส่วนบน */}
-        <header className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
-          <img src="/cis-logo.svg" className="h-10" alt="CIS Logo" />
-          <div className="flex items-center gap-3">
-             <span className="text-sm font-bold">Admin User</span>
-             <div className="w-8 h-8 rounded-full bg-slate-200" />
-          </div>
-        </header>
+        {/* 🚀 Top Navbar: ส่วนค้นหาและ User Profile */}
+        <AdminNavbar />
 
-        {/* 4. พื้นที่แสดงเนื้อหา (Outlet): ตั้งค่า overflow-y-auto เพื่อให้เลื่อนดูข้อมูลได้อิสระ */}
-        <main className="flex-grow overflow-y-auto p-8">
-          <div className="max-w-[1400px] mx-auto">
+        {/* 4. Dashboard Scrollable Content: พื้นที่แสดงผลหน้าต่างๆ ผ่าน Outlet */}
+        <main className="flex-1 overflow-y-auto p-10 bg-[#FDF8F4]/30">
+          <div className="max-w-[1600px] mx-auto pb-10">
+            {/* เนื้อหาจาก AdminDashboard หรือหน้าจัดการอื่นๆ จะมาแสดงตรงนี้ */}
             <Outlet />
           </div>
         </main>
