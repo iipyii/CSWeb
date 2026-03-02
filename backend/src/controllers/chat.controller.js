@@ -1,4 +1,5 @@
 import pool from "../config/db.js";
+import { getLocalEmbedding } from "../services/embedding.service.js";
 
 export const chatWithAI = async (req, res) => {
   try {
@@ -9,16 +10,23 @@ export const chatWithAI = async (req, res) => {
     }
 
     // 🔎 ดึง FAQ ที่เกี่ยวข้อง
+    const messageVector = await getLocalEmbedding(message);
+    const vectorString = `[${messageVector.join(",")}]`;
+
     const faqResult = await pool.query(
       `
-      SELECT question, answer 
-      FROM faq 
-      WHERE status='active'
-      AND question ILIKE $1
+      SELECT question,
+            answer,
+            embedding <-> $1::vector AS distance
+      FROM faq
+      ORDER BY distance
       LIMIT 5
       `,
-      [`%${message}%`]
+      [vectorString]
     );
+
+    // กรองเฉพาะ distance < 0.8
+    const filtered = faqResult.rows.filter(row => row.distance < 0.8);
 
     let contextText = "";
 
@@ -41,9 +49,8 @@ ${contextText}
 ${message}
 `;
 
-    // 🔥 เรียก Gemini ผ่าน REST
     const response = await fetch(
-  `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: {
@@ -68,6 +75,43 @@ ${message}
     const reply = data.candidates[0].content.parts[0].text;
 
     res.json({ reply });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const updateFaqVectors = async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT id, question, answer FROM faq"
+    );
+
+    let count = 0;
+
+    for (const row of result.rows) {
+      console.log("==== เริ่มทำ ID:", row.id);
+
+      const textToEmbed = `คำถาม: ${row.question} คำตอบ: ${row.answer}`;
+
+      try {
+        const vector = await getLocalEmbedding(textToEmbed);
+        const vectorString = `[${vector.join(",")}]`;
+
+        await pool.query(
+          "UPDATE faq SET embedding = $1::vector WHERE id = $2",
+          [vectorString, row.id]
+        );
+
+        count++;
+
+      } catch (err) {
+        console.error("❌ Error ID", row.id, ":", err.message);
+      }
+    }
+
+    res.json({ message: `อัปเดต Vector สำเร็จทั้งหมด ${count} รายการ!` });
 
   } catch (error) {
     console.error(error);
