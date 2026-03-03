@@ -116,13 +116,16 @@ export default function AdministratorDetail() {
               <h1 className="text-2xl md:text-3xl font-bold text-slate-800 mb-3 leading-tight">
                 {profile.fullname_th}
               </h1>
-              <p className="text-lg md:text-xl text-[#3F51B5] font-light italic leading-relaxed">
+              <p className="mb-4 text-lg md:text-xl text-[#3F51B5] font-light italic leading-relaxed">
                 {profile.fullname_en}
               </p>
 
               <p className="mb-4 font-medium text-gray-600 flex flex-col">
-                <span>{profile.position_th}</span>
-                <span>{profile.position_en}</span>
+                {profile.position_th}
+              </p>
+
+              <p className="mb-4 font-small text-gray-500 flex flex-col">
+                {profile.position_en}
               </p>
 
             </div>
