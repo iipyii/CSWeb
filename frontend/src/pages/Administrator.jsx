@@ -54,7 +54,7 @@ const fadeInUp = {
 };
 
 export default function Administrator() {
-   const [lecturers, setLecturers] = useState([]);
+  const [lecturers, setLecturers] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -122,11 +122,11 @@ export default function Administrator() {
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                         onError={(e) => e.target.style.display='none'}
                       />
-                      <User size={80} className="text-slate-400 absolute" />
+                      {/* <User size={80} className="text-slate-400 absolute" /> */}
                     </div>
                   </div>
                   <h3 className="font-bold text-xl text-slate-800 group-hover:text-[#3F51B5]">
-                    {head.name_th}
+                    {head.fullname_th}
                   </h3>
                   <p className="text-[#3F51B5] font-bold text-sm uppercase tracking-wide">
                     {head.position_th}
@@ -148,7 +148,7 @@ export default function Administrator() {
                         alt={deputy.fullname_th}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       />
-                      <User size={70} className="text-slate-400 absolute" />
+                      {/* <User size={70} className="text-slate-400 absolute" /> */}
                     </div>
                   </div>
                   <h3 className="font-bold text-lg text-slate-800 group-hover:text-[#3F51B5]">
@@ -176,7 +176,7 @@ export default function Administrator() {
                         alt={staff.fullname_th}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       />
-                      <User size={50} className="text-slate-300 absolute" />
+                      {/* <User size={50} className="text-slate-300 absolute" /> */}
                     </div>
                   </div>
                   <h4 className="font-bold text-slate-800 mb-1 group-hover:text-[#3F51B5]">
@@ -184,6 +184,7 @@ export default function Administrator() {
                   </h4>
                   <p className="text-[11px] text-[#3F51B5] font-black uppercase tracking-tighter">
                     {staff.position_th}
+              
                   </p>
                 </motion.div>
               </Link>
@@ -211,7 +212,7 @@ export default function Administrator() {
                         alt={staff.fullname_th}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       />
-                      <User size={50} className="text-slate-200 absolute" />
+                      {/* <User size={50} className="text-slate-200 absolute" /> */}
                     </div>
                   </div>
                   <h4 className="font-bold text-slate-800 mb-1 text-sm group-hover:text-[#3F51B5]">

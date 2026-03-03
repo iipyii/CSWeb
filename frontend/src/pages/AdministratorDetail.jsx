@@ -120,8 +120,9 @@ export default function AdministratorDetail() {
                 {profile.fullname_en}
               </p>
 
-              <p className="mb-4 font-medium text-gray-600">
-                {profile.position_th}
+              <p className="mb-4 font-medium text-gray-600 flex flex-col">
+                <span>{profile.position_th}</span>
+                <span>{profile.position_en}</span>
               </p>
 
             </div>
@@ -172,6 +173,6 @@ export default function AdministratorDetail() {
       <Footer />
     </div>
 
-    
+
   );
 }
