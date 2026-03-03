@@ -1,0 +1,50 @@
+version: "3.9"
+
+services:
+
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: csweb_dbvector
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: csweb_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  backend:
+    build: ./backend
+    container_name: csweb_backend
+    restart: always
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: csweb_db
+      DB_PORT: 5432
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  frontend:
+    build: ./frontend
+    container_name: csweb_frontend
+    restart: always
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  pgdata:
