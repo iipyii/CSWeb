@@ -22,6 +22,8 @@ import Staff from './pages/Staff';
 import StaffDownloads from './pages/StaffDownloads';
 import PersonnelLinks from './pages/PersonnelLinks';
 
+import StudentProjects from './pages/StudentProjects';
+import ProjectDetail from './pages/ProjectDetail';
 import StudentLinks from './pages/StudentLinks';
 import GreenOffice from './pages/GreenOffice';
 
@@ -92,6 +94,8 @@ export default function App() {
         <Route path="/student-downloads" element={<StudentDownloads />} />
         <Route path="/personnel-links" element={<PersonnelLinks />} />
 
+        <Route path="/student-projects" element={<StudentProjects />} />
+        <Route path="/student-projects/:id" element={<ProjectDetail />} />
         <Route path="/student-links" element={<StudentLinks />} />
         
         <Route path="/green-office" element={<GreenOffice />} />
