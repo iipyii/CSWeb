@@ -21,6 +21,8 @@ import AdministratorDetail from './pages/AdministratorDetail';
 import Staff from './pages/Staff';
 import StaffDownloads from './pages/StaffDownloads';
 import PersonnelLinks from './pages/PersonnelLinks';
+
+import StudentLinks from './pages/StudentLinks';
 import GreenOffice from './pages/GreenOffice';
 
 // Pages - Admin
@@ -89,6 +91,9 @@ export default function App() {
         <Route path="/course-description" element={<CourseDescription />} />
         <Route path="/student-downloads" element={<StudentDownloads />} />
         <Route path="/personnel-links" element={<PersonnelLinks />} />
+
+        <Route path="/student-links" element={<StudentLinks />} />
+        
         <Route path="/green-office" element={<GreenOffice />} />
         <Route path="*" element={<Home />} />
         
