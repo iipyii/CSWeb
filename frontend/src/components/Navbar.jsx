@@ -69,7 +69,7 @@ export default function Navbar() {
         { label: "ปฏิทินการศึกษา", href: "#" },
         { label: "ขบวนวิชา", href: "#" },
         { label: "คู่มือนักศึกษา", href: "#" },
-        { label: "ลิงก์สำหรับนักศึกษา", href: "#" },
+        { label: "ลิงก์สำหรับนักศึกษา", href: "/student-links" },
       ] 
     },
     { label: "ข่าวสารและกิจกรรม", 
