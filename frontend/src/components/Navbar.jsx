@@ -57,7 +57,7 @@ export default function Navbar() {
           ]
         },
         { label: "ดาวน์โหลดเอกสารสำหรับนักศึกษา", href: "/student-downloads" },
-        { label: "โครงงานนักศึกษา", href: "#" },
+        { label: "โครงงานนักศึกษา", href: "/student-projects" },
         { 
           label: "อาจารย์ที่ปรึกษา", 
           href: "#", 
