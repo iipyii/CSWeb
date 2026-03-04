@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import pool from "./config/db.js";
+
 import usersRoutes from "./routes/users.routes.js";
 import newsRoutes from "./routes/news.routes.js";
 import faqRoutes from "./routes/faq.routes.js";

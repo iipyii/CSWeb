@@ -1,10 +1,22 @@
-import pool from "../config/db.js";
+import { prisma } from "../lib/prisma.js";
 
 export const getAllUsers = async (req, res) => {
     try {
-        const result = await pool.query("SELECT * FROM users ORDER BY id ASC");
-        res.json(result.rows);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }  
+    const users = await prisma.users.findMany({
+      orderBy: {
+        id: "asc",
+      },
+      select: {
+        id: true,
+        email: true,
+        full_name: true,
+        role: true,
+      },
+    });
+
+    res.json(users);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server error" });
+  }  
 };

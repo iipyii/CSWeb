@@ -1,4 +1,4 @@
-import pool from "../config/db.js";
+import { prisma } from "../lib/prisma.js";
 import { getLocalEmbedding } from "../services/embedding.service.js";
 
 export const chatWithAI = async (req, res) => {
@@ -9,33 +9,37 @@ export const chatWithAI = async (req, res) => {
       return res.status(400).json({ error: "Message is required" });
     }
 
-    // 🔎 ดึง FAQ ที่เกี่ยวข้อง
+    // Generate embedding
     const messageVector = await getLocalEmbedding(message);
     const vectorString = `[${messageVector.join(",")}]`;
 
-    const faqResult = await pool.query(
-      `
+    // Vector similarity search (pgvector)
+    const faqResult = await prisma.$queryRaw`
       SELECT question,
-            answer,
-            embedding <-> $1::vector AS distance
+             answer,
+             embedding <-> ${vectorString}::vector AS distance
       FROM faq
       ORDER BY distance
       LIMIT 5
-      `,
-      [vectorString]
-    );
+    `;
 
-    // กรองเฉพาะ distance < 0.8
-    const filtered = faqResult.rows.filter(row => row.distance < 0.8);
+    // Filter by similarity threshold
+    const filtered = faqResult.filter(row => row.distance < 0.8);
 
     let contextText = "";
 
-    faqResult.rows.forEach((faq) => {
+    filtered.forEach((faq) => {
       contextText += `
-      Q: ${faq.question}
-      A: ${faq.answer}
-      `;
+Q: ${faq.question}
+A: ${faq.answer}
+`;
     });
+
+    if (!contextText.trim()) {
+      return res.json({
+        reply: "ไม่พบข้อมูลที่เกี่ยวข้อง"
+      });
+    }
 
     const prompt = `
 คุณคือผู้ช่วยของภาควิชาคอมพิวเตอร์และสารสนเทศ
@@ -79,43 +83,43 @@ ${message}
 
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: "AI processing error" });
   }
 };
 
+
+// Rebuild FAQ embeddings
 export const updateFaqVectors = async (req, res) => {
   try {
-    const result = await pool.query(
-      "SELECT id, question, answer FROM faq"
-    );
+    const faqs = await prisma.faq.findMany({
+      select: {
+        id: true,
+        question: true,
+        answer: true
+      }
+    });
 
     let count = 0;
 
-    for (const row of result.rows) {
-      console.log("==== เริ่มทำ ID:", row.id);
+    for (const row of faqs) {
 
       const textToEmbed = `คำถาม: ${row.question} คำตอบ: ${row.answer}`;
+      const vector = await getLocalEmbedding(textToEmbed);
+      const vectorString = `[${vector.join(",")}]`;
 
-      try {
-        const vector = await getLocalEmbedding(textToEmbed);
-        const vectorString = `[${vector.join(",")}]`;
+      await prisma.$executeRaw`
+        UPDATE faq
+        SET embedding = ${vectorString}::vector
+        WHERE id = ${row.id}
+      `;
 
-        await pool.query(
-          "UPDATE faq SET embedding = $1::vector WHERE id = $2",
-          [vectorString, row.id]
-        );
-
-        count++;
-
-      } catch (err) {
-        console.error("❌ Error ID", row.id, ":", err.message);
-      }
+      count++;
     }
 
     res.json({ message: `อัปเดต Vector สำเร็จทั้งหมด ${count} รายการ!` });
 
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: "Vector update failed" });
   }
 };

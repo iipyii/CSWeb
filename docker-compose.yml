@@ -3,9 +3,8 @@ version: "3.8"
 services:
 
   db:
-    image: pgvector/pgvector:pg16
+    image: pgvector/pgvector:pg17
     container_name: csweb_dbvector
-    # platform: linux/amd64 # 👈 เพิ่มบรรทัดนี้
     restart: always
     environment:
       POSTGRES_USER: postgres
@@ -15,7 +14,7 @@ services:
       - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      # - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
 
   # backend:
   #   build: ./backend

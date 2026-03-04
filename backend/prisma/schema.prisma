@@ -1,0 +1,84 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model lecturers {
+  id                    Int                     @id @default(autoincrement())
+  lecturer_code         String                  @unique @db.VarChar(10)
+  fullname_th           String
+  fullname_en           String?
+  position_th           String?
+  position_en           String?
+  email                 String?                 @db.VarChar(150)
+  tel                   String?                 @db.VarChar(100)
+  education_th          String?
+  education_en          String?
+  image_path            String?
+  created_at            DateTime?               @default(now()) @db.Timestamp(6)
+  orcid                 String?                 @db.VarChar(50)
+  scholar_name          String?
+  research_publications research_publications[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model faq {
+  id         Int                    @id @default(autoincrement())
+  question   String
+  answer     String
+  category   String?                @db.VarChar(100)
+  status     String                 @default("active") @db.VarChar(20)
+  created_at DateTime?              @default(now()) @db.Timestamp(6)
+  embedding  Unsupported("vector")?
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model news {
+  id         Int       @id @default(autoincrement())
+  title      String    @db.VarChar(255)
+  content    String
+  category   String    @db.VarChar(100)
+  status     String    @default("active") @db.VarChar(20)
+  start_date DateTime  @db.Date
+  end_date   DateTime? @db.Date
+  created_by Int
+  created_at DateTime  @default(now()) @db.Timestamp(6)
+  users      users     @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "cr_by")
+}
+
+model research_publications {
+  id               Int        @id @default(autoincrement())
+  lecturer_id      Int?
+  title            String
+  authors          String?
+  publication_type String?    @db.VarChar(30)
+  venue            String?
+  publication_year Int?
+  volume           String?    @db.VarChar(50)
+  issue            String?    @db.VarChar(50)
+  pages            String?    @db.VarChar(50)
+  doi              String?
+  url              String?
+  abstract         String?
+  external_source  String?    @db.VarChar(50)
+  external_id      String?
+  is_auto_imported Boolean?   @default(false)
+  is_published     Boolean?   @default(true)
+  created_at       DateTime?  @default(now()) @db.Timestamp(6)
+  updated_at       DateTime?  @default(now()) @db.Timestamp(6)
+  lecturers        lecturers? @relation(fields: [lecturer_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model users {
+  id        Int    @id @default(autoincrement())
+  email     String @unique @db.VarChar(255)
+  full_name String @db.VarChar(255)
+  role      String @db.VarChar(50)
+  news      news[]
+}

@@ -1,134 +1,162 @@
-import pool from "../config/db.js";
+import { prisma } from "../lib/prisma.js";
 
-// GET active news
+// ✅ GET active news
 export const getActiveNews = async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT * FROM news
-      WHERE status = 'active'
-      AND start_date <= CURRENT_DATE
-      AND (end_date IS NULL OR end_date >= CURRENT_DATE)
-      ORDER BY created_at DESC
-    `);
+    const today = new Date();
 
-    res.json(result.rows);
+    const news = await prisma.news.findMany({
+      where: {
+        status: "active",
+        start_date: {
+          lte: today,
+        },
+        OR: [
+          { end_date: null },
+          { end_date: { gte: today } },
+        ],
+      },
+      orderBy: {
+        created_at: "desc",
+      },
+    });
+
+    res.json(news);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error(error);
+    res.status(500).json({ error: "Server error" });
   }
 };
 
-// POST news (admin only)
+// ✅ POST news (admin only)
 export const createNews = async (req, res) => {
   try {
     const { title, content, category, start_date, end_date } = req.body;
 
-    const result = await pool.query(
-      `
-      INSERT INTO news
-      (title, content, category, status, start_date, end_date, created_by)
-      VALUES ($1, $2, $3, 'active', $4, $5, $6)
-      RETURNING *
-      `,
-      [title, content, category, start_date, end_date, req.user.id]
-    );
+    const newNews = await prisma.news.create({
+      data: {
+        title,
+        content,
+        category,
+        status: "active",
+        start_date: new Date(start_date),
+        end_date: end_date ? new Date(end_date) : null,
+        created_by: req.user.id, // ต้องมี auth middleware ก่อน
+      },
+    });
 
-    res.status(201).json(result.rows[0]);
+    res.status(201).json(newNews);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error(error);
+    res.status(500).json({ error: "Server error" });
   }
 };
 
+// ✅ GET all news (admin)
 export const getAllNews = async (req, res) => {
   try {
-    const result = await pool.query(
-      "SELECT * FROM news ORDER BY created_at DESC"
-    );
-    res.json(result.rows);
+    const news = await prisma.news.findMany({
+      orderBy: {
+        created_at: "desc",
+      },
+    });
+
+    res.json(news);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error(error);
+    res.status(500).json({ error: "Server error" });
   }
 };
 
+// ✅ UPDATE news
 export const updateNews = async (req, res) => {
   try {
     const { id } = req.params;
     const { title, content, category, status, start_date, end_date } = req.body;
 
-    const result = await pool.query(
-      `
-      UPDATE news
-      SET title=$1,
-          content=$2,
-          category=$3,
-          status=$4,
-          start_date=$5,
-          end_date=$6
-      WHERE id=$7
-      RETURNING *
-      `,
-      [title, content, category, status, start_date, end_date, id]
-    );
+    const updated = await prisma.news.update({
+      where: { id: Number(id) },
+      data: {
+        title,
+        content,
+        category,
+        status,
+        start_date: new Date(start_date),
+        end_date: end_date ? new Date(end_date) : null,
+      },
+    });
 
-    res.json(result.rows[0]);
+    res.json(updated);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error(error);
+
+    if (error.code === "P2025") {
+      return res.status(404).json({ message: "News not found" });
+    }
+
+    res.status(500).json({ error: "Server error" });
   }
 };
 
+// ✅ Soft delete (archive)
 export const deleteNews = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const result = await pool.query(
-      `
-      UPDATE news
-      SET status='deleted'
-      WHERE id=$1
-      RETURNING *
-      `,
-      [id]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: "News not found" });
-    }
+    await prisma.news.update({
+      where: { id: Number(id) },
+      data: {
+        status: "deleted",
+      },
+    });
 
     res.json({ message: "News archived (soft deleted)" });
   } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+    console.error(error);
 
-export const getNewsById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await pool.query(
-      "SELECT * FROM news WHERE id=$1",
-      [id]
-    );
-
-    if (result.rows.length === 0) {
+    if (error.code === "P2025") {
       return res.status(404).json({ message: "News not found" });
     }
 
-    res.json(result.rows[0]);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: "Server error" });
   }
 };
 
+// ✅ GET by ID
+export const getNewsById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const news = await prisma.news.findUnique({
+      where: { id: Number(id) },
+    });
+
+    if (!news) {
+      return res.status(404).json({ message: "News not found" });
+    }
+
+    res.json(news);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+// ✅ GET archived news
 export const getArchivedNews = async (req, res) => {
   try {
-    const result = await pool.query(
-      `
-      SELECT * FROM news
-      WHERE status = 'archived'
-      ORDER BY created_at DESC
-      `
-    );
+    const news = await prisma.news.findMany({
+      where: {
+        status: "archived",
+      },
+      orderBy: {
+        created_at: "desc",
+      },
+    });
 
-    res.json(result.rows);
+    res.json(news);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error(error);
+    res.status(500).json({ error: "Server error" });
   }
 };

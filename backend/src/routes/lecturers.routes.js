@@ -1,15 +1,17 @@
 import express from "express";
-import pool from "../config/db.js";
+import { prisma } from "../lib/prisma.js"
 
 const router = express.Router();
 
 // GET all lecturers
 router.get("/", async (req, res) => {
   try {
-    const result = await pool.query(
-      "SELECT * FROM lecturers ORDER BY lecturer_code"
-    );
-    res.json(result.rows);
+    const lecturers = await prisma.lecturers.findMany({
+      orderBy: {
+        lecturer_code: "asc",
+      },
+    });
+    res.json(lecturers);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
@@ -21,16 +23,17 @@ router.get("/:code", async (req, res) => {
   try {
     const { code } = req.params;
 
-    const result = await pool.query(
-      "SELECT * FROM lecturers WHERE lecturer_code = $1",
-      [code]
-    );
+    const lecturer = await prisma.lecturers.findUnique({
+      where: {
+        lecturer_code: code,
+      },
+    });
 
-    if (result.rows.length === 0) {
+    if (!lecturer) {
       return res.status(404).json({ error: "Lecturer not found" });
     }
 
-    res.json(result.rows[0]);
+    res.json(lecturer);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });

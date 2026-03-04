@@ -1,86 +1,119 @@
-import pool from "../config/db.js";
+import { prisma } from "../lib/prisma.js";
 
-// GET active FAQ
+// ✅ GET active FAQ
 export const getActiveFAQ = async (req, res) => {
   try {
-    const result = await pool.query(
-      "SELECT * FROM faq WHERE status='active' ORDER BY created_at DESC"
-    );
-    res.json(result.rows);
+    const faq = await prisma.faq.findMany({
+      where: {
+        status: "active",
+      },
+      orderBy: {
+        created_at: "desc",
+      },
+      select: {
+        id: true,
+        question: true,
+        answer: true,
+        category: true,
+        status: true,
+        created_at: true,
+      },
+    });
+
+    res.json(faq);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error(error);
+    res.status(500).json({ error: "Server error" });
   }
 };
 
-// GET all FAQ (admin)
+// ✅ GET all FAQ (admin)
 export const getAllFAQ = async (req, res) => {
   try {
-    const result = await pool.query(
-      "SELECT * FROM faq ORDER BY created_at DESC"
-    );
-    res.json(result.rows);
+    const faq = await prisma.faq.findMany({
+      orderBy: {
+        created_at: "desc",
+      },
+    });
+
+    res.json(faq);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error(error);
+    res.status(500).json({ error: "Server error" });
   }
 };
 
-// CREATE FAQ
+// ✅ CREATE FAQ
 export const createFAQ = async (req, res) => {
   try {
     const { question, answer, category } = req.body;
 
-    const result = await pool.query(
-      `
-      INSERT INTO faq (question, answer, category)
-      VALUES ($1, $2, $3)
-      RETURNING *
-      `,
-      [question, answer, category]
-    );
+    const newFAQ = await prisma.faq.create({
+      data: {
+        question,
+        answer,
+        category,
+        status: "active",
+      },
+    });
 
-    res.status(201).json(result.rows[0]);
+    res.status(201).json(newFAQ);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error(error);
+    res.status(500).json({ error: "Server error" });
   }
 };
 
-// UPDATE FAQ
+// ✅ UPDATE FAQ
 export const updateFAQ = async (req, res) => {
   try {
     const { id } = req.params;
     const { question, answer, category, status } = req.body;
 
-    const result = await pool.query(
-      `
-      UPDATE faq
-      SET question=$1,
-          answer=$2,
-          category=$3,
-          status=$4
-      WHERE id=$5
-      RETURNING *
-      `,
-      [question, answer, category, status, id]
-    );
+    const updated = await prisma.faq.update({
+      where: {
+        id: Number(id),
+      },
+      data: {
+        question,
+        answer,
+        category,
+        status,
+      },
+    });
 
-    res.json(result.rows[0]);
+    res.json(updated);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error(error);
+
+    if (error.code === "P2025") {
+      return res.status(404).json({ message: "FAQ not found" });
+    }
+
+    res.status(500).json({ error: "Server error" });
   }
 };
 
-// DELETE (soft)
+// ✅ Soft delete
 export const deleteFAQ = async (req, res) => {
   try {
     const { id } = req.params;
 
-    await pool.query(
-      "UPDATE faq SET status='inactive' WHERE id=$1",
-      [id]
-    );
+    await prisma.faq.update({
+      where: { id: Number(id) },
+      data: {
+        status: "inactive",
+      },
+    });
 
     res.json({ message: "FAQ deactivated" });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error(error);
+
+    if (error.code === "P2025") {
+      return res.status(404).json({ message: "FAQ not found" });
+    }
+
+    res.status(500).json({ error: "Server error" });
   }
 };
