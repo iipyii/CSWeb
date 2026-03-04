@@ -53,8 +53,12 @@ export default function AdministratorDetail() {
 
   // 🔥 แยกวุฒิการศึกษาตามบรรทัด
   const educationList = profile.education_th
-    ? profile.education_th.split(/\r?\n/).filter(e => e.trim() !== "")
-    : [];
+  ? profile.education_th
+      .replace(/"/g, "")                 // ลบ "
+      .split(/(?=ปริญญา)/g)             // แยกทุกครั้งที่เจอคำว่า ปริญญา
+      .map(e => e.trim())
+      .filter(e => e !== "")
+  : [];
 
   return (
     <div className="bg-white font-['Prompt'] min-h-screen text-slate-700">
