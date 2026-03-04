@@ -25,6 +25,7 @@ import PersonnelLinks from './pages/PersonnelLinks';
 import StudentProjects from './pages/StudentProjects';
 import ProjectDetail from './pages/ProjectDetail';
 import ConsultStudent from './pages/ConsultStudent';
+import ConsultDetail from './pages/ConsultDetail';
 import StudentLinks from './pages/StudentLinks';
 import GreenOffice from './pages/GreenOffice';
 
@@ -98,6 +99,7 @@ export default function App() {
         <Route path="/student-projects" element={<StudentProjects />} />
         <Route path="/student-projects/:id" element={<ProjectDetail />} />
         <Route path="/consult-student/:code" element={<ConsultStudent />} />
+        <Route path="/consult-detail/:level/:year" element={<ConsultDetail />} />
         <Route path="/student-links" element={<StudentLinks />} />
         
         <Route path="/green-office" element={<GreenOffice />} />
