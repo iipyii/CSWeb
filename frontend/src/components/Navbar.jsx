@@ -62,7 +62,7 @@ export default function Navbar() {
           label: "อาจารย์ที่ปรึกษา", 
           href: "#", 
           submenu: [
-            { label: "ค้นหารายชื่อนักศึกษา", href: "#" },
+            { label: "ค้นหารายชื่อนักศึกษา", href: "/consult-student/:code" },
           ]
         },
         { label: "การฝึกงานและสหกิจศึกษา", href: "#" },
