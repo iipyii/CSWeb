@@ -53,7 +53,7 @@ export default function AdministratorDetail() {
 
   // 🔥 แยกวุฒิการศึกษาตามบรรทัด
   const educationList = profile.education_th
-    ? profile.education_th.split("\n").filter(e => e.trim() !== "")
+    ? profile.education_th.split(/\r?\n/).filter(e => e.trim() !== "")
     : [];
 
   return (
@@ -154,16 +154,26 @@ export default function AdministratorDetail() {
               </h2>
               <div className="space-y-10">
                 <div>
-                  <h3 className="text-[#3F51B5] font-bold text-xs uppercase tracking-[0.2em] mb-6 opacity-80">
+                  {/* <h3 className="text-[#3F51B5] font-bold text-xs uppercase tracking-[0.2em] mb-6 opacity-80">
                     International Conferences
-                  </h3>
+                  </h3> */}
                   <ul className="space-y-8">
-                    {profile.publications?.map((pub, index) => (
+                    {/* {profile.publications?.map((pub, index) => (
                       <li key={index} className="relative pl-8 border-l border-slate-100 pb-2">
                         <div className="absolute left-[-5.5px] top-0 w-2.5 h-2.5 rounded-full bg-blue-100 border-2 border-white"></div>
                         <p className="text-slate-600 text-sm md:text-base leading-relaxed font-light italic">
                           {pub}
                         </p>
+                      </li>
+                    ))} */}
+                    {profile.research_publications?.map((pub) => (
+                      <li key={pub.id} className="relative pl-8 border-l border-slate-100 pb-2">
+                        <div className="absolute left-[-5.5px] top-0 w-2.5 h-2.5 rounded-full bg-blue-100 border-2 border-white"></div>
+
+                        <p className="text-slate-600 text-sm md:text-base leading-relaxed font-light italic">
+                          {pub.authors}. <strong>{pub.title}</strong>. {pub.venue}, {pub.publication_year}.
+                        </p>
+
                       </li>
                     ))}
                   </ul>

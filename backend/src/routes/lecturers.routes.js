@@ -27,6 +27,13 @@ router.get("/:code", async (req, res) => {
       where: {
         lecturer_code: code,
       },
+      include: {
+        research_publications: {
+          orderBy: {
+            publication_year: "desc",
+          },
+        },
+      },
     });
 
     if (!lecturer) {
