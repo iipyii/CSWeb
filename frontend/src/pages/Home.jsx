@@ -9,12 +9,22 @@ import { newsData } from '../data/newsData';
 export default function Home() {
   const navigate = useNavigate(); 
 
+  // 1. เพิ่มข้อมูล Path และสถานะ Link ภายนอก
   const actions = [
-    { icon: <Monitor size={24} />, label: 'ระบบคำร้องออนไลน์' },
-    { icon: <Calendar size={24} />, label: 'ปฏิทินการศึกษา' },
-    { icon: <Download size={24} />, label: 'ดาวน์โหลดเอกสาร' },
-    { icon: <ClipboardCheck size={24} />, label: 'ระบบประเมินอาจารย์' }
+    { icon: <Monitor size={24} />, label: 'ระบบคำร้องออนไลน์', path: 'https://reg.kmutnb.ac.th/registrar/home', isExternal: true },
+    { icon: <Calendar size={24} />, label: 'ปฏิทินการศึกษา', path: 'https://acdserv.kmutnb.ac.th/academic-calendar', isExternal: true },
+    { icon: <Download size={24} />, label: 'ดาวน์โหลดเอกสาร', path: '/student-downloads' },
+    { icon: <ClipboardCheck size={24} />, label: 'ระบบประเมินอาจารย์', path: 'https://reg4.kmutnb.ac.th/registrar/home', isExternal: true },
   ];
+
+  // 2. ฟังก์ชันจัดการการคลิกปุ่มทางลัด
+  const handleActionClick = (act) => {
+    if (act.isExternal) {
+      window.open(act.path, '_blank', 'noopener,noreferrer');
+    } else {
+      navigate(act.path);
+    }
+  };
 
   const highlightNews = useMemo(() => {
     return newsData.filter(news => news.isLatest === true);
@@ -29,17 +39,18 @@ export default function Home() {
   ];
 
   return (
-    <div className="bg-[#f8fafc] font-['Prompt']">
+    <div className="bg-[#f8fafc] font-['Prompt'] text-left">
       <HeroSlider />
 
       <div className="bg-white relative z-30 pb-24 shadow-sm">
         <div className="max-w-[1440px] mx-auto px-10">
           
-          {/* Quick Actions */}
+          {/* Quick Actions - เพิ่ม onClick เพื่อให้ทำงานได้ */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-[60px] mb-24 max-w-[1000px] mx-auto relative z-40">
             {actions.map((act, i) => (
               <div 
                 key={i} 
+                onClick={() => handleActionClick(act)}
                 className="bg-[#3F51B5] text-white py-7 px-4 rounded-2xl shadow-xl flex flex-col items-center justify-center cursor-pointer hover:-translate-y-2 hover:bg-[#2e3b8a] transition-all duration-300 group"
               >
                 <div className="mb-2 opacity-90 group-hover:scale-110 transition-transform">
@@ -57,7 +68,6 @@ export default function Home() {
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 border-l-[8px] border-[#3F51B5] pl-5">
               <div>
                 <h2 className="text-4xl font-bold text-[#1e293b] tracking-tight uppercase">ข่าวสาร CIS</h2>
-          
               </div>
               <button 
                 onClick={() => navigate('/news')}
@@ -67,7 +77,6 @@ export default function Home() {
               </button>
             </div>
 
-            {/* แสดงเฉพาะข่าวที่กรองมาแล้ว */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-8">
               {highlightNews.length > 0 ? (
                 highlightNews.map((item) => (
@@ -144,7 +153,7 @@ function CourseCard({ course, onViewDetail }) {
       <div className="w-full sm:w-52 h-52 rounded-2xl shrink-0 overflow-hidden bg-slate-50 shadow-inner">
         <img src={course.image} alt={course.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
       </div>
-      <div className="flex flex-col justify-between py-1 flex-1">
+      <div className="flex flex-col justify-between py-1 flex-1 text-left">
         <div>
           <span className="text-xs text-gray-400 flex items-center mb-4">
             <Calendar size={14} className="mr-2" /> {course.date}

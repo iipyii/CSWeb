@@ -13,7 +13,6 @@ export default function Navbar() {
       href: "#", 
       dropdown: [
         { label: "ประวัติภาควิชาฯ", href: "/history" }, 
-        { label: "วิสัยทัศน์ / พันธกิจ", href: "#" },
         { label: "โครงสร้างการบริหาร", href: "/organization" },
         { label: "ติดต่อภาควิชาฯ", href: "/contact" },
       ] 
@@ -65,8 +64,8 @@ export default function Navbar() {
             { label: "ค้นหารายชื่อนักศึกษา", href: "/consult-student/:code" },
           ]
         },
-        { label: "การฝึกงานและสหกิจศึกษา", href: "#" },
-        { label: "ปฏิทินการศึกษา", href: "#" },
+        { label: "การฝึกงาน", href: "/internship" },
+        { label: "ปฏิทินการศึกษา", href: 'https://acdserv.kmutnb.ac.th/academic-calendar', isExternal: true },
         { label: "ขบวนวิชา", href: "#" },
         { label: "คู่มือนักศึกษา", href: "#" },
         { label: "ลิงก์สำหรับนักศึกษา", href: "/student-links" },
