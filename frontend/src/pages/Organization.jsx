@@ -6,12 +6,12 @@ const orgData = {
   head: {
     name: 'รศ.ดร.ธนภัทร์ อนุศาสน์อมรกุล',
     role: 'หัวหน้าภาควิชาฯ',
-    image: 'https://cs.kmutnb.ac.th/img/staff/tanapat.jpg' // เปลี่ยนเป็น path รูปจริงใน project
+    image: '/img/lecturers/TNA.jpg'
   },
   deputy: {
     name: 'ผศ.ดร.ลือพล พิพานเมฆาภรณ์',
     role: 'รองหัวหน้าภาควิชาฯ',
-    image: 'https://cs.kmutnb.ac.th/img/staff/luepol.jpg'
+    image: '/img/lecturers/LPP.jpg'
   },
 
   assistants: [
@@ -19,25 +19,25 @@ const orgData = {
       name: 'ผศ.ดร.นิกร สุทธิเสงี่ยม', 
       role: 'ผู้ช่วยหัวหน้าภาควิชา', 
       detail: 'ฝ่ายสารสนเทศและวิจัย',
-      image: 'https://cs.kmutnb.ac.th/img/staff/nikorn.jpg' 
+      image: '/img/lecturers/NKS.jpg'
     },
     { 
       name: 'ผศ.ดร.คันธารัตน์ อเนกบุณย์', 
       role: 'ผู้ช่วยหัวหน้าภาควิชา', 
       detail: 'ฝ่ายกิจการนักศึกษา',
-      image: 'https://cs.kmutnb.ac.th/img/staff/kantharat.jpg' 
+      image: '/img/lecturers/KAB.jpg' 
     },
     { 
       name: 'ผศ.ดร.อภิสิทธิ์ รัตนาตรานุรักษ์', 
       role: 'ผู้ช่วยหัวหน้าภาควิชา', 
       detail: 'ประกันคุณภาพการศึกษาและบริหารความเสี่ยง',
-      image: 'https://cs.kmutnb.ac.th/img/staff/apisit.jpg' 
+      image: '/img/lecturers/ART.jpg'
     },
     { 
       name: 'ผศ.ดร.สรร รัตนสัญญา', 
       role: 'ผู้ช่วยหัวหน้าภาควิชา', 
       detail: 'ฝ่ายสหกิจศึกษาและบริการวิชาการ',
-      image: 'https://cs.kmutnb.ac.th/img/staff/sun.jpg' 
+      image: '/img/lecturers/SRS.jpg'
     }
   ]
 };
@@ -64,7 +64,6 @@ export default function Organization() {
           >
             <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight text-center md:text-left">โครงสร้างการบริหารภาควิชาวิทยาการคอมพิวเตอร์และสารสนเทศ</h1>
             <div className="w-12 h-1 bg-white/30 mb-4 mx-auto md:mx-0"></div>
-
           </motion.div>
         </div>
         <div className="absolute right-[0%] bottom-[5%] opacity-5 select-none pointer-events-none">
@@ -86,7 +85,8 @@ export default function Organization() {
             <div className="bg-white rounded-xl shadow-lg border border-slate-100 p-8 text-center relative overflow-hidden group">
               <div className="absolute top-0 left-0 w-full h-1.5 bg-[#3F51B5]"></div>
               <div className="w-32 h-32 mx-auto rounded-full overflow-hidden mb-6 border-4 border-slate-50 shadow-md">
-                <img src={orgData.head.image} alt={orgData.head.name} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
+                {/* ลบ grayscale ออกเพื่อให้เป็นรูปสีปกติ */}
+                <img src={orgData.head.image} alt={orgData.head.name} className="w-full h-full object-cover transition-all duration-500" />
               </div>
               <h3 className="text-[#3F51B5] font-bold text-lg mb-1">{orgData.head.name}</h3>
               <p className="text-slate-500 text-sm font-medium">{orgData.head.role}</p>
@@ -109,7 +109,8 @@ export default function Organization() {
             <div className="bg-white rounded-xl shadow-lg border border-slate-100 p-8 text-center relative overflow-hidden group">
               <div className="absolute top-0 left-0 w-full h-1.5 bg-[#3F51B5]"></div>
               <div className="w-32 h-32 mx-auto rounded-full overflow-hidden mb-6 border-4 border-slate-50 shadow-md">
-                <img src={orgData.deputy.image} alt={orgData.deputy.name} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
+                {/* ลบ grayscale ออกเพื่อให้เป็นรูปสีปกติ */}
+                <img src={orgData.deputy.image} alt={orgData.deputy.name} className="w-full h-full object-cover transition-all duration-500" />
               </div>
               <h3 className="text-[#3F51B5] font-bold text-lg mb-1">{orgData.deputy.name}</h3>
               <p className="text-slate-500 text-sm font-medium">{orgData.deputy.role}</p>
@@ -124,7 +125,6 @@ export default function Organization() {
             กรรมการบริหาร
           </div>
           <div className="w-px h-12 bg-slate-200"></div>
-          {/* เส้นขวางเชื่อม 4 ตำแหน่ง */}
           <div className="hidden lg:block w-[75%] h-px bg-slate-200 -mt-px"></div>
         </div>
 
@@ -143,8 +143,9 @@ export default function Organization() {
               <div className="hidden lg:block absolute top-[-48px] left-1/2 -translate-x-1/2 w-px h-12 bg-slate-200"></div>
               
               <div className="bg-white rounded-xl shadow-md border border-slate-50 p-6 text-center hover:shadow-xl transition-all duration-300 group h-full">
-                <div className="w-24 h-24 mx-auto rounded-full overflow-hidden mb-4 border-2 border-slate-100 grayscale group-hover:grayscale-0 transition-all duration-500">
-                  <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                <div className="w-24 h-24 mx-auto rounded-full overflow-hidden mb-4 border-2 border-slate-100 shadow-sm">
+                  {/* ลบ grayscale ออกเพื่อให้เป็นรูปสีปกติ */}
+                  <img src={item.image} alt={item.name} className="w-full h-full object-cover transition-all duration-500" />
                 </div>
                 <h4 className="text-slate-800 font-bold text-sm mb-2 group-hover:text-[#3F51B5] transition-colors">{item.name}</h4>
                 <div className="space-y-1">
