@@ -91,3 +91,15 @@ model downloads {
   category    String?   @db.VarChar(100)
   created_at  DateTime  @default(now())
 }
+
+model staff {
+  id          Int      @id @default(autoincrement())
+  staff_code  String?  @unique
+  fullname_th String
+  fullname_en String?
+  position_th String?
+  position_en String?
+  email       String?  @db.VarChar(150)
+  image_path  String?
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+}
