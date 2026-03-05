@@ -6,6 +6,7 @@ import newsRoutes from "./routes/news.routes.js";
 import faqRoutes from "./routes/faq.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
 import lecturersRoutes from "./routes/lecturers.routes.js";
+import downloadsRoutes from "./routes/downloads.routes.js";
 
 const app = express();
 
@@ -29,5 +30,6 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/lecturers", lecturersRoutes);
 app.use('/uploads', express.static('uploads'));
 app.set("json spaces", 2);
+app.use("/api/downloads", downloadsRoutes);
 
 export default app;
