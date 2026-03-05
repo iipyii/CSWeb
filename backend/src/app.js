@@ -7,12 +7,14 @@ import faqRoutes from "./routes/faq.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
 import lecturersRoutes from "./routes/lecturers.routes.js";
 import downloadsRoutes from "./routes/downloads.routes.js";
+import cookieParser from "cookie-parser";
+import authRoutes from "./routes/auth.routes.js";
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
-
+app.use(cookieParser());
 
 app.use((req, res, next) => {
     req.user = { 
@@ -31,5 +33,6 @@ app.use("/api/lecturers", lecturersRoutes);
 app.use('/uploads', express.static('uploads'));
 app.set("json spaces", 2);
 app.use("/api/downloads", downloadsRoutes);
+app.use("/auth", authRoutes);
 
 export default app;
