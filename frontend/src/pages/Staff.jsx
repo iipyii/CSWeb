@@ -3,43 +3,43 @@ import { motion } from 'framer-motion';
 import { Mail, User, Settings } from 'lucide-react';
 import Footer from '../components/Footer';
 
-// ข้อมูลบุคลากรสายสนับสนุน (อ้างอิงจากรูปภาพต้นฉบับ)
+// ข้อมูลบุคลากรสายสนับสนุน 
 const supportStaff = [
   {
     name: "นางสาวอาลิษา หุ่นไทย",
     role: "เจ้าหน้าที่บริหารงานทั่วไป",
     email: "alisa.h@sci.kmutnb.ac.th",
-    image: "/img/staff/support-1.jpg"
+    image: "/img/staff/staff-alisa.jpg"
   },
   {
     name: "นางสาวจันทิมา อรรฆรุจิรัตน์",
     role: "นักวิชาการศึกษา",
     email: "jantima.p@sci.kmutnb.ac.th",
-    image: "/img/staff/support-2.jpg"
+    image: "/img/staff/staff-jantima.jpg"
   },
   {
     name: "นายเกรียงไกร เอี่ยมวงค์",
     role: "ช่างเทคนิค",
     email: "kriangkrai.a@sci.kmutnb.ac.th",
-    image: "/img/staff/support-3.jpg"
+    image: "/img/staff/staff-kriangkrai.jpg"
   },
   {
     name: "นายนที ปัญญาประสิทธิ์",
     role: "เจ้าหน้าที่บริหารงานทั่วไป",
     email: "natee.p@sci.kmutnb.ac.th",
-    image: "/img/staff/support-4.jpg"
+    image: "/img/staff/staff-natee.jpg"
   },
   {
     name: "นางสาวอุษณีย์ บัลลังน้อย",
     role: "นักวิชาการคอมพิวเตอร์",
     email: "ousanee.b@sci.kmutnb.ac.th",
-    image: "/img/staff/support-5.jpg"
+    image: "/img/staff/staff-ousanee.jpg"
   },
   {
     name: "นายปิยศิวเณศ์ พุ่มไสว",
     role: "เจ้าหน้าที่บริหารงานทั่วไป",
     email: "piyasiwanet.p@sci.kmutnb.ac.th",
-    image: "/img/staff/support-6.jpg"
+    image: "/img/staff/staff-piyasiwanet.png"
   }
 ];
 
