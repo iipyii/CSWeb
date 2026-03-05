@@ -100,9 +100,44 @@ async function seedPublications() {
   });
 }
 
+async function seedStaff() {
+  const staffList = [];
+
+  return new Promise((resolve) => {
+    fs.createReadStream("./data/staff.csv")
+      .pipe(csv({
+        mapHeaders: ({ header }) =>
+          header.replace(/^\uFEFF/, "").trim()
+      }))
+      .on("data", (row) => {
+        if (!row.fullname_th) return;
+
+        staffList.push({
+          staff_code: row.staff_code,
+          fullname_th: row.fullname_th,
+          fullname_en: row.fullname_en || null,
+          position_th: row.position_th || null,
+          position_en: row.position_en || null,
+          email: row.email || null,
+          image_path: row.image_path || null
+        });
+      })
+      .on("end", async () => {
+        await prisma.staff.createMany({
+          data: staffList,
+          skipDuplicates: true
+        });
+
+        console.log("Staff seeded");
+        resolve();
+      });
+  });
+}
+
 async function main() {
     await seedLecturers();
     await seedPublications();
+    await seedStaff();
 }
 
 main()
