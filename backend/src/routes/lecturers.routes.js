@@ -8,7 +8,7 @@ router.get("/", async (req, res) => {
   try {
     const lecturers = await prisma.lecturers.findMany({
       orderBy: {
-        lecturer_code: "asc",
+        id: "asc",
       },
     });
     res.json(lecturers);

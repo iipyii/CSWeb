@@ -119,6 +119,7 @@ export default function AdministratorDetail() {
             <div className="mb-12 border-b border-slate-100 pb-8">
               <h1 className="text-2xl md:text-3xl font-bold text-slate-800 mb-3 leading-tight">
                 {profile.fullname_th}
+                {" "}({profile.lecturer_code})
               </h1>
               <p className="mb-4 text-lg md:text-xl text-[#3F51B5] font-light italic leading-relaxed">
                 {profile.fullname_en}

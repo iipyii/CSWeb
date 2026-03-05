@@ -82,3 +82,12 @@ model users {
   role      String @db.VarChar(50)
   news      news[]
 }
+
+model downloads {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  file_path   String
+  category    String?   @db.VarChar(100)
+  created_at  DateTime  @default(now())
+}
