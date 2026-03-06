@@ -9,6 +9,7 @@ import lecturersRoutes from "./routes/lecturers.routes.js";
 import downloadsRoutes from "./routes/downloads.routes.js";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.routes.js";
+import staffRoutes from "./routes/staff.routes.js";
 
 const app = express();
 
@@ -34,5 +35,6 @@ app.use('/uploads', express.static('uploads'));
 app.set("json spaces", 2);
 app.use("/api/downloads", downloadsRoutes);
 app.use("/auth", authRoutes);
+app.use("/api/staff", staffRoutes);
 
 export default app;
