@@ -110,122 +110,146 @@ export default function Administrator() {
           </div>
           
           {/* แถวที่ 1: หัวหน้าภาควิชา */}
-          {head && (
-            <div className="flex justify-center mb-16">
-              <Link to={`/administrator/${head.lecturer_code}`} className="w-72 block group">
-                <motion.div variants={fadeInUp} initial="hidden" whileInView="visible">
-                  <div className="relative aspect-[3/4] mb-6 rounded-3xl overflow-hidden shadow-xl border-4 border-[#3F51B5]/20 bg-white transition-transform group-hover:-translate-y-2">
-                    <div className="w-full h-full bg-slate-200 flex items-center justify-center">
-                      <img
-                        src={`http://localhost:5000${head.image_path}`}
-                        alt={head.fullname_th}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                        onError={(e) => e.target.style.display='none'}
-                      />
-                      {/* <User size={80} className="text-slate-400 absolute" /> */}
-                    </div>
-                  </div>
-                  <h3 className="font-bold text-xl text-slate-800 group-hover:text-[#3F51B5]">
-                    {head.fullname_th}
-                  </h3>
-                  <p className="text-[#3F51B5] font-bold text-sm uppercase tracking-wide">
-                    {head.position_th}
-                  </p>
-                </motion.div>
-              </Link>
-            </div>
-          )}
+{head && (
+  <div className="flex justify-center mb-16">
+    <Link to={`/administrator/${head.lecturer_code}`} className="group block">
+      <motion.div variants={fadeInUp} initial="hidden" whileInView="visible" className="flex flex-col items-center">
+        {/* 🖼️ กล่องรูปภาพขนาดคงที่ */}
+        <div className="relative aspect-[3/4] w-64 mb-6 rounded-3xl overflow-hidden shadow-xl border-4 border-[#3F51B5]/20 bg-white group-hover:-translate-y-2 transition-all duration-300">
+          <img
+            src={`http://localhost:5000${head.image_path}`}
+            alt={head.fullname_th}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          />
+        </div>
+        
+        {/* ✨ ส่วนชื่อ: ปรับให้กว้างกว่ารูปและจัดกึ่งกลางพอดี */}
+        <div className="w-screen max-w-[400px] text-center px-4">
+          <h3 className="font-bold text-base md:text-[17px] text-slate-800 group-hover:text-[#3F51B5] whitespace-nowrap">
+            {head.fullname_th}
+          </h3>
+          <p className="text-[#3F51B5] font-bold text-sm uppercase tracking-wide mt-1">
+            {head.position_th}
+          </p>
+        </div>
+      </motion.div>
+    </Link>
+  </div>
+)}
 
-          {/* แถวที่ 2: รองหัวหน้าภาควิชา */}
-          {deputy && (
-            <div className="flex justify-center mb-20">
-              <Link to={`/administrator/${deputy.lecturer_code}`} className="w-64 block group">
-                <motion.div variants={fadeInUp} initial="hidden" whileInView="visible">
-                  <div className="relative aspect-[3/4] mb-6 rounded-3xl overflow-hidden shadow-lg border-4 border-white bg-white transition-transform group-hover:-translate-y-2">
-                    <div className="w-full h-full bg-slate-200 flex items-center justify-center">
-                      <img
-                        src={`http://localhost:5000${deputy.image_path}`}
-                        alt={deputy.fullname_th}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      />
-                      {/* <User size={70} className="text-slate-400 absolute" /> */}
-                    </div>
-                  </div>
-                  <h3 className="font-bold text-lg text-slate-800 group-hover:text-[#3F51B5]">
-                    {deputy.fullname_th}
-                  </h3>
-                  <p className="text-[#3F51B5] font-medium text-sm">
-                    {deputy.position_th}
-                  </p>
-                </motion.div>
-              </Link>
-            </div>
-          )}
+{/* แถวที่ 2: รองหัวหน้าภาควิชา (ใช้วิธีเดียวกัน) */}
+{deputy && (
+  <div className="flex justify-center mb-16">
+    <Link to={`/administrator/${deputy.lecturer_code}`} className="group block">
+      <motion.div variants={fadeInUp} initial="hidden" whileInView="visible" className="flex flex-col items-center">
+        <div className="relative aspect-[3/4] w-64 mb-6 rounded-3xl overflow-hidden shadow-xl border-4 border-[#3F51B5]/20 bg-white group-hover:-translate-y-2 transition-all duration-300">
+          <img
+            src={`http://localhost:5000${deputy.image_path}`}
+            alt={deputy.fullname_th}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          />
+        </div>
+        
+        <div className="w-screen max-w-[400px] text-center px-4">
+          <h3 className="font-bold text-base md:text-[17px] text-slate-800 group-hover:text-[#3F51B5] whitespace-nowrap">
+            {deputy.fullname_th}
+          </h3>
+          <p className="text-[#3F51B5] font-bold text-sm uppercase tracking-wide mt-1">
+            {deputy.position_th}
+          </p>
+        </div>
+      </motion.div>
+    </Link>
+  </div>
+)}
 
            {/* Assistants */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
-            {assistants.map((staff) => (
-              <Link key={staff.lecturer_code}
-                to={`/administrator/${staff.lecturer_code}`}
-                className="group block">
-                <motion.div variants={fadeInUp} initial="hidden" whileInView="visible">
-                  <div className="relative aspect-[3/4] mb-6 rounded-2xl overflow-hidden shadow-md border-2 border-white bg-white group-hover:shadow-xl group-hover:-translate-y-2">
-                    <div className="w-full h-full bg-slate-100 flex items-center justify-center">
-                      <img
-                        src={`http://localhost:5000${staff.image_path}`}
-                        alt={staff.fullname_th}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      />
-                      {/* <User size={50} className="text-slate-300 absolute" /> */}
-                    </div>
-                  </div>
-                  <h4 className="font-bold text-slate-800 mb-1 group-hover:text-[#3F51B5]">
-                    {staff.fullname_th}
-                  </h4>
-                  <p className="text-[11px] text-[#3F51B5] font-black uppercase tracking-tighter">
-                    {staff.position_th}
-              
-                  </p>
-                </motion.div>
-              </Link>
-            ))}
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+  {assistants.map((staff) => (
+    <Link 
+      key={staff.lecturer_code}
+      to={`/administrator/${staff.lecturer_code}`}
+      className="group block"
+    >
+      <motion.div 
+        variants={fadeInUp} 
+        initial="hidden" 
+        whileInView="visible"
+        className="flex flex-col items-center" // ✨ จัดทุกอย่างให้อยู่กึ่งกลางแนวตั้ง
+      >
+        {/* 🖼️ กล่องรูปภาพขนาดคงที่ (ไม่ขยายตามชื่อ) */}
+        <div className="relative aspect-[3/4] w-48 mb-6 rounded-2xl overflow-hidden shadow-md border-2 border-white bg-white group-hover:shadow-xl group-hover:-translate-y-2 transition-all duration-300">
+          <div className="w-full h-full bg-slate-100 flex items-center justify-center">
+            <img
+              src={`http://localhost:5000${staff.image_path}`}
+              alt={staff.fullname_th}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              onError={(e) => { e.target.src = "/img/placeholder-user.png"; }} // กรณีไม่มีรูป
+            />
           </div>
-        </section>
+        </div>
 
-        {/* คณาจารย์ (Faculty Section) */}
-        <section className="text-center">
-          <div className="mb-16">
-            <h2 className="text-2xl font-bold text-[#3F51B5]">คณาจารย์</h2>
-            <div className="w-16 h-1 bg-[#3F51B5] mx-auto mt-4"></div>
+        {/* ✨ ส่วนชื่อ: ใช้พื้นที่กว้างกว่ารูปเพื่อให้เห็นชื่อเต็มและจัดกึ่งกลาง */}
+        <div className="w-full max-w-[280px] text-center px-2">
+          <h4 className="font-bold text-slate-800 text-[14px] md:text-[15px] group-hover:text-[#3F51B5] whitespace-nowrap transition-colors">
+            {staff.fullname_th}
+          </h4>
+          <p className="text-[11px] text-[#3F51B5] font-black uppercase tracking-tighter mt-1.5 leading-tight">
+            {staff.position_th}
+          </p>
+        </div>
+      </motion.div>
+    </Link>
+  ))}
+</div>
+</section>
+
+       {/* คณาจารย์ (Faculty Section) */}
+<section className="text-center">
+  <div className="mb-16">
+    <h2 className="text-2xl font-bold text-[#3F51B5]">คณาจารย์</h2>
+    <div className="w-16 h-1 bg-[#3F51B5] mx-auto mt-4"></div>
+  </div>
+
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-16">
+    {faculty.map((staff) => (
+      <Link 
+        key={staff.lecturer_code} 
+        to={`/administrator/${staff.lecturer_code}`} 
+        className="group block text-center"
+      >
+        <motion.div 
+          variants={fadeInUp} 
+          initial="hidden" 
+          whileInView="visible"
+          className="flex flex-col items-center" // ✨ จัดกึ่งกลางรูปและชื่อ
+        >
+          {/* 🖼️ กล่องรูปภาพขนาดคงที่ w-48 (ประมาณ 192px) */}
+          <div className="relative aspect-[3/4] w-48 mb-6 rounded-2xl overflow-hidden shadow-sm border border-slate-100 bg-white group-hover:shadow-lg group-hover:-translate-y-2 transition-all duration-300">
+            <div className="w-full h-full bg-slate-50 flex items-center justify-center">
+              <img
+                src={`http://localhost:5000${staff.image_path}`}
+                alt={staff.fullname_th}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                onError={(e) => { e.target.src = "/img/placeholder-user.png"; }}
+              />
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
-            {faculty.map((staff) => (
-              <Link key={staff.lecturer_code}
-                to={`/administrator/${staff.lecturer_code}`}
-                className="group block text-center">
-                <motion.div variants={fadeInUp} initial="hidden" whileInView="visible">
-                  <div className="relative aspect-[3/4] mb-6 rounded-2xl overflow-hidden shadow-sm border border-slate-100 bg-white group-hover:shadow-lg group-hover:-translate-y-2">
-                    <div className="w-full h-full bg-slate-50 flex items-center justify-center">
-                      <img
-                        src={`http://localhost:5000${staff.image_path}`}
-                        alt={staff.fullname_th}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      />
-                      {/* <User size={50} className="text-slate-200 absolute" /> */}
-                    </div>
-                  </div>
-                  <h4 className="font-bold text-slate-800 mb-1 text-sm group-hover:text-[#3F51B5]">
-                    {staff.fullname_th}
-                  </h4>
-                  <p className="text-[11px] text-[#3F51B5] font-medium">
-                    {staff.position_th || "อาจารย์ประจำ"}
-                  </p>
-                </motion.div>
-              </Link>
-            ))}
+          {/* ✨ ส่วนชื่อ: ขยายพื้นที่ให้กว้างกว่ารูปเล็กน้อยเพื่อให้ชื่อยาวอยู่แถวเดียวได้กึ่งกลางพอดี */}
+          <div className="w-full max-w-[260px] px-1">
+            <h4 className="font-bold text-slate-800 text-[13.5px] md:text-[14px] group-hover:text-[#3F51B5] whitespace-nowrap transition-colors">
+              {staff.fullname_th}
+            </h4>
+            <p className="text-[11px] text-[#3F51B5] font-medium mt-1.5 opacity-80">
+              {staff.position_th || "อาจารย์ประจำ"}
+            </p>
           </div>
-        </section>
+        </motion.div>
+      </Link>
+    ))}
+  </div>
+</section>
 
       </main>
 

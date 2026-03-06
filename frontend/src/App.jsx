@@ -27,6 +27,8 @@ import ProjectDetail from './pages/ProjectDetail';
 import ConsultStudent from './pages/ConsultStudent';
 import ConsultDetail from './pages/ConsultDetail';
 import Internship from './pages/Internship';
+import SubjectCourses from './pages/SubjectCourses';
+import SubjectDetail from './pages/SubjectDetail';
 import StudentLinks from './pages/StudentLinks';
 import GreenOffice from './pages/GreenOffice';
 
@@ -37,6 +39,9 @@ import CreateNews from './pages/admin/CreateNews';
 import EditNews from './pages/admin/EditNews';
 import NewsArchive from './pages/admin/NewsArchive';
 import ManageCurriculum from './pages/admin/ManageCurriculum';
+import ManageFiles from './pages/admin/ManageFiles';
+import CreateFile from './pages/admin/CreateFile';
+import EditFile from './pages/admin/EditFile';
 import AdminDashboard from './pages/admin/AdminDashboard';
 
 // 🟢 Layout สำหรับหน้าบ้าน (Public)
@@ -55,18 +60,14 @@ const AdminLayout = () => (
   <div className="flex h-screen w-full bg-slate-50 font-['Prompt'] overflow-hidden">
     <ScrollToTop />
 
-    {/* Sidebar (ซ้าย): ล็อกความกว้างคงที่ */}
     <aside className="w-72 flex-shrink-0 bg-white border-r border-slate-100 z-20">
       <AdminSidebar />
     </aside>
 
-    {/* พื้นที่ทางขวา: รวม Navbar และ Content */}
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
       
-      {/* ส่วนหัวแอดมิน: ช่องค้นหาและโปรไฟล์ */}
       <AdminNavbar />
 
-      {/* พื้นที่แสดงผล Dashboard: เลื่อนขึ้นลงได้ */}
       <main className="flex-1 overflow-y-auto p-10 bg-[#FDF8F4]/30">
         <div className="max-w-[1600px] mx-auto pb-10">
           <Outlet />
@@ -102,6 +103,9 @@ export default function App() {
         <Route path="/consult-student/:code" element={<ConsultStudent />} />
         <Route path="/consult-detail/:level/:year" element={<ConsultDetail />} />
         <Route path="/internship" element={<Internship />} />
+        <Route path="/subject-courses" element={<SubjectCourses />} />
+        <Route path="/subject-courses/detail/:year/:term" element={<SubjectDetail />} />
+        
         <Route path="/student-links" element={<StudentLinks />} />
         
         <Route path="/green-office" element={<GreenOffice />} />
@@ -123,6 +127,10 @@ export default function App() {
         <Route path="news/archive" element={<NewsArchive />} />
 
         <Route path="curriculum" element={<ManageCurriculum />} />
+
+        <Route path="files" element={<ManageFiles />} />
+        <Route path="files/create" element={<CreateFile />} />
+        <Route path="files/edit/:id" element={<EditFile />} />
       </Route>
     </Routes>
   );
