@@ -13,18 +13,26 @@ import staffRoutes from "./routes/staff.routes.js";
 
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 app.use(cookieParser());
 
-app.use((req, res, next) => {
-    req.user = { 
-        id: 2, 
-        email: "admin@csweb.com", 
-        role: "admin", 
+if (process.env.NODE_ENV === "development") {
+  app.use((req, res, next) => {
+    req.user = {
+      id: 2,
+      email: "admin@csweb.com",
+      role: "admin",
     };
     next();
-});
+  });
+}
 
 app.use("/api/news", newsRoutes);
 app.use("/api/users", usersRoutes);

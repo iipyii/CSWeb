@@ -4,6 +4,8 @@ import { prisma } from "../lib/prisma.js";
 export const getActiveNews = async (req, res) => {
   try {
     const today = new Date();
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
 
     const news = await prisma.news.findMany({
       where: {
@@ -19,6 +21,8 @@ export const getActiveNews = async (req, res) => {
       orderBy: {
         created_at: "desc",
       },
+      skip: (page - 1) * limit,
+      take: limit,
     });
 
     res.json(news);
@@ -39,7 +43,7 @@ export const createNews = async (req, res) => {
         content,
         category,
         status: "active",
-        start_date: new Date(start_date),
+        start_date: start_date ? new Date(start_date) : null,
         end_date: end_date ? new Date(end_date) : null,
         created_by: req.user.id, // ต้องมี auth middleware ก่อน
       },
@@ -49,6 +53,11 @@ export const createNews = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Server error" });
+  }
+  if (!title || !content) {
+    return res.status(400).json({
+      error: "Title and content are required",
+    });
   }
 };
 
@@ -66,6 +75,7 @@ export const getAllNews = async (req, res) => {
     console.error(error);
     res.status(500).json({ error: "Server error" });
   }
+
 };
 
 // ✅ UPDATE news
@@ -157,6 +167,40 @@ export const getArchivedNews = async (req, res) => {
     res.json(news);
   } catch (error) {
     console.error(error);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+export const getLatestNews = async (req, res) => {
+  try {
+    const news = await prisma.news.findMany({
+      where: { status: "active" },
+      orderBy: { created_at: "desc" },
+      take: 5,
+    });
+
+    res.json(news);
+  } catch (error) {
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+export const getNewsByCategory = async (req, res) => {
+  try {
+    const { category } = req.params;
+
+    const news = await prisma.news.findMany({
+      where: {
+        category,
+        status: "active",
+      },
+      orderBy: {
+        created_at: "desc",
+      },
+    });
+
+    res.json(news);
+  } catch (error) {
     res.status(500).json({ error: "Server error" });
   }
 };
