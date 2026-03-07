@@ -74,10 +74,11 @@ export default function Navbar() {
     { label: "ข่าวสารและกิจกรรม", 
       href: "/news", // เชื่อมไปหน้า News หลัก
       dropdown: [
-        { label: "ข่าวทั้งหมด", href: "/news" },
-        { label: "ข่าวภาควิชาฯ", href: "/news" },
-        { label: "ข่าวคณะ/มหาวิทยาลัย", href: "/news" },
-        { label: "ข่าวทุนการศึกษา", href: "/news" },
+        { label: "ข่าวภาควิชาฯ", href: "/news?tab=ข่าวภาควิชาฯ" },
+        { label: "ข่าวคณะ/มหาวิทยาลัย", href: "/news?tab=ข่าวคณะและมหาวิทยาลัย" },
+        { label: "ข่าวทุนการศึกษา", href: "/news?tab=ข่าวทุนการศึกษา" },
+        { label: "ข่าวรับสมัครงาน/ประชาสัมพันธ์", href: "/news?tab=ข่าวรับสมัครงาน-ประชาสัมพันธ์" },
+
       ] 
     },
     { label: "ระเบียบ/ประกาศ", 

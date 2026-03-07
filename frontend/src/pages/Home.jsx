@@ -4,12 +4,13 @@ import HeroSlider from '../components/HeroSlider';
 import Footer from '../components/Footer';
 import { Monitor, Calendar, Download, ClipboardCheck, ArrowRightCircle, Clock } from 'lucide-react';
 
+// นำเข้าข้อมูลข่าวสารจากไฟล์ data (ตรวจสอบให้แน่ใจว่า path ถูกต้อง)
 import { newsData } from '../data/newsData';
 
 export default function Home() {
   const navigate = useNavigate(); 
 
-  // 1. เพิ่มข้อมูล Path และสถานะ Link ภายนอก
+  // 1. ข้อมูลปุ่มทางลัด (Quick Actions)
   const actions = [
     { icon: <Monitor size={24} />, label: 'ระบบคำร้องออนไลน์', path: 'https://reg.kmutnb.ac.th/registrar/home', isExternal: true },
     { icon: <Calendar size={24} />, label: 'ปฏิทินการศึกษา', path: 'https://acdserv.kmutnb.ac.th/academic-calendar', isExternal: true },
@@ -26,10 +27,19 @@ export default function Home() {
     }
   };
 
+  // 3. Logic การแสดงข่าวสารหน้าแรก (เหมือนหน้า News.jsx)
   const highlightNews = useMemo(() => {
-    return newsData.filter(news => news.isLatest === true);
+    // กรองเฉพาะข่าวที่กำหนดว่าเป็นข่าวล่าสุด (isLatest: true)
+    const latestNews = newsData.filter(news => news.isLatest === true);
+
+    // เรียงลำดับ: ข่าวที่ปักหมุด (isPinned: true) จะถูกยกขึ้นอันดับแรกสุด
+    return [...latestNews].sort((a, b) => {
+      if (a.isPinned === b.isPinned) return 0;
+      return a.isPinned ? -1 : 1;
+    }).slice(0, 3); // แสดงเพียง 3 ข่าวสำคัญที่หน้าแรกเพื่อความสวยงาม
   }, []);
 
+  // 4. ข้อมูลหลักสูตรแนะนำ
   const courses = [
     { id: 'cs-normal', level: 'bachelor', title: 'หลักสูตรวิทยาศาสตรบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์ (ปริญญาตรี ภาคปกติ)', enTitle: 'BACHELOR OF SCIENCE PROGRAM IN COMPUTER SCIENCE', date: 'มีนาคม 2564', image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80' },
     { id: 'cs-english', level: 'cs-english', title: 'หลักสูตรวิทยาศาสตรบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์ (ปริญญาตรี โครงการพิเศษ สองภาษา)', enTitle: 'BACHELOR OF SCIENCE PROGRAM IN COMPUTER SCIENCE', date: 'มีนาคม 2564', image: 'https://images.unsplash.com/photo-1684503830683-108f3e0fd03f?auto=format&fit=crop&w=800&q=80' },
@@ -45,7 +55,7 @@ export default function Home() {
       <div className="bg-white relative z-30 pb-24 shadow-sm">
         <div className="max-w-[1440px] mx-auto px-10">
           
-          {/* Quick Actions - เพิ่ม onClick เพื่อให้ทำงานได้ */}
+          {/* Quick Actions Bar */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-[60px] mb-24 max-w-[1000px] mx-auto relative z-40">
             {actions.map((act, i) => (
               <div 
@@ -77,51 +87,63 @@ export default function Home() {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
               {highlightNews.length > 0 ? (
                 highlightNews.map((item) => (
                   <div 
                     key={item.id} 
                     onClick={() => navigate(`/news/${item.id}`)}
-                    className="w-full max-w-[360px] mx-auto bg-white rounded-2xl overflow-hidden shadow-[0_6px_20px_rgb(0,0,0,0.04)] hover:shadow-[0_10px_28px_rgb(0,0,0,0.10)] transition-all duration-300 flex flex-col group cursor-pointer border border-gray-50"
+                    className={`w-full max-w-[380px] mx-auto bg-white rounded-[32px] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col group cursor-pointer border 
+                      ${item.isPinned ? 'border-indigo-100 bg-indigo-50/10' : 'border-gray-50'}`}
                   >
-                    <div className="relative h-[200px] w-full overflow-hidden">
-                      <img src={item.image} alt={item.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                      <div className="absolute top-4 left-4 bg-[#3F51B5] text-white text-[10px] px-3 py-1 rounded-full font-bold">
+                    <div className="relative h-[220px] w-full overflow-hidden">
+                      <img src={item.image} alt={item.title} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                      
+                      {/* Tag หมวดหมู่ */}
+                      <div className="absolute top-4 left-4 bg-[#3F51B5] text-white text-[10px] px-3 py-1.5 rounded-xl font-bold shadow-md">
                         {item.tag}
                       </div>
+
+                      {/* ✨ Badge ปักหมุด (Pinned) */}
+                      {item.isPinned && (
+                        <div className="absolute top-4 right-4 bg-white/95 text-[#3F51B5] text-[9px] px-2.5 py-1.5 rounded-lg font-bold shadow-sm uppercase tracking-widest border border-indigo-50">
+                          Pinned
+                        </div>
+                      )}
                     </div>
-                    <div className="px-6 pt-6 pb-5 flex flex-col flex-1 min-h-[180px]">
-                      <div className="flex items-center text-gray-400 text-[12px] mb-3 font-medium">
-                        <Clock size={13} className="mr-2 opacity-60" />
-                        {item.date}
+
+                    <div className="px-7 pt-7 pb-6 flex flex-col flex-1 min-h-[190px]">
+                      <div className="flex items-center text-slate-400 text-[12px] mb-4 font-bold uppercase tracking-wider">
+                        <Clock size={14} className="mr-2 text-[#3F51B5]/40" />
+                        ประกาศเมื่อ : {item.date}
                       </div>
-                      <h3 className="text-[15px] font-bold text-[#1e293b] leading-[1.55] mb-3 line-clamp-2 group-hover:text-[#3F51B5] transition-colors">
+                      <h3 className="text-[17px] font-bold text-[#1e293b] leading-[1.6] mb-4 line-clamp-2 group-hover:text-[#3F51B5] transition-colors">
                         {item.title}
                       </h3>
-                      <div className="mt-auto pt-3 border-t border-gray-50 flex justify-between items-center">
-                        <span className="text-[#3F51B5] text-[13px] font-bold">อ่านต่อ</span>
-                        <ArrowRightCircle size={16} className="text-gray-300 group-hover:text-[#3F51B5] group-hover:translate-x-1 transition-all" />
+                      
+                      <div className="mt-auto pt-4 border-t border-slate-50 flex justify-between items-center">
+                        <span className="text-[#3F51B5] text-[13px] font-bold">อ่านรายละเอียด</span>
+                        <ArrowRightCircle size={18} className="text-gray-300 group-hover:text-[#3F51B5] group-hover:translate-x-1 transition-all" />
                       </div>
                     </div>
                   </div>
                 ))
               ) : (
-                <p className="text-gray-400 col-span-full text-center py-10">ยังไม่มีข่าวประชาสัมพันธ์ล่าสุดในขณะนี้</p>
+                <p className="text-gray-400 col-span-full text-center py-20">ยังไม่มีข่าวประชาสัมพันธ์ล่าสุดในขณะนี้</p>
               )}
             </div>
           </section>
         </div>
       </div>
 
-      {/* ส่วนหลักสูตรแนะนำ */}
+      {/* Section: หลักสูตรแนะนำ */}
       <div className="bg-[#FAFAFA] py-28 border-t border-gray-100">
         <div className="max-w-[1440px] mx-auto px-10">
           <section>
             <div className="flex items-center mb-16 border-l-[8px] border-[#3F51B5] pl-5">
               <h2 className="text-4xl font-bold text-[#1e293b] tracking-tight uppercase">หลักสูตรแนะนำของเรา</h2>
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
               {courses.slice(0, 4).map((course) => (
                 <CourseCard 
                   key={course.id} 
@@ -130,6 +152,7 @@ export default function Home() {
                 />
               ))}
             </div>
+            {/* ปริญญาเอก (จัดกึ่งกลาง) */}
             <div className="flex justify-center mt-12">
               <div className="w-full lg:w-1/2">
                 <CourseCard 
@@ -147,25 +170,26 @@ export default function Home() {
   );
 }
 
+// คอมโพเนนต์การ์ดหลักสูตร
 function CourseCard({ course, onViewDetail }) {
   return (
-    <div className="bg-white p-8 rounded-[32px] shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-100 flex flex-col sm:flex-row space-y-6 sm:space-y-0 sm:space-x-8 hover:shadow-xl transition-all duration-300 group">
-      <div className="w-full sm:w-52 h-52 rounded-2xl shrink-0 overflow-hidden bg-slate-50 shadow-inner">
-        <img src={course.image} alt={course.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+    <div className="bg-white p-8 rounded-[40px] shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-100 flex flex-col sm:flex-row space-y-6 sm:space-y-0 sm:space-x-8 hover:shadow-xl transition-all duration-500 group">
+      <div className="w-full sm:w-56 h-56 rounded-3xl shrink-0 overflow-hidden bg-slate-50 shadow-inner">
+        <img src={course.image} alt={course.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
       </div>
-      <div className="flex flex-col justify-between py-1 flex-1 text-left">
+      <div className="flex flex-col justify-between py-2 flex-1 text-left">
         <div>
-          <span className="text-xs text-gray-400 flex items-center mb-4">
-            <Calendar size={14} className="mr-2" /> {course.date}
+          <span className="text-xs text-slate-400 font-bold flex items-center mb-4 uppercase tracking-widest">
+            <Calendar size={14} className="mr-2 text-indigo-300" /> อัปเดตเมื่อ: {course.date}
           </span>
-          <h4 className="text-[#1e293b] font-bold text-[20px] leading-tight mb-4 group-hover:text-[#3F51B5] transition-colors">{course.title}</h4>
-          <p className="text-[13.5px] text-gray-400 italic font-light leading-relaxed line-clamp-2 uppercase">{course.enTitle}</p>
+          <h4 className="text-[#1e293b] font-bold text-[20px] leading-[1.4] mb-4 group-hover:text-[#3F51B5] transition-colors">{course.title}</h4>
+          <p className="text-[13px] text-slate-400 italic font-light leading-relaxed line-clamp-2 uppercase tracking-tight">{course.enTitle}</p>
         </div>
         <button 
           onClick={onViewDetail}
-          className="bg-[#3F51B5] text-white text-[14px] px-10 py-3 rounded-full w-fit font-bold hover:bg-indigo-800 transition-colors flex items-center shadow-md mt-6 active:scale-95 transition-transform"
+          className="bg-[#3F51B5] text-white text-[14px] px-10 py-3.5 rounded-full w-fit font-bold hover:bg-indigo-800 transition-all flex items-center shadow-lg hover:shadow-indigo-200 mt-8 active:scale-95"
         >
-          <ArrowRightCircle size={18} className="mr-2" /> รายละเอียด
+          <ArrowRightCircle size={18} className="mr-2" /> รายละเอียดหลักสูตร
         </button>
       </div>
     </div>
