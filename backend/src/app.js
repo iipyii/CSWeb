@@ -10,6 +10,7 @@ import downloadsRoutes from "./routes/downloads.routes.js";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.routes.js";
 import staffRoutes from "./routes/staff.routes.js";
+import programRoutes from "./routes/program.routes.js"
 
 const app = express();
 
@@ -44,5 +45,6 @@ app.set("json spaces", 2);
 app.use("/api/downloads", downloadsRoutes);
 app.use("/auth", authRoutes);
 app.use("/api/staff", staffRoutes);
+app.use("/api/programs", programRoutes)
 
 export default app;

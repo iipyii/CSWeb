@@ -157,6 +157,7 @@ model program_sections {
   title       String
   content     String @db.Text
   order_index Int
+  pdf_path    String?
 
   version     program_versions @relation(fields: [versionId], references: [id])
 }
