@@ -119,3 +119,44 @@ model staff {
   image_path  String?
   created_at  DateTime @default(now()) @db.Timestamp(6)
 }
+
+model degrees {
+  id        Int    @id @default(autoincrement())
+  name_th   String
+  slug      String @unique
+
+  programs  programs[]
+}
+
+model programs {
+  id        Int    @id @default(autoincrement())
+  degreeId  Int
+  name_th   String
+  slug      String
+
+  degree    degrees @relation(fields: [degreeId], references: [id])
+  versions  program_versions[]
+}
+
+model program_versions {
+  id        Int    @id @default(autoincrement())
+  programId Int
+  year      Int
+  pdf_url   String?
+
+  program   programs @relation(fields: [programId], references: [id])
+  sections  program_sections[]
+
+  @@unique([programId, year])
+}
+
+model program_sections {
+  id          Int    @id @default(autoincrement())
+  versionId   Int
+  section_no  Int
+  title       String
+  content     String @db.Text
+  order_index Int
+
+  version     program_versions @relation(fields: [versionId], references: [id])
+}

@@ -54,7 +54,7 @@ export default function CourseDescription() {
           {/* ✅ แก้ไขส่วนนี้เป็นรายการปริญญาต่างๆ */}
           <div className="relative flex-1">
             <select className="w-full appearance-none pl-5 pr-10 py-2.5 bg-white border border-gray-200 rounded-full shadow-sm outline-none text-sm text-slate-500 cursor-pointer focus:ring-2 focus:ring-[#3F51B5]">
-              <option value="">เลือกรหลักสูตร</option>
+              <option value="">เลือกหลักสูตร</option>
               <option value="bachelor">หลักสูตรปริญญาตรี</option>
               <option value="master">หลักสูตรปริญญาโท</option>
               <option value="doctor">หลักสูตรปริญญาเอก</option>
