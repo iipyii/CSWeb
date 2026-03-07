@@ -136,7 +136,7 @@ export default function GraduateRegs() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8 }}
                 >
-                  <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">ระดับบัณฑิตศึกษา</h1>
+                  <h1 className="text-3xl md:text-3xl font-bold mb-4 tracking-tight">ข้อบังคับ-ประกาศ-หลักเกณฑ์-ชี้แจงกฎระเบียบสำหรับระดับบัณฑิตศึกษา</h1>
                   <div className="w-12 h-1 bg-white/30 mb-5"></div>
                 </motion.div>
               </div>
@@ -144,19 +144,9 @@ export default function GraduateRegs() {
                 <h2 className="text-[5rem] font-bold">CIS</h2>
               </div>
             </section>
-
+            
       {/* 📂 Main Content */}
       <main className="max-w-7xl mx-auto w-full px-6 py-12 flex-grow">
-        
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-center mb-16 mt-4"
-        >
-          <h2 className="text-2xl md:text-3xl font-bold text-[#3F51B5] leading-snug">
-            ข้อบังคับ-ประกาศ-หลักเกณฑ์-ชี้แจงกฎระเบียบสำหรับระดับบัณฑิตศึกษา
-          </h2>
-        </motion.div>
 
         {downloadData.map((section, sIdx) => {
           const isOpen = openSections.includes(sIdx);
@@ -205,7 +195,8 @@ export default function GraduateRegs() {
                             <div className="col-span-12 lg:col-span-9">
                               <div className="flex items-start gap-4">
                                 <span className="lg:hidden text-xs font-bold text-slate-300 mt-1 w-6">{iIdx + 1}</span>
-                                <div className="border-b border-transparent group-hover:border-[#3F51B5]/20 pb-1 transition-all inline-block">
+                                {/* ✨ ชื่อรายการเอกสาร: นำ class group-hover:border ออกแล้ว */}
+                                <div className="border-b border-transparent pb-1 transition-all inline-block">
                                   <span className="text-[15px] md:text-[16px] font-medium text-slate-700 leading-relaxed group-hover:text-[#3F51B5] transition-colors">
                                     {item.title}
                                   </span>

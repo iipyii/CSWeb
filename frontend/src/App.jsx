@@ -36,6 +36,9 @@ import FinanceRegs from './pages/FinanceRegs';
 import AcademicRegs from './pages/AcademicRegs';
 import PersonnelRegs from './pages/PersonnelRegs';
 import GraduateRegs from './pages/GraduateRegs';
+import StudentAffairsRegs from './pages/StudentAffairsRegs';
+import CoopRegs from './pages/CoopRegs';
+import ScholarshipRegs from './pages/ScholarshipRegs';
 
 import GreenOffice from './pages/GreenOffice';
 
@@ -119,6 +122,9 @@ export default function App() {
         <Route path="/academic-regulations" element={<AcademicRegs />} />
         <Route path="/personnel-regulations" element={<PersonnelRegs />} />
         <Route path="/graduate-regulations" element={<GraduateRegs />} />
+        <Route path="/student-affairs-regulations" element={<StudentAffairsRegs />} />
+        <Route path="/coop-regulations" element={<CoopRegs />} />
+        <Route path="/scholarship-regulations" element={<ScholarshipRegs />} />
         
         <Route path="/green-office" element={<GreenOffice />} />
         <Route path="*" element={<Home />} />
