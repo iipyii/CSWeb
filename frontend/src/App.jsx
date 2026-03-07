@@ -31,6 +31,9 @@ import SubjectCourses from './pages/SubjectCourses';
 import SubjectDetail from './pages/SubjectDetail';
 import StudentGuide from './pages/StudentGuide';
 import StudentLinks from './pages/StudentLinks';
+
+import FinanceRegs from './pages/FinanceRegs';
+
 import GreenOffice from './pages/GreenOffice';
 
 // Pages - Admin
@@ -107,8 +110,9 @@ export default function App() {
         <Route path="/subject-courses" element={<SubjectCourses />} />
         <Route path="/subject-courses/detail/:year/:term" element={<SubjectDetail />} />
         <Route path="/student-guide" element={<StudentGuide />} />
-        
         <Route path="/student-links" element={<StudentLinks />} />
+
+        <Route path="/finance-regulations" element={<FinanceRegs />} />
         
         <Route path="/green-office" element={<GreenOffice />} />
         <Route path="*" element={<Home />} />
