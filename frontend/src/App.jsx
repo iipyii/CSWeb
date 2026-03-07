@@ -40,6 +40,8 @@ import StudentAffairsRegs from './pages/StudentAffairsRegs';
 import CoopRegs from './pages/CoopRegs';
 import ScholarshipRegs from './pages/ScholarshipRegs';
 
+import FAQ from './pages/FAQ';
+
 import GreenOffice from './pages/GreenOffice';
 
 // Pages - Admin
@@ -127,6 +129,9 @@ export default function App() {
         <Route path="/scholarship-regulations" element={<ScholarshipRegs />} />
         
         <Route path="/green-office" element={<GreenOffice />} />
+
+        <Route path="/faq" element={<FAQ />} />
+        
         <Route path="*" element={<Home />} />
         
       </Route>

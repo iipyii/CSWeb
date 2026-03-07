@@ -93,7 +93,7 @@ export default function Navbar() {
       ] 
     },
     { label: "CS Greenoffice", href: "/green-office" },
-    { label: "FAQ", href: "#" },
+    { label: "FAQ", href: "/faq" },
   ];
 
   return (
