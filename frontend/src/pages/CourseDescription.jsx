@@ -37,7 +37,7 @@ export default function CourseDescription() {
     {
       code: "040613100",
       degree: "bachelor-normal",
-      year: "2565",
+      year: "2564",
       titleTH: "พื้นฐานวิทยาการคอมพิวเตอร์และประเด็นทางวิชาชีพ",
       titleEN: "Fundamental of Computer Science and Professional Issue",
       credit: "3(3-0-6)",
