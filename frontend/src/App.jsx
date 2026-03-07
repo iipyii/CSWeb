@@ -4,6 +4,7 @@ import Navbar from './components/Navbar';
 import ScrollToTop from './components/ScrollToTop';
 import AdminSidebar from './components/admin/AdminSidebar';
 import AdminNavbar from './components/admin/AdminNavbar'; 
+import AIChatbot from './components/AIChatbot';
 
 // Pages - General
 import Home from './pages/Home';
@@ -64,6 +65,7 @@ const MainLayout = () => (
     <main className="flex-grow">
       <Outlet />
     </main>
+    <AIChatbot />
   </div>
 );
 
