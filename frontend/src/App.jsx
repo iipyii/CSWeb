@@ -29,6 +29,7 @@ import ConsultDetail from './pages/ConsultDetail';
 import Internship from './pages/Internship';
 import SubjectCourses from './pages/SubjectCourses';
 import SubjectDetail from './pages/SubjectDetail';
+import StudentGuide from './pages/StudentGuide';
 import StudentLinks from './pages/StudentLinks';
 import GreenOffice from './pages/GreenOffice';
 
@@ -105,6 +106,7 @@ export default function App() {
         <Route path="/internship" element={<Internship />} />
         <Route path="/subject-courses" element={<SubjectCourses />} />
         <Route path="/subject-courses/detail/:year/:term" element={<SubjectDetail />} />
+        <Route path="/student-guide" element={<StudentGuide />} />
         
         <Route path="/student-links" element={<StudentLinks />} />
         
