@@ -84,7 +84,7 @@ export default function Navbar() {
       href: "#", 
       dropdown: [
         { label: "งานการเงิน", href: "/finance-regulations" },
-        { label: "งานวิชาการ", href: "#" },
+        { label: "งานวิชาการ", href: "/academic-regulations" },
         { label: "งานบุคคล", href: "#" },
         { label: "ระดับบัณฑิตศึกษา", href: "#" },
         { label: "งานกิจการนักศึกษา", href: "#" },

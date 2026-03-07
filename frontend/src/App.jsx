@@ -33,6 +33,7 @@ import StudentGuide from './pages/StudentGuide';
 import StudentLinks from './pages/StudentLinks';
 
 import FinanceRegs from './pages/FinanceRegs';
+import AcademicRegs from './pages/AcademicRegs';
 
 import GreenOffice from './pages/GreenOffice';
 
@@ -113,6 +114,7 @@ export default function App() {
         <Route path="/student-links" element={<StudentLinks />} />
 
         <Route path="/finance-regulations" element={<FinanceRegs />} />
+        <Route path="/academic-regulations" element={<AcademicRegs />} />
         
         <Route path="/green-office" element={<GreenOffice />} />
         <Route path="*" element={<Home />} />
