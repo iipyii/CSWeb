@@ -34,6 +34,7 @@ import StudentLinks from './pages/StudentLinks';
 
 import FinanceRegs from './pages/FinanceRegs';
 import AcademicRegs from './pages/AcademicRegs';
+import PersonnelRegs from './pages/PersonnelRegs';
 
 import GreenOffice from './pages/GreenOffice';
 
@@ -115,6 +116,7 @@ export default function App() {
 
         <Route path="/finance-regulations" element={<FinanceRegs />} />
         <Route path="/academic-regulations" element={<AcademicRegs />} />
+        <Route path="/personnel-regulations" element={<PersonnelRegs />} />
         
         <Route path="/green-office" element={<GreenOffice />} />
         <Route path="*" element={<Home />} />
