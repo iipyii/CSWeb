@@ -2,8 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
-  ChevronLeft, 
-  ArrowUpRight
+  ChevronLeft
 } from 'lucide-react';
 import Footer from '../components/Footer';
 
@@ -30,63 +29,66 @@ export default function FinanceRegs() {
       
       {/* 🏛️ Header Section */}
       <section className="bg-[#3F51B5] text-white py-8 px-6 relative overflow-hidden">
-              <div className="max-w-5xl mx-auto relative z-10">
-                <motion.div
-                  initial={{ opacity: 0, y: -15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8 }}
-                >
-                  <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">งานการเงิน</h1>
-                  <div className="w-12 h-1 bg-white/30 mb-5"></div>
-                </motion.div>
-              </div>
-              <div className="absolute right-[0%] bottom-[5%] opacity-5 select-none pointer-events-none">
-                <h2 className="text-[5rem] font-bold">CIS</h2>
-              </div>
-            </section>
+                    <div className="max-w-5xl mx-auto relative z-10">
+                      <motion.div
+                        initial={{ opacity: 0, y: -15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8 }}
+                      >
+                        <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">งานการเงิน</h1>
+                        <div className="w-12 h-1 bg-white/30 mb-5"></div>
+                      </motion.div>
+                    </div>
+                    <div className="absolute right-[0%] bottom-[5%] opacity-5 select-none pointer-events-none">
+                      <h2 className="text-[5rem] font-bold">CIS</h2>
+                    </div>
+                  </section>
 
-
-      {/* 📚 Document List Section */}
-      <main className="max-w-5xl mx-auto w-full px-6 py-12 flex-grow">
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      {/* 📂 Main Content - ขยายพื้นที่การแสดงผล */}
+      <main className="max-w-7xl mx-auto w-full px-6 py-12 flex-grow">
+        
+       
+        <div className="bg-white rounded-[1.5rem] shadow-sm border border-slate-100 overflow-hidden mb-8">
           
-          {/* Table Header */}
-          <div className="hidden md:grid grid-cols-12 gap-4 bg-slate-50 p-5 border-b border-slate-200 text-slate-500 font-bold text-xs uppercase tracking-widest">
-            <div className="col-span-1 text-center">ลำดับ</div>
-            <div className="col-span-9">รายการเอกสาร</div>
-            <div className="col-span-2 text-center">ไฟล์</div>
+          {/* ✨ หัวตารางจำลอง (Table Header) */}
+          <div className="hidden lg:grid grid-cols-12 gap-4 bg-slate-50/80 p-5 border-b border-slate-100 text-slate-400 font-bold text-[13px] uppercase tracking-wider">
+            <div className="col-span-1 text-center font-['Prompt']">ลำดับ</div>
+            <div className="col-span-9 font-['Prompt']">รายการเอกสาร</div>
+            <div className="col-span-2 text-center font-['Prompt']">ไฟล์</div>
           </div>
 
           {/* List Items */}
-          <div className="divide-y divide-slate-100">
-            {financeDocs.map((doc) => (
+          <div className="divide-y divide-slate-50">
+            {financeDocs.map((doc, idx) => (
               <motion.div 
                 key={doc.id}
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
                 viewport={{ once: true }}
-                className="grid grid-cols-1 md:grid-cols-12 gap-4 p-6 items-center hover:bg-slate-50/50 transition-colors"
+                className="grid grid-cols-1 lg:grid-cols-12 gap-4 p-6 lg:p-7 items-center hover:bg-slate-50/50 transition-colors group"
               >
                 {/* ลำดับ */}
-                <div className="hidden md:block col-span-1 text-center font-medium text-slate-400 text-sm">
-                  {doc.id}
+                <div className="hidden lg:block col-span-1 text-center font-bold text-slate-300">
+                  {idx + 1}
                 </div>
 
-                {/* ชื่อเอกสาร */}
-                <div className="col-span-12 md:col-span-9">
-                  <span className="text-slate-700 font-medium leading-relaxed text-[14.5px] md:text-[15px]">
-                    {doc.title}
-                  </span>
+                {/* ชื่อเอกสาร - เน้นสีน้ำเงินเมื่อ Hover */}
+                <div className="col-span-12 lg:col-span-9">
+                  <div className="flex items-start gap-4">
+                    <span className="lg:hidden text-xs font-bold text-slate-300 mt-1.5 w-8 shrink-0">{idx + 1}</span>
+                    <span className="text-[15px] md:text-[16px] font-medium text-slate-700 leading-relaxed group-hover:text-[#3F51B5] transition-colors">
+                      {doc.title}
+                    </span>
+                  </div>
                 </div>
 
-                {/* ปุ่มเปิดดู */}
-                <div className="col-span-12 md:col-span-2 flex justify-center">
+                {/* ปุ่มเปิดดู PDF สไตล์พรีเมียม */}
+                <div className="col-span-12 lg:col-span-2 flex justify-end lg:justify-center">
                   <a 
                     href={`/files/finance/${doc.file}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    // ✨ ปรับปรุง: เพิ่ม px-8 เพื่อให้ปุ่มกว้างขึ้น และระบุ text-white ให้ชัดเจน
-                    className="w-full md:w-auto flex items-center justify-center gap-2 px-10 py-2.5 bg-[#3F51B5] text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100 active:scale-95 uppercase tracking-wider"
+                    className="w-full md:w-auto flex items-center justify-center gap-2 px-12 py-3 bg-[#3F51B5] text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100 active:scale-95 uppercase tracking-widest"
                   >
                     <span className="text-white">pdf</span>
                   </a>
@@ -95,7 +97,6 @@ export default function FinanceRegs() {
             ))}
           </div>
         </div>
-
       </main>
 
       <Footer />

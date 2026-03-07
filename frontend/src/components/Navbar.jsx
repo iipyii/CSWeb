@@ -87,9 +87,9 @@ export default function Navbar() {
         { label: "งานวิชาการ", href: "/academic-regulations" },
         { label: "งานบุคคล", href: "/personnel-regulations" },
         { label: "ระดับบัณฑิตศึกษา", href: "/graduate-regulations" },
-        { label: "งานกิจการนักศึกษา", href: "#" },
-        { label: "สหกิจศึกษา", href: "#" },
-        { label: "งานทุนการศึกษา", href: "#" },
+        { label: "งานกิจการนักศึกษา", href: "/student-affairs-regulations" },
+        { label: "สหกิจศึกษา", href: "/coop-regulations" },
+        { label: "งานทุนการศึกษา", href: "/scholarship-regulations" },
       ] 
     },
     { label: "CS Greenoffice", href: "/green-office" },

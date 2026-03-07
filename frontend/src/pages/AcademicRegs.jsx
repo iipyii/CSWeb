@@ -22,61 +22,68 @@ export default function AcademicRegs() {
   return (
     <div className="bg-slate-50 font-['Prompt'] min-h-screen flex flex-col text-left">
       
-      {/* 🏛️ Header Section */}
+      {/* 🏛️ Header Section - ขยายความกว้างสูงสุดเป็น 7xl */}
       <section className="bg-[#3F51B5] text-white py-8 px-6 relative overflow-hidden">
-        <div className="max-w-5xl mx-auto relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: -15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">งานวิชาการ</h1>
-            <div className="w-12 h-1 bg-white/30 mb-5"></div>
-          </motion.div>
-        </div>
-
-        {/* ลายน้ำพื้นหลัง */}
-        <div className="absolute right-[0%] bottom-[5%] opacity-5 select-none pointer-events-none">
-          <h2 className="text-[5rem] font-bold">CIS</h2>
-        </div>
-      </section>
+                    <div className="max-w-5xl mx-auto relative z-10">
+                      <motion.div
+                        initial={{ opacity: 0, y: -15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8 }}
+                      >
+                        <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">งานวิชาการ</h1>
+                        <div className="w-12 h-1 bg-white/30 mb-5"></div>
+                      </motion.div>
+                    </div>
+            
+                    {/* ลายน้ำพื้นหลัง */}
+                    <div className="absolute right-[0%] bottom-[5%] opacity-5 select-none pointer-events-none">
+                      <h2 className="text-[5rem] font-bold">CIS</h2>
+                    </div>
+                  </section>
 
 
       {/* 📚 Document List Section */}
-      <main className="max-w-5xl mx-auto w-full px-6 py-12 flex-grow">
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <main className="max-w-7xl mx-auto w-full px-6 py-12 flex-grow">
+        
+
+        <div className="bg-white rounded-[1.5rem] shadow-sm border border-slate-100 overflow-hidden mb-8">
           
-          {/* Table Header */}
-          <div className="hidden md:grid grid-cols-12 gap-4 bg-slate-50 p-5 border-b border-slate-200 text-slate-500 font-bold text-xs uppercase tracking-widest">
-            <div className="col-span-1 text-center">ลำดับ</div>
-            <div className="col-span-9">รายการเอกสาร</div>
-            <div className="col-span-2 text-center">ไฟล์</div>
+          {/* หัวตารางจำลอง (Table Header) */}
+          <div className="hidden lg:grid grid-cols-12 gap-4 bg-slate-50/50 p-4 border-b border-slate-100 text-slate-400 font-bold text-[13px] uppercase tracking-wider">
+            <div className="col-span-1 text-center font-['Prompt']">ลำดับ</div>
+            <div className="col-span-9 font-['Prompt']">รายการเอกสาร</div>
+            <div className="col-span-2 text-center font-['Prompt']">ไฟล์</div>
           </div>
 
           {/* List Items */}
           <div className="divide-y divide-slate-100">
-            {academicDocs.map((doc) => (
+            {academicDocs.map((doc, idx) => (
               <motion.div 
                 key={doc.id}
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
                 viewport={{ once: true }}
-                className="grid grid-cols-1 md:grid-cols-12 gap-4 p-6 items-center hover:bg-slate-50/50 transition-colors"
+                className="grid grid-cols-1 lg:grid-cols-12 gap-4 p-5 lg:p-6 items-center hover:bg-slate-50/30 transition-colors group"
               >
                 {/* ลำดับ */}
-                <div className="hidden md:block col-span-1 text-center font-medium text-slate-400 text-sm">
-                  {doc.id}
+                <div className="hidden lg:block col-span-1 text-center font-bold text-slate-300">
+                  {idx + 1}
                 </div>
 
                 {/* ชื่อเอกสาร */}
-                <div className="col-span-12 md:col-span-9">
-                  <span className="text-slate-700 font-medium leading-relaxed text-[14.5px] md:text-[15px]">
-                    {doc.title}
-                  </span>
+                <div className="col-span-12 lg:col-span-9">
+                  <div className="flex items-start gap-4">
+                    <span className="lg:hidden text-xs font-bold text-slate-300 mt-1 w-6">{idx + 1}</span>
+                    <div className="border-b border-transparent pb-1 transition-all inline-block">
+                      <span className="text-[15px] md:text-[16px] font-medium text-slate-700 leading-relaxed group-hover:text-[#3F51B5] transition-colors">
+                        {doc.title}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
-                {/* ปุ่มเปิดดู PDF */}
-                <div className="col-span-12 md:col-span-2 flex justify-center">
+                {/* ปุ่มเปิดดู PDF สไตล์ Indigo */}
+                <div className="col-span-12 lg:col-span-2 flex justify-end lg:justify-center">
                   <a 
                     href={`/files/academic/${doc.file}`} 
                     target="_blank" 
