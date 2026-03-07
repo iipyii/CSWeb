@@ -30,13 +30,6 @@ export default function PersonnelRegs() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-             {/* ปุ่มย้อนกลับ */}
-             <button 
-              onClick={() => navigate(-1)} 
-              className="flex items-center gap-2 text-white/60 hover:text-white mb-6 transition-colors text-sm font-medium"
-            >
-              <ChevronLeft size={18} /> ย้อนกลับ
-            </button>
 
             <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">งานบุคคล</h1>
             <div className="w-12 h-1 bg-white/30 mb-5"></div>

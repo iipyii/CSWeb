@@ -86,7 +86,7 @@ export default function Navbar() {
         { label: "งานการเงิน", href: "/finance-regulations" },
         { label: "งานวิชาการ", href: "/academic-regulations" },
         { label: "งานบุคคล", href: "/personnel-regulations" },
-        { label: "ระดับบัณฑิตศึกษา", href: "#" },
+        { label: "ระดับบัณฑิตศึกษา", href: "/graduate-regulations" },
         { label: "งานกิจการนักศึกษา", href: "#" },
         { label: "สหกิจศึกษา", href: "#" },
         { label: "งานทุนการศึกษา", href: "#" },
