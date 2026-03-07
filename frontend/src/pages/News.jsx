@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSearchParams } from 'react-router-dom'; // ✨ สำหรับดึงค่าจาก URL
 import Footer from '../components/Footer';
 import { ArrowRightCircle, Clock, Search, Tag, Newspaper } from 'lucide-react';
 
@@ -11,10 +12,28 @@ const ALLOWED_TAGS = [
 ];
 
 export default function News() {
-  const [activeTab, setActiveTab] = useState('ล่าสุด');
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // ✨ ดึงค่า tab จาก URL (ถ้าไม่มีให้เป็น 'ล่าสุด')
+  const initialTab = searchParams.get('tab') || 'ล่าสุด';
+  const [activeTab, setActiveTab] = useState(initialTab);
 
-  // 📝 เพิ่มฟิลด์ isPinned: true สำหรับข่าวที่ต้องการให้อยู่บนสุดเสมอ
+  // ✨ ตรวจสอบการเปลี่ยน URL (เมื่อคลิกเมนูจาก Navbar) เพื่อเปลี่ยน Tab ตาม
+  useEffect(() => {
+    const tabFromUrl = searchParams.get('tab');
+    if (tabFromUrl && (ALLOWED_TAGS.includes(tabFromUrl) || tabFromUrl === 'ล่าสุด')) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [searchParams]);
+
+  // ✨ ฟังก์ชันเปลี่ยน Tab พร้อมอัปเดต URL
+  const handleTabChange = (tabName) => {
+    setActiveTab(tabName);
+    setSearchParams({ tab: tabName });
+  };
+
+  // 📝 ข้อมูลข่าวสาร (คงเดิม)
   const newsData = [
     {
       id: 1,
@@ -30,7 +49,7 @@ export default function News() {
       id: 2,
       tag: 'ข่าวรับสมัครงาน-ประชาสัมพันธ์',
       isLatest: true,
-      isPinned: true, // ✨ ปักหมุดข่าวนี้ (จะขึ้นอันดับ 1 เสมอ)
+      isPinned: true, 
       title: 'กิจกรรมประกวดคลิปสั้น Green Creator ทิ้ง เทิร์น ให้โลกจำ ค้นหา Content Creator รุ่นใหม่',
       date: '19 สิงหาคม 2568',
       description: 'เชิญชวนนักศึกษาเข้าร่วมประกวดสร้างสรรค์คอนเทนต์รักษ์โลก พร้อมชิงรางวัลมากมาย...',
@@ -40,7 +59,7 @@ export default function News() {
       id: 3,
       tag: 'ข่าวทุนการศึกษา',
       isLatest: true,
-      isPinned: true, // ✨ ปักหมุดข่าวนี้ด้วย (ข่าวปักหมุดจะเรียงตามลำดับ ID หรือวันที่ในกลุ่มเดียวกัน)
+      isPinned: true, 
       title: 'ประกาศ เรื่องการให้ทุนการศึกษาประเภทลดหย่อนค่าเล่าเรียน ประจำภาคเรียนที่ 2 ปีการศึกษา 2568',
       date: '4 พฤศจิกายน 2568',
       description: 'รายละเอียดการสมัครและเกณฑ์การคัดเลือกนักศึกษาเพื่อรับทุนลดหย่อนค่าเล่าเรียน...',
@@ -60,7 +79,7 @@ export default function News() {
 
   const tabs = useMemo(() => ['ล่าสุด', ...ALLOWED_TAGS], []);
 
-  // 🔍 Logic การกรองและเรียงลำดับ (Sorting)
+  // 🔍 Logic การกรองและเรียงลำดับ (Sorting) พร้อมระบบปักหมุด
   const filteredNews = useMemo(() => {
     const filtered = newsData.filter((news) => {
       const matchesTab = activeTab === 'ล่าสุด' 
@@ -71,10 +90,10 @@ export default function News() {
       return matchesTab && matchesSearch;
     });
 
-    // ✨ เรียงลำดับ: ข่าวที่ isPinned เป็น true จะถูกยกขึ้นไปไว้ข้างบนสุด
+    // ✨ เรียงลำดับ: ข่าวปักหมุดขึ้นก่อน
     return [...filtered].sort((a, b) => {
-      if (a.isPinned === b.isPinned) return 0; // ถ้าสถานะเหมือนกัน ไม่เปลี่ยนลำดับ
-      return a.isPinned ? -1 : 1; // ถ้า a ปักหมุด ให้เอาขึ้นก่อน (-1)
+      if (a.isPinned === b.isPinned) return 0;
+      return a.isPinned ? -1 : 1;
     });
   }, [activeTab, searchQuery, newsData]);
 
@@ -91,22 +110,22 @@ export default function News() {
                 >
                   <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">ข่าวสาร CIS</h1>
                   <div className="w-12 h-1 bg-white/30 mb-5"></div>
-                </motion.div>
-              </div>
-              <div className="absolute right-[0%] bottom-[5%] opacity-5 select-none pointer-events-none">
-                <h2 className="text-[5rem] font-bold">CIS</h2>
-              </div>
-            </section>
+          </motion.div>
+        </div>
+        <div className="absolute right-[0%] bottom-[5%] opacity-5 select-none pointer-events-none">
+          <h2 className="text-[5rem] font-bold">CIS</h2>
+        </div>
+      </section>
 
       <main className="max-w-[1400px] mx-auto w-full px-6 lg:px-10 py-12 flex-grow">
         
-        {/* 🔍 Navigation & Search Bar */}
+        {/* 🔍 Navigation (Tabs) & Search Bar */}
         <div className="flex flex-col xl:flex-row justify-between items-center mb-16 gap-8">
           <div className="flex items-center gap-2 overflow-x-auto pb-4 scrollbar-hide w-full xl:w-auto">
             {tabs.map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => handleTabChange(tab)} // ✨ ใช้ฟังก์ชันที่อัปเดต URL ด้วย
                 className={`px-7 py-3 rounded-2xl text-sm font-bold transition-all whitespace-nowrap
                   ${activeTab === tab 
                     ? 'bg-[#3F51B5] text-white shadow-lg shadow-indigo-100' 
@@ -121,7 +140,7 @@ export default function News() {
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#3F51B5] transition-colors" size={20} />
             <input 
               type="text" 
-              placeholder="ค้นหาพาดหัวข่าว..."
+              placeholder="ค้นหาข่าว..."
               className="w-full pl-14 pr-6 py-4 rounded-2xl border border-slate-100 focus:outline-none focus:ring-4 focus:ring-[#3F51B5]/5 bg-white shadow-sm transition-all text-slate-600"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -146,7 +165,6 @@ export default function News() {
                   className={`bg-white rounded-[32px] overflow-hidden shadow-sm transition-all duration-500 flex flex-col group
                     ${item.isPinned ? 'border-2 border-[#3F51B5]/20 shadow-indigo-50' : 'border border-slate-100'}`}
                 >
-                  {/* Thumbnail */}
                   <div className="relative h-[260px] w-full overflow-hidden">
                     <img 
                       src={item.image} 
@@ -155,12 +173,10 @@ export default function News() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-60"></div>
                     
-                    {/* Tag Badge */}
                     <div className="absolute top-6 left-6 bg-[#3F51B5] text-white text-[10px] px-4 py-2 rounded-xl font-bold shadow-xl flex items-center backdrop-blur-md border border-white/20">
                       <Tag size={12} className="mr-2" /> {item.tag}
                     </div>
 
-                    {/* ✨ Label บอกว่าข่าวนี้ปักหมุด (แบบเรียบง่าย/ทางการ) */}
                     {item.isPinned && (
                       <div className="absolute top-6 right-6 bg-white/90 text-[#3F51B5] text-[10px] px-3 py-1.5 rounded-lg font-bold shadow-sm backdrop-blur-sm uppercase tracking-widest border border-[#3F51B5]/10">
                         Pinned
@@ -168,7 +184,6 @@ export default function News() {
                     )}
                   </div>
                   
-                  {/* Content Area */}
                   <div className="p-8 flex flex-col flex-1">
                     <div className="flex items-center text-slate-400 text-xs mb-4 font-bold tracking-wide uppercase">
                       <Clock size={14} className="mr-2 text-[#3F51B5]/60" />
@@ -181,7 +196,6 @@ export default function News() {
                       {item.description}
                     </p>
                     
-                    {/* Read More Footer */}
                     <div className="mt-auto pt-6 border-t border-slate-50 flex justify-between items-center">
                       <button className="text-[#3F51B5] text-sm font-bold flex items-center gap-2 group/btn active:scale-95 transition-all">
                         อ่านรายละเอียดเพิ่มเติม 
