@@ -6,7 +6,7 @@ export default function AIChatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState([
-    { id: 1, text: "สวัสดีครับ! ผมคือ AI ผู้ช่วยประจำภาควิชา CIS มีอะไรให้ผมช่วยไหมครับ? เช่น สอบถามค่าเทอม หรือ ข้อมูลหลักสูตร", isBot: true }
+    { id: 1, text: "สวัสดีครับ! ผมคือ AI ผู้ช่วยประจำภาควิชา CIS มีอะไรให้ผมช่วยไหมครับ?", isBot: true }
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef(null);
