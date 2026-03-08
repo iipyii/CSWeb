@@ -59,6 +59,8 @@ import ManageCurriculum from './pages/admin/ManageCurriculum';
 import ManageFiles from './pages/admin/ManageFiles';
 import CreateFile from './pages/admin/CreateFile';
 import EditFile from './pages/admin/EditFile';
+import ManageRoles from './pages/admin/ManageRoles';
+import ManageSubjects from './pages/admin/ManageSubjects';
 import AdminDashboard from './pages/admin/AdminDashboard';
 
 // 🟢 Layout สำหรับหน้าบ้าน (Public)
@@ -163,6 +165,10 @@ export default function App() {
         <Route path="files" element={<ManageFiles />} />
         <Route path="files/create" element={<CreateFile />} />
         <Route path="files/edit/:id" element={<EditFile />} />
+
+        <Route path="roles" element={<ManageRoles />} />
+
+        <Route path="subjects" element={<ManageSubjects />} />
       </Route>
     </Routes>
   );
