@@ -61,6 +61,7 @@ import CreateFile from './pages/admin/CreateFile';
 import EditFile from './pages/admin/EditFile';
 import ManageRoles from './pages/admin/ManageRoles';
 import ManageSubjects from './pages/admin/ManageSubjects';
+import ManageProjects from './pages/admin/ManageProjects';
 import AdminDashboard from './pages/admin/AdminDashboard';
 
 // 🟢 Layout สำหรับหน้าบ้าน (Public)
@@ -161,7 +162,7 @@ export default function App() {
         <Route path="news/archive" element={<NewsArchive />} />
 
         <Route path="curriculum" element={<ManageCurriculum />} />
-
+        <Route path="projects" element={<ManageProjects />} />
         <Route path="files" element={<ManageFiles />} />
         <Route path="files/create" element={<CreateFile />} />
         <Route path="files/edit/:id" element={<EditFile />} />

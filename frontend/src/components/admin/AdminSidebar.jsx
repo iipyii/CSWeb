@@ -18,10 +18,10 @@ export default function AdminSidebar() {
     { label: 'คลังข่าว', icon: <Archive size={22} />, path: '/admin/news/archive', roles: ['admin'] }, 
     { label: 'ข้อมูลส่วนตัวอาจารย์', icon: <UserCircle size={22} />, path: '/admin/profile', roles: ['teacher'] },
     { label: 'หลักสูตร', icon: <GraduationCap size={22} />, path: '/admin/curriculum', roles: ['admin'] },
+    { label: 'โครงงานนักศึกษา', icon: <FolderGit2 size={22} />, path: '/admin/projects', roles: ['admin'] },
     { label: 'ไฟล์และเอกสาร', icon: <Files size={22} />, path: '/admin/files', roles: ['admin'] },
     { label: 'บทบาทและสิทธิ์', icon: <ShieldCheck size={22} />, path: '/admin/roles', roles: ['admin'] },
     { label: 'ข้อมูลรายวิชา', icon: <BookOpen size={22} />, path: '/admin/subjects', roles: ['admin'] },
-    { label: 'โครงงานนักศึกษา', icon: <FolderGit2 size={22} />, path: '/admin/projects', roles: ['admin'] },
     { label: 'จัดการ AI Chatbot', icon: <MessageSquare size={22} />, path: '/admin/chatbot', roles: ['admin'] },
   ];
 
