@@ -3,14 +3,17 @@ import { Routes, Route, Outlet } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import ScrollToTop from './components/ScrollToTop';
 import AdminSidebar from './components/admin/AdminSidebar';
+
 import AdminNavbar from './components/admin/AdminNavbar'; 
 import AIChatbot from './components/AIChatbot';
+
 
 // Pages - General
 import Home from './pages/Home';
 import News from './pages/News';
 import NewsDetail from './pages/NewsDetail';
 import CourseSections from './pages/CourseSections';
+import CourseSectionContent from "./pages/CourseSectionContent"
 import CourseDetail from './pages/CourseDetail';
 import CourseDescription from './pages/CourseDescription';
 import StudentDownloads from './pages/StudentDownloads';
@@ -80,7 +83,7 @@ const AdminLayout = () => (
     </aside>
 
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-      
+
       <AdminNavbar />
 
       <main className="flex-1 overflow-y-auto p-10 bg-[#FDF8F4]/30">
@@ -108,6 +111,7 @@ export default function App() {
         <Route path="/news" element={<News />} />
         <Route path="/news/:id" element={<NewsDetail />} />
         <Route path="/course-sections/:level" element={<CourseSections />} />
+        <Route path="/course-section/:id" element={<CourseSectionContent />} />
         <Route path="/course-detail/:id" element={<CourseDetail />} />
         <Route path="/course-description" element={<CourseDescription />} />
         <Route path="/student-downloads" element={<StudentDownloads />} />
@@ -130,13 +134,13 @@ export default function App() {
         <Route path="/student-affairs-regulations" element={<StudentAffairsRegs />} />
         <Route path="/coop-regulations" element={<CoopRegs />} />
         <Route path="/scholarship-regulations" element={<ScholarshipRegs />} />
-        
+
         <Route path="/green-office" element={<GreenOffice />} />
 
         <Route path="/faq" element={<FAQ />} />
-        
+
         <Route path="*" element={<Home />} />
-        
+
       </Route>
 
       {/* 🔐 Admin Login */}
@@ -145,7 +149,7 @@ export default function App() {
       {/* 🔐 กลุ่มหน้า Admin */}
       <Route path="/admin" element={<AdminLayout />}>
         {/* แก้ไขบรรทัดที่เคย Error: ใช้ <Route index ... /> เพียงบรรทัดเดียว */}
-        <Route index element={<AdminDashboard />} /> 
+        <Route index element={<AdminDashboard />} />
 
         <Route path="appearance" element={<ManageAppearance />} />
 

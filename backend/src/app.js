@@ -11,6 +11,7 @@ import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.routes.js";
 import staffRoutes from "./routes/staff.routes.js";
 import programRoutes from "./routes/program.routes.js"
+import programSectionRoutes from "./routes/programSection.routes.js"
 
 const app = express();
 
@@ -46,5 +47,6 @@ app.use("/api/downloads", downloadsRoutes);
 app.use("/auth", authRoutes);
 app.use("/api/staff", staffRoutes);
 app.use("/api/programs", programRoutes)
+app.use("/api/program-sections", programSectionRoutes)
 
 export default app;

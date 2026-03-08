@@ -135,7 +135,8 @@ async function scan(dir) {
         section_no: sectionNo ?? 0,
         title: item,
         content: cleanContent,
-        order_index: sectionNo ?? 999
+        order_index: sectionNo ?? 999,
+        pdf_path: fullPath.replace("uploads/", "")
       }
     })
 

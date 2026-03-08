@@ -1,15 +1,57 @@
 // src/pages/CourseDetail.jsx
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import Footer from "../components/Footer";
-import { courses } from "../data/courses";
+
+const idMap = {
+  "cs-normal-2564": { slug: "regular", year: 2564 },
+  "cs-normal-2559": { slug: "regular", year: 2559 },
+  "cs-old-2554": { slug: "regular", year: 2554 },
+
+  "cs-english-2564": { slug: "csb", year: 2564 },
+
+  "cs-master-2567": { slug: "ComputerScience", year: 2567 },
+  "cs-master-2562": { slug: "ComputerScience", year: 2562 },
+
+  "se-master-2559": { slug: "SoftwareEngineering", year: 2559 },
+
+  "cs-phd-2564": { slug: "computersci", year: 2564 },
+};
+
+const sectionTitles = {
+  1: "หมวดที่ 1 ข้อมูลทั่วไป",
+  2: "หมวดที่ 2 ข้อมูลเฉพาะของหลักสูตร",
+  3: "หมวดที่ 3 ระบบการจัดการศึกษา การดำเนินการและโครงสร้างของหลักสูตร",
+  4: "หมวดที่ 4 ผลการเรียนรู้ กลยุทธ์การสอนและการประเมินผล",
+  5: "หมวดที่ 5 หลักเกณฑ์ในการประเมินผลนักศึกษา",
+  6: "หมวดที่ 6 การพัฒนาคณาจารย์",
+  7: "หมวดที่ 7 การประกันคุณภาพหลักสูตร",
+  8: "หมวดที่ 8 การประเมินและปรับปรุงการดำเนินการของหลักสูตร",
+  99: "แผนภูมิแสดงความต่อเนื่องของการศึกษาในหลักสูตรวิทยาศาสตรบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์",
+  999: "คำอธิบายรายวิชา"
+}
+
 
 export default function CourseDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const currentData = courses[id];
+  const [program, setProgram] = useState(null);
+  useEffect(() => {
+
+    const data = idMap[id]
+
+    if (!data) return
+
+    fetch(`http://localhost:5000/api/programs/${data.slug}/${data.year}`)
+      .then(res => res.json())
+      .then(data => setProgram(data))
+
+  }, [id])
+
+  const currentData = program;
+
 
   if (!currentData) {
     return (
@@ -50,7 +92,7 @@ export default function CourseDetail() {
               หลักสูตร
             </Link>
             <ChevronRight size={14} className="opacity-40" />
-            
+
             {/* แสดงชื่อสาขาตาม level ที่ระบุไว้ในฐานข้อมูล */}
             <span className="">
               {(() => {
@@ -90,25 +132,23 @@ export default function CourseDetail() {
           )}
 
           <div className="grid grid-cols-1 gap-4">
-            {currentData.sections.map((section) => (
-              <a
+            {currentData?.versions?.[0]?.sections.map((section) => (
+              <div
                 key={section.id}
-                href={section.pdf}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-between p-5 bg-slate-50/50 rounded-2xl transition-all group hover:bg-white hover:shadow-lg border border-transparent hover:border-gray-100"
+                onClick={() => navigate(`/course-section/${section.id}`)}
+                className="cursor-pointer flex items-center justify-between p-5 bg-slate-50/50 rounded-2xl transition-all group hover:bg-white hover:shadow-lg border border-transparent hover:border-gray-100"
               >
                 <div className="flex items-center space-x-6">
                   <div className="w-1.5 h-8 rounded-full bg-[#3F51B5]" />
                   <span className="text-lg font-medium text-slate-700 group-hover:text-[#183153] transition-colors">
-                    {section.title}
+                    {sectionTitles[section.order_index] || section.title}
                   </span>
                 </div>
 
                 <div className="text-slate-300 group-hover:text-[#183153] transition-all transform group-hover:scale-110">
                   <Eye size={22} />
                 </div>
-              </a>
+              </div>
             ))}
           </div>
         </div>
