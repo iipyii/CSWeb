@@ -63,6 +63,7 @@ import EditFile from './pages/admin/EditFile';
 import ManageRoles from './pages/admin/ManageRoles';
 import ManageSubjects from './pages/admin/ManageSubjects';
 import ManageProjects from './pages/admin/ManageProjects';
+import ManageConsultants from './pages/admin/ManageConsultants';
 import ManageChatbot from './pages/admin/ManageChatbot';
 
 
@@ -172,6 +173,7 @@ export default function App() {
         <Route path="roles" element={<ManageRoles />} />
 
         <Route path="subjects" element={<ManageSubjects />} />
+        <Route path="consultants" element={<ManageConsultants />} />
 
         <Route path="chatbot" element={<ManageChatbot />} />
       </Route>
