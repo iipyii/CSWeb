@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { Palette } from 'lucide-react';
 import { 
   LayoutDashboard, Newspaper, Archive, GraduationCap, 
   Files, Users, BookOpen, FolderGit2, LogOut, UserCircle,
@@ -8,18 +9,16 @@ import {
 
 export default function AdminSidebar() {
   const location = useLocation();
-  
-  // 🛡️ ในอนาคตดึง Role จาก Auth Context
-  const userRole = 'admin'; // 'admin' หรือ 'teacher'
+  const userRole = 'admin';
 
-  // ✅ ปรับข้อมูลเมนู: อัปเดต Path การจัดการไฟล์เป็น /admin/files และใช้ไอคอน Files
   const menuItems = [
     { label: 'แดชบอร์ด', icon: <LayoutDashboard size={22} />, path: '/admin', roles: ['admin', 'teacher'] },
+    { label: 'จัดการภาพลักษณ์', icon: <Palette size={22} />, path: '/admin/appearance', roles: ['admin'] },
     { label: 'จัดการข่าวสาร', icon: <Newspaper size={22} />, path: '/admin/news', roles: ['admin', 'teacher'] },
     { label: 'คลังข่าว', icon: <Archive size={22} />, path: '/admin/news/archive', roles: ['admin'] }, 
     { label: 'ข้อมูลส่วนตัวอาจารย์', icon: <UserCircle size={22} />, path: '/admin/profile', roles: ['teacher'] },
     { label: 'หลักสูตร', icon: <GraduationCap size={22} />, path: '/admin/curriculum', roles: ['admin'] },
-    { label: 'จัดการไฟล์และเอกสาร', icon: <Files size={22} />, path: '/admin/files', roles: ['admin'] }, // ✨ อัปเดต Path และ Icon
+    { label: 'จัดการไฟล์และเอกสาร', icon: <Files size={22} />, path: '/admin/files', roles: ['admin'] },
     { label: 'จัดการผู้ใช้งาน', icon: <Users size={22} />, path: '/admin/users', roles: ['admin'] },
     { label: 'ข้อมูลรายวิชา', icon: <BookOpen size={22} />, path: '/admin/subjects', roles: ['admin'] },
     { label: 'โครงงานนักศึกษา', icon: <FolderGit2 size={22} />, path: '/admin/projects', roles: ['admin'] },
@@ -28,7 +27,6 @@ export default function AdminSidebar() {
 
   return (
     <div className="w-full h-full bg-white flex flex-col font-['Prompt'] border-r border-slate-50 text-left">
-      
       {/* 🏛️ Admin Header Section */}
       <div className="p-8 pb-4">
         <div className="flex items-center gap-3 px-2 mb-8">
@@ -40,7 +38,6 @@ export default function AdminSidebar() {
             <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Management System</p>
           </div>
         </div>
-        
         <h3 className="text-[#3F51B5] font-black text-[11px] uppercase tracking-[0.25em] mb-4 opacity-50 ml-2">
           Main Management
         </h3>
@@ -50,29 +47,36 @@ export default function AdminSidebar() {
       <div className="px-6 flex-1 overflow-y-auto no-scrollbar">
         <nav className="space-y-1.5 pb-8">
           {menuItems.filter(item => item.roles.includes(userRole)).map((item) => {
-            // ตรวจสอบสถานะเมนูที่เลือก (Active State)
-            const isActive = location.pathname === item.path || 
-                           (item.path !== '/admin' && location.pathname.startsWith(item.path));
+            
+            // ✨ ปรับปรุง Logic การเช็ค Active ใหม่ ✨
+            // 1. ถ้าเป็นหน้าคลังข่าว ให้เช็คแบบตรงตัวเท่านั้น เพื่อไม่ให้ไปติดที่หน้าจัดการข่าวสาร
+            // 2. สำหรับเมนูอื่นๆ ให้เช็คว่า Path ปัจจุบันตรงกับเมนู หรือเริ่มต้นด้วย Path ของเมนูนั้นๆ
+            const isActive = item.path === '/admin/news/archive' 
+              ? location.pathname === item.path 
+              : (location.pathname === item.path || (item.path !== '/admin' && location.pathname.startsWith(item.path + '/')));
+
+            // พิเศษสำหรับหน้าจัดการข่าวสาร (เมนูหลัก) ไม่ให้สว่างเมื่ออยู่หน้าคลังข่าว
+            const isNewsMainActive = item.path === '/admin/news' && location.pathname.startsWith('/admin/news/archive');
+            const finalActive = isActive && !isNewsMainActive;
             
             return (
               <Link 
                 key={item.path} 
                 to={item.path} 
                 className={`flex items-center gap-4 px-6 py-4 rounded-[1.5rem] transition-all duration-300 group ${
-                  isActive 
+                  finalActive 
                   ? 'bg-[#3F51B5] text-white shadow-xl shadow-indigo-100/40' 
                   : 'text-slate-400 hover:bg-slate-50 hover:text-[#3F51B5]'
                 }`}
               >
-                <span className={`${isActive ? 'text-white' : 'group-hover:text-[#3F51B5] transition-colors'}`}>
+                <span className={`${finalActive ? 'text-white' : 'group-hover:text-[#3F51B5] transition-colors'}`}>
                   {item.icon}
                 </span>
-                <span className={`font-bold text-sm tracking-tight ${isActive ? 'text-white' : ''}`}>
+                <span className={`font-bold text-sm tracking-tight ${finalActive ? 'text-white' : ''}`}>
                   {item.label}
                 </span>
                 
-                {/* Active Indicator Dot */}
-                {isActive && (
+                {finalActive && (
                   <div className="ml-auto w-1.5 h-1.5 bg-white/40 rounded-full animate-pulse" />
                 )}
               </Link>

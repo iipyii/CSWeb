@@ -47,6 +47,7 @@ import GreenOffice from './pages/GreenOffice';
 
 // Pages - Admin
 import Login from './pages/admin/Login';
+import ManageAppearance from './pages/admin/ManageAppearance';
 import ManageNews from './pages/admin/ManageNews';
 import CreateNews from './pages/admin/CreateNews';
 import EditNews from './pages/admin/EditNews';
@@ -145,6 +146,8 @@ export default function App() {
       <Route path="/admin" element={<AdminLayout />}>
         {/* แก้ไขบรรทัดที่เคย Error: ใช้ <Route index ... /> เพียงบรรทัดเดียว */}
         <Route index element={<AdminDashboard />} /> 
+
+        <Route path="appearance" element={<ManageAppearance />} />
 
         <Route path="news" element={<ManageNews />} />
         <Route path="news/create" element={<CreateNews />} />
