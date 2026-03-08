@@ -17,6 +17,7 @@ const idMap = {
   "se-master-2559": { slug: "SoftwareEngineering", year: 2559 },
 
   "cs-phd-2564": { slug: "computersci", year: 2564 },
+  "cs-phd-edit-2559": { slug: "computersci", year: 2559 },
 };
 
 const sectionTitles = {
