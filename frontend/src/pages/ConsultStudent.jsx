@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from "react";
 import { motion } from 'framer-motion';
 import { ChevronLeft } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom'; // เพิ่ม Link
