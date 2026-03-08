@@ -50,6 +50,7 @@ import GreenOffice from './pages/GreenOffice';
 
 // Pages - Admin
 import Login from './pages/admin/Login';
+import AdminDashboard from './pages/admin/AdminDashboard';
 import ManageAppearance from './pages/admin/ManageAppearance';
 import ManageNews from './pages/admin/ManageNews';
 import CreateNews from './pages/admin/CreateNews';
@@ -62,7 +63,8 @@ import EditFile from './pages/admin/EditFile';
 import ManageRoles from './pages/admin/ManageRoles';
 import ManageSubjects from './pages/admin/ManageSubjects';
 import ManageProjects from './pages/admin/ManageProjects';
-import AdminDashboard from './pages/admin/AdminDashboard';
+import ManageChatbot from './pages/admin/ManageChatbot';
+
 
 // 🟢 Layout สำหรับหน้าบ้าน (Public)
 const MainLayout = () => (
@@ -170,6 +172,8 @@ export default function App() {
         <Route path="roles" element={<ManageRoles />} />
 
         <Route path="subjects" element={<ManageSubjects />} />
+
+        <Route path="chatbot" element={<ManageChatbot />} />
       </Route>
     </Routes>
   );
