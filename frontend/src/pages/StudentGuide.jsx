@@ -13,13 +13,13 @@ export default function StudentGuide() {
   const navigate = useNavigate();
 
   const guideData = [
-    { title: "คู่มือการลงทะเบียน", type: "Manual", file: "/files/guides/registration-manual.pdf" },
-    { title: "คู่มือนักศึกษา ปี 2568", year: "2568", type: "PDF", file: "/files/guides/guide-2568.pdf" },
-    { title: "คู่มือนักศึกษา ปี 2567", year: "2567", type: "PDF", file: "/files/guides/guide-2567.pdf" },
-    { title: "คู่มือนักศึกษา ปี 2566", year: "2566", type: "PDF", file: "/files/guides/guide-2566.pdf" },
-    { title: "คู่มือนักศึกษา ปี 2565", year: "2565", type: "PDF", file: "/files/guides/guide-2565.pdf" },
-    { title: "คู่มือนักศึกษา ปี 2564", year: "2564", type: "PDF", file: "/files/guides/guide-2564.pdf" },
-    { title: "คู่มือนักศึกษา ปี 2563", year: "2563", type: "PDF", file: "/files/guides/guide-2563.pdf" },
+    { title: "คู่มือการลงทะเบียน", type: "Manual", file: "https://reg.kmutnb.ac.th/Download/MAN_UW-KMUTNB63-REG-02-student_Register.pdf" },
+    { title: "คู่มือนักศึกษา ปี 2568", year: "2568", type: "PDF", file: "https://acdserv.kmutnb.ac.th/wp-content/uploads/2025/03/student_manual2568_1.pdf" },
+    { title: "คู่มือนักศึกษา ปี 2567", year: "2567", type: "PDF", file: "https://acdserv.kmutnb.ac.th/wp-content/uploads/2024/04/stdHB2567.pdf" },
+    { title: "คู่มือนักศึกษา ปี 2566", year: "2566", type: "PDF", file: "https://acdserv.kmutnb.ac.th/wp-content/uploads/2023/03/stdHB2566_edit_15092023.pdf" },
+    { title: "คู่มือนักศึกษา ปี 2565", year: "2565", type: "PDF", file: "https://acdserv.kmutnb.ac.th/wp-content/uploads/2022/03/StdHB2565.pdf" },
+    { title: "คู่มือนักศึกษา ปี 2564", year: "2564", type: "PDF", file: "https://acdserv.kmutnb.ac.th/wp-content/uploads/2021/02/studentHandBook2564.pdf" },
+    { title: "คู่มือนักศึกษา ปี 2563", year: "2563", type: "PDF", file: "https://acdserv.kmutnb.ac.th/wp-content/uploads/2020/07/ManualStu63.pdf" },
   ];
 
   return (
