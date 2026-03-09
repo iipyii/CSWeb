@@ -1,9 +1,11 @@
 import express from "express";
 import axios from "axios";
+import cors from "cors";
 import jwt from "jsonwebtoken";
 import { prisma } from "../lib/prisma.js";
 
 const router = express.Router();
+
 
 /* 1. LOGIN */
 router.get("/login", (req, res) => {

@@ -100,13 +100,13 @@ model users {
 }
 
 model downloads {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String?
-  file_path   String
-  category    String?  @db.VarChar(100)
-  created_at  DateTime @default(now())
-  file_type   String?
+  id         Int      @id @default(autoincrement())
+  title      String
+  file_path  String
+  file_type  String?
+  audience   String // staff | student
+  category   String // internship | thesis | csb | graduate etc
+  created_at DateTime @default(now())
 }
 
 model staff {

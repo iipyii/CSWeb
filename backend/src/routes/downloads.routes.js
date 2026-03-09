@@ -3,6 +3,11 @@ import multer from "multer";
 import path from "path";
 import { prisma } from "../lib/prisma.js";
 
+import {
+  getDownloads,
+  getDownloadsByAudience
+} from "../controllers/downloads.controller.js";
+
 const router = express.Router();
 
 const storage = multer.diskStorage({
@@ -18,25 +23,27 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 
-// GET downloads
-router.get("/", async (req, res) => {
-  const files = await prisma.downloads.findMany({
-    orderBy: { created_at: "desc" }
-  });
+// GET all downloads
+router.get("/", getDownloads);
 
-  res.json(files);
-});
+
+// GET downloads by audience
+router.get("/:audience", getDownloadsByAudience);
 
 
 // POST upload file
 router.post("/upload", upload.single("file"), async (req, res) => {
+
   try {
-    const { title, category } = req.body;
+
+    const { title, category, audience, file_type } = req.body;
 
     const file = await prisma.downloads.create({
       data: {
         title,
         category,
+        audience,
+        file_type,
         file_path: req.file.filename
       }
     });
@@ -44,9 +51,12 @@ router.post("/upload", upload.single("file"), async (req, res) => {
     res.json(file);
 
   } catch (err) {
+
     console.error(err);
     res.status(500).json({ error: "Upload failed" });
+
   }
+
 });
 
 export default router;

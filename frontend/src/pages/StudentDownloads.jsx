@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight} from 'lucide-react';
 import Footer from '../components/Footer';
+import axios from "axios";
 
 const downloadData = [
   {
@@ -103,7 +104,20 @@ const downloadData = [
 
 ];export default function StaffDownloads() {
   const [openSections, setOpenSections] = useState([0]);
+  const [downloads, setDownloads] = useState([]);
 
+  useEffect(() => {
+
+  axios
+    .get("http://localhost:5000/api/downloads/student")
+    .then(res => {
+      setDownloads(res.data);
+    })
+    .catch(err => {
+      console.error(err);
+    });
+
+}, []);
   const toggleSection = (index) => {
     if (openSections.includes(index)) {
       setOpenSections(openSections.filter(i => i !== index));

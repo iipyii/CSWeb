@@ -3,7 +3,7 @@ import React from 'react';
 export default function Login() {
   const handleSSOLogin = () => {
     // URL สำหรับเชื่อมต่อกับระบบ SSO ของมหาวิทยาลัย
-    window.location.href = "https://sso.kmutnb.ac.th/auth/login";
+    window.location.href = "http://localhost:5000/auth/login";
   };
 
   return (
