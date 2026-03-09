@@ -50,7 +50,7 @@ model news {
   status     String    @default("active") @db.VarChar(20)
   image      String?
   slug       String?   @unique
-  start_date DateTime  @db.Date
+  start_date DateTime?  @db.Date
   end_date   DateTime? @db.Date
 
   created_by Int
