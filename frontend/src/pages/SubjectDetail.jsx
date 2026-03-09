@@ -1,20 +1,44 @@
-import React from 'react';
+import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  ChevronLeft, 
-  FileText, 
-  GraduationCap, 
-  Users, 
+import {
+  ChevronLeft,
+  FileText,
+  GraduationCap,
+  Users,
   BookOpenCheck,
   ArrowUpRight,
   Inbox
 } from 'lucide-react';
 import Footer from '../components/Footer';
+import axios from "axios";
 
 export default function SubjectDetail() {
   const { year, term } = useParams();
   const navigate = useNavigate();
+  const [subjects, setSubjects] = useState([]);
+
+  useEffect(() => {
+
+    axios
+      .get(`http://localhost:5000/api/courses/${year}/${term}`)
+      .then(res => {
+        setSubjects(res.data);
+      });
+
+  }, [year, term]);
+
+  const grouped = subjects.reduce((acc, item) => {
+
+    if (!acc[item.category]) {
+      acc[item.category] = [];
+    }
+
+    acc[item.category].push(item);
+
+    return acc;
+
+  }, {});
 
   // 📂 รวมข้อมูลทุกปีการศึกษาไว้ที่นี่
   const allCourseData = {
@@ -96,7 +120,7 @@ export default function SubjectDetail() {
         subjects: [
           { label: "สาขาวิชาวิทยาการคอมพิวเตอร์ ปีที่ 1 ห้อง (MCS 1) รหัส 68", file: "mcs_1_68_2568_1.pdf" },
           { label: "สาขาวิชาวิทยาการคอมพิวเตอร์ ปีที่ 2 ห้อง (MCS 2) รหัส 67", file: "mcs_2_68_2568_1.pdf" },
-         
+
         ]
       },
       {
@@ -148,7 +172,7 @@ export default function SubjectDetail() {
         title: "ระดับบัณฑิตศึกษา (MCS)",
         icon: <GraduationCap size={20} />,
         subjects: [
-          { label: "สาขาวิชาวิทยาการคอมพิวเตอร์ปีที่ 1 ห้อง (MCS RA รอบเช้า) รหัส 67", file: "mcs_1_67_2567_2.pdf" },         
+          { label: "สาขาวิชาวิทยาการคอมพิวเตอร์ปีที่ 1 ห้อง (MCS RA รอบเช้า) รหัส 67", file: "mcs_1_67_2567_2.pdf" },
         ]
       },
       {
@@ -190,8 +214,8 @@ export default function SubjectDetail() {
         title: "ระดับบัณฑิตศึกษา (MCS)",
         icon: <GraduationCap size={20} />,
         subjects: [
-          { label: "สาขาวิชาวิทยาการคอมพิวเตอร์ ปีที่1 (MCS 1) หลักสูตร (รหัส 67)", file: "mcs_1_67_2567_1.pdf" },  
-          { label: "สาขาวิชาวิทยาการคอมพิวเตอร์ ปีที่2 (S-MCS 2) ภาคพิเศษ (รหัส 66)", file: "s_mcs_2_66_2567_1.pdf" },        
+          { label: "สาขาวิชาวิทยาการคอมพิวเตอร์ ปีที่1 (MCS 1) หลักสูตร (รหัส 67)", file: "mcs_1_67_2567_1.pdf" },
+          { label: "สาขาวิชาวิทยาการคอมพิวเตอร์ ปีที่2 (S-MCS 2) ภาคพิเศษ (รหัส 66)", file: "s_mcs_2_66_2567_1.pdf" },
         ]
       },
     ],
@@ -225,10 +249,10 @@ export default function SubjectDetail() {
         title: "ระดับบัณฑิตศึกษา (MCS)",
         icon: <GraduationCap size={20} />,
         subjects: [
-          { label: "สาขาวิชาวิทยาการคอมพิวเตอร์ปีที่ 1 ห้อง (MCS 1) รหัส 66", file: "mcs_1_66_2566_2.pdf" },  
-          { label: "สาขาวิชาวิทยาการคอมพิวเตอร์ปีที่ 1 ห้อง (S-MCS2) รหัส 65", file: "s_mcs_2_65_2566_2.pdf" },        
-          { label: "สาขาวิชาวิทยาการคอมพิวเตอร์ปีที่ 3-6", file: "mcs_3-6_2566_2.pdf" },  
-          { label: "สาขาวิชาวิทยาการคอมพิวเตอร์ปีที่ 4", file: "mcs_4_2566_2.pdf" },        
+          { label: "สาขาวิชาวิทยาการคอมพิวเตอร์ปีที่ 1 ห้อง (MCS 1) รหัส 66", file: "mcs_1_66_2566_2.pdf" },
+          { label: "สาขาวิชาวิทยาการคอมพิวเตอร์ปีที่ 1 ห้อง (S-MCS2) รหัส 65", file: "s_mcs_2_65_2566_2.pdf" },
+          { label: "สาขาวิชาวิทยาการคอมพิวเตอร์ปีที่ 3-6", file: "mcs_3-6_2566_2.pdf" },
+          { label: "สาขาวิชาวิทยาการคอมพิวเตอร์ปีที่ 4", file: "mcs_4_2566_2.pdf" },
         ]
       },
       {
@@ -279,11 +303,11 @@ export default function SubjectDetail() {
         title: "ระดับบัณฑิตศึกษา (MCS)",
         icon: <GraduationCap size={20} />,
         subjects: [
-          { label: "สาขาวิชาวิทยาการคอมพิวเตอร์ปีที่ 1 ห้อง (MCS 1) รหัส 66", file: "mcs_1_66_2566_1.pdf" },  
-          { label: "สาขาวิชาวิทยาการคอมพิวเตอร์ปีที่ 1 ห้อง (S-MCS2) รหัส 65", file: "s_mcs_2_65_2566_1.pdf" },    
-          { label: "สาขาวิชาวิทยาการคอมพิวเตอร์ปีที่ 2 รหัส 65", file: "mcs_2_65_2566_1.pdf" },      
-          { label: "สาขาวิชาวิทยาการคอมพิวเตอร์ปีที่ 3-5", file: "mcs_3-5_2566_1.pdf" },  
-          { label: "สาขาวิชาวิทยาการคอมพิวเตอร์ปีที่ 4", file: "mcs_4_2566_1.pdf" },        
+          { label: "สาขาวิชาวิทยาการคอมพิวเตอร์ปีที่ 1 ห้อง (MCS 1) รหัส 66", file: "mcs_1_66_2566_1.pdf" },
+          { label: "สาขาวิชาวิทยาการคอมพิวเตอร์ปีที่ 1 ห้อง (S-MCS2) รหัส 65", file: "s_mcs_2_65_2566_1.pdf" },
+          { label: "สาขาวิชาวิทยาการคอมพิวเตอร์ปีที่ 2 รหัส 65", file: "mcs_2_65_2566_1.pdf" },
+          { label: "สาขาวิชาวิทยาการคอมพิวเตอร์ปีที่ 3-5", file: "mcs_3-5_2566_1.pdf" },
+          { label: "สาขาวิชาวิทยาการคอมพิวเตอร์ปีที่ 4", file: "mcs_4_2566_1.pdf" },
         ]
       },
       {
@@ -312,94 +336,110 @@ export default function SubjectDetail() {
 
   return (
     <div className="bg-[#F8FAFC] font-['Prompt'] min-h-screen flex flex-col text-left">
-      
+
       {/* 🏛️ Header Section */}
       <section className="bg-[#3F51B5] text-white py-8 px-6 relative overflow-hidden">
-                    <div className="max-w-5xl mx-auto relative z-10">
-                      <motion.div
-                        initial={{ opacity: 0, y: -15 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8 }}
-                      >
-                        <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">ขบวนวิชา</h1>
-                        <div className="w-12 h-1 bg-white/30 mb-5"></div>
-                      </motion.div>
-                    </div>
-                    <div className="absolute right-[0%] bottom-[5%] opacity-5 select-none pointer-events-none">
-                      <h2 className="text-[5rem] font-bold">CIS</h2>
-                    </div>
-                  </section>
+        <div className="max-w-5xl mx-auto relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: -15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">ขบวนวิชา</h1>
+            <div className="w-12 h-1 bg-white/30 mb-5"></div>
+          </motion.div>
+        </div>
+        <div className="absolute right-[0%] bottom-[5%] opacity-5 select-none pointer-events-none">
+          <h2 className="text-[5rem] font-bold">CIS</h2>
+        </div>
+      </section>
 
       {/* 📚 Main Content Grid */}
       <main className="max-w-6xl mx-auto w-full px-6 py-12 flex-grow">
-        {subjectGroups.length > 0 ? (
+        {subjects.length > 0 ? (
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-10 gap-y-12">
-            {subjectGroups.map((group, idx) => (
-              <motion.div 
-                key={group.id}
+
+            {Object.entries(grouped).map(([category, items], idx) => (
+
+              <motion.div
+                key={category}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.1 }}
                 viewport={{ once: true }}
                 className="space-y-5"
               >
-                {/* Group Header */}
+
+                {/* header */}
                 <div className="flex items-center gap-3 border-b-2 border-slate-200 pb-3">
+
                   <div className="p-2 bg-[#3F51B5] text-white rounded-lg shadow-sm">
-                    {group.icon}
+                    <GraduationCap size={20} />
                   </div>
+
                   <h2 className="text-[#3F51B5] font-bold text-lg tracking-tight">
-                    {group.title}
+                    {category}
                   </h2>
+
                 </div>
 
-                {/* Subject List */}
+
+                {/* subjects */}
+
                 <div className="grid gap-3">
-                  {group.subjects.map((sub, sIdx) => (
-                    <a 
-                      key={sIdx}
-                      href={`/files/courses/${year}/${term}/${sub.file}`}
+
+                  {items.map((item) => (
+
+                    <a
+                      key={item.id}
+                      href={`http://localhost:5000/uploads/${item.file_path}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md hover:border-[#3F51B5]/30 hover:bg-indigo-50/30 transition-all group"
                     >
+
                       <div className="flex items-center gap-4 flex-1 pr-4">
+
                         <div className="p-2.5 bg-slate-50 text-slate-400 group-hover:bg-white group-hover:text-[#3F51B5] rounded-xl transition-colors">
                           <FileText size={20} />
                         </div>
+
                         <span className="text-[14.5px] font-bold text-slate-600 group-hover:text-slate-800 leading-tight">
-                          {sub.label}
+                          {item.title}
                         </span>
+
                       </div>
-                      <div className="flex items-center shrink-0">
-                        <ArrowUpRight size={20} className="text-slate-300 group-hover:text-[#3F51B5] transition-all" />
-                      </div>
+
+                      <ArrowUpRight
+                        size={20}
+                        className="text-slate-300 group-hover:text-[#3F51B5]"
+                      />
+
                     </a>
+
                   ))}
+
                 </div>
+
               </motion.div>
+
             ))}
+
           </div>
+
         ) : (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex flex-col items-center justify-center py-24 text-center space-y-4"
-          >
-            <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center text-slate-300">
-              <Inbox size={40} />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-slate-700">ไม่พบข้อมูลขบวนวิชา</h3>
-              <p className="text-slate-400 text-sm mt-1">ยังไม่มีการเพิ่มข้อมูลสำหรับปีการศึกษา {term}/{year} เข้าสู่ระบบ</p>
-            </div>
-            <button 
-              onClick={() => navigate(-1)}
-              className="mt-4 px-6 py-2 bg-[#3F51B5] text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-100 active:scale-95 transition-all"
-            >
-              กลับไปหน้าก่อนหน้า
-            </button>
-          </motion.div>
+
+          <div className="flex flex-col items-center justify-center py-24 text-center space-y-4">
+
+            <Inbox size={40} className="text-slate-300" />
+
+            <p className="text-slate-400">
+              ยังไม่มีข้อมูลสำหรับปีการศึกษา {term}/{year}
+            </p>
+
+          </div>
+
         )}
       </main>
 

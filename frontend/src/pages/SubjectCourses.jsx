@@ -1,11 +1,45 @@
-import React from 'react';
+import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from 'react-router-dom'; // ✨ เพิ่ม Link สำหรับนำทางภายในแอป
 import { motion } from 'framer-motion';
 import { ChevronLeft, BookOpen, FileText, ArrowRight } from 'lucide-react';
 import Footer from '../components/Footer';
+import axios from "axios";
 
 export default function SubjectCourses() {
   const navigate = useNavigate();
+  const [courses, setCourses] = useState([]);
+
+
+
+  useEffect(() => {
+
+  axios
+    .get("http://localhost:5000/api/courses/years")
+    .then(res => {
+
+      const years = res.data;
+
+      const list = [];
+
+      years.forEach(y => {
+        list.push({
+          title:`ขบวนวิชาที่เปิดสอน ระดับ ป.ตรีและระดับบัณฑิตศึกษา ปีการศึกษา 1/${y.year}`,
+          year:y.year,
+          term:"1"
+        });
+
+        list.push({
+          title:`ขบวนวิชาที่เปิดสอน ระดับ ป.ตรีและระดับบัณฑิตศึกษา ปีการศึกษา 2/${y.year}`,
+          year:y.year,
+          term:"2"
+        });
+      });
+
+      setCourses(list);
+
+    });
+
+}, []);
 
   // 📝 รายการขบวนวิชาตามปีการศึกษา
   const courseData = [
@@ -40,7 +74,7 @@ export default function SubjectCourses() {
       {/* 📚 Main Content List */}
       <main className="max-w-4xl mx-auto w-full px-6 py-16 flex-grow">
         <div className="grid gap-4">
-          {courseData.map((item, idx) => (
+          {courses.map((item, idx) => (
             <motion.div
               key={idx}
               initial={{ opacity: 0, x: -10 }}
