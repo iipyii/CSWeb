@@ -28,16 +28,16 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-if (process.env.NODE_ENV === "development") {
-  app.use((req, res, next) => {
-    req.user = {
-      id: 2,
-      email: "admin@csweb.com",
-      role: "admin",
-    };
-    next();
-  });
-}
+// if (process.env.NODE_ENV === "development") {
+//   app.use((req, res, next) => {
+//     req.user = {
+//       id: 2,
+//       email: "admin@csweb.com",
+//       role: "admin",
+//     };
+//     next();
+//   });
+// }
 
 app.use("/api/news", newsRoutes);
 app.use("/api/users", usersRoutes);
@@ -54,5 +54,6 @@ app.use("/api/program-sections", programSectionRoutes)
 app.use("/api", consultRoutes);
 app.use("/api/internships", internshipsRoutes);
 app.use("/api/courses", subjectcoursesRoutes);
+app.use("/downloads", express.static("uploads/downloads"));
 
 export default app;

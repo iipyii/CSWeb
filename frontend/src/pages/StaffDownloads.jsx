@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight} from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import Footer from '../components/Footer';
+import axios from "axios";
 
 const downloadData = [
   {
@@ -29,13 +30,13 @@ const downloadData = [
       { id: 15, title: "แบบรายงานลาเข้ารับการตรวจเลือก หรือเข้ารับการเตรียมพล", formats: ["PDF"] },
       { id: 16, title: "แบบรายงานผลเกี่ยวกับการลาไปปฏิบัติงานในองค์การระหว่างประเทศ", formats: ["PDF"] },
       { id: 17, title: "แบบฟอร์มปรับคุณวุฒิ", formats: ["PDF"] },
-      { id: 18, title: "แบบฟอร์มเขียนรายงานการฝึกอบรม ประชุม สัมมนาและฟังการบรรยาย ภายในประเทศ", formats: ["DOC", "PDF"]},
+      { id: 18, title: "แบบฟอร์มเขียนรายงานการฝึกอบรม ประชุม สัมมนาและฟังการบรรยาย ภายในประเทศ", formats: ["DOC", "PDF"] },
       { id: 19, title: "แนวปฏิบัติในการกรอกแบบ ก.พ.อ.03 และการนำเสนอผลงานทางวิชาการ", formats: ["PDF"] },
       { id: 20, title: "แบบสรุปการประเมินผลการปฏิบัติงานของบุคลากรสายสนับสนุนวิชาการ", formats: ["DOC", "PDF"] },
       { id: 21, title: "สัญญาจ้างพนักงานมหาวิทยาลัย (1 ปี และ 3 ปี)", formats: ["PDF"] },
       { id: 22, title: "สัญญาจ้างพนักงานมหาวิทยาลัย (ทดลองงาน)", formats: ["PDF"] },
       { id: 23, title: "สัญญาจ้างพนักงานมหาวิทยาลัย (ลักษณะประจำ)", formats: ["PDF"] },
-      { id: 24, title: "แบบประวัติและผลงานเพื่อต่อสัญญาจ้างพนักงานมหาวิทยาลัย (สายสนับสนุนวิชาการ)", formats: ["DOC", "PDF"]},
+      { id: 24, title: "แบบประวัติและผลงานเพื่อต่อสัญญาจ้างพนักงานมหาวิทยาลัย (สายสนับสนุนวิชาการ)", formats: ["DOC", "PDF"] },
       { id: 25, title: "แบบประวัติและผลงานเพื่อต่อสัญญาจ้างพนักงานมหาวิทยาลัย (สายวิชาการ)", formats: ["DOC", "PDF"] },
       { id: 26, title: "คำขอมีบัตรประจำตัว-จนท.ของรัฐอิเล็กทรอนิกส์", formats: ["PDF"] },
       { id: 27, title: "ตัวอย่างภาพถ่ายสำหรับทำบัตรประจำตัวพนักงานมหาวิทยาลัย", formats: ["PDF"] },
@@ -57,12 +58,26 @@ const downloadData = [
   {
     category: "งานหลักสูตร",
     items: [
-      { 
-        id: 36, title: "Link เอกสารดาวน์โหลดสำหรับอาจารย์ เจ้าหน้าที่ (กองบริการการศึกษา)", url: "https://acdserv.kmutnb.ac.th/downloads-for-teachers-staff" },
+      {
+        id: 36, title: "Link เอกสารดาวน์โหลดสำหรับอาจารย์ เจ้าหน้าที่ (กองบริการการศึกษา)", url: "https://acdserv.kmutnb.ac.th/downloads-for-teachers-staff"
+      },
     ]
   }
-];export default function StaffDownloads() {
+];
+export default function StaffDownloads() {
   const [openSections, setOpenSections] = useState([0]);
+  const [downloads, setDownloads] = useState([]);
+
+  useEffect(() => {
+    axios
+      .get("http://localhost:5000/api/downloads/staff")
+      .then((res) => {
+        setDownloads(res.data);
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  }, []);
 
   const toggleSection = (index) => {
     if (openSections.includes(index)) {
@@ -71,7 +86,17 @@ const downloadData = [
       setOpenSections([...openSections, index]);
     }
   };
+  const grouped = downloads.reduce((acc, item) => {
 
+    if (!acc[item.category]) {
+      acc[item.category] = [];
+    }
+
+    acc[item.category].push(item);
+
+    return acc;
+
+  }, {});
   return (
     <div className="bg-slate-50 font-['Prompt'] min-h-screen flex flex-col">
       {/* Hero Section */}
@@ -88,7 +113,7 @@ const downloadData = [
       </section>
 
       <main className="max-w-5xl mx-auto w-full px-6 py-12 flex-grow">
-        {downloadData.map((section, sIdx) => {
+        {Object.entries(grouped).map(([category, items], sIdx) => {
           const isOpen = openSections.includes(sIdx);
           return (
             <div key={sIdx} className="mb-6">
@@ -96,7 +121,7 @@ const downloadData = [
                 <motion.div animate={{ rotate: isOpen ? 90 : 0 }} transition={{ duration: 0.2 }}>
                   <ChevronRight size={22} className="text-[#3F51B5]" />
                 </motion.div>
-                <h2 className="text-xl font-bold text-slate-800 group-hover:text-[#3F51B5] transition-colors">{section.category}</h2>
+                <h2 className="text-xl font-bold text-slate-800 group-hover:text-[#3F51B5] transition-colors">{category}</h2>
               </button>
 
               <AnimatePresence>
@@ -112,35 +137,28 @@ const downloadData = [
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
-                          {section.items.map((item, iIdx) => (
+                          {items.map((item, iIdx) => (
                             <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
                               <td className="px-6 py-5 text-center text-slate-400 text-sm">{iIdx + 1}</td>
                               <td className="px-6 py-5 text-slate-700 text-[15px] group-hover:text-[#3F51B5] transition-colors">{item.title}</td>
                               <td className="px-6 py-5 text-center">
                                 <div className="flex justify-center gap-1.5">
-                                  {item.url ? (
-                                    <a 
-                                      href={item.url}
+                                  
+                                    <a
+                                      href={`http://localhost:5000${item.file_path}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="px-8 py-2 bg-[#F3B664] hover:bg-[#e0a14d] text-white rounded-full text-xs font-bold transition-all active:scale-95 shadow-sm inline-block"
+                                      className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all active:scale-95 border
+                                        ${item.file_type === 'pdf'
+                                          ? 'text-rose-600 border-rose-100 bg-rose-50 hover:bg-rose-600 hover:text-white'
+                                          : item.file_type === 'docx'
+                                          ? 'text-blue-600 border-blue-100 bg-blue-50 hover:bg-blue-600 hover:text-white'
+                                          : 'text-emerald-600 border-emerald-100 bg-emerald-50 hover:bg-emerald-600 hover:text-white'
+                                        }`}
                                     >
-                                      Link
+                                      {item.file_type?.toUpperCase()}
                                     </a>
-                                  ) : (
-                                    item.formats.map((format) => (
-                                      <button
-                                        key={format}
-                                        className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all active:scale-95 border
-                                          ${format === 'PDF' ? 'text-rose-600 border-rose-100 bg-rose-50 hover:bg-rose-600 hover:text-white' : 
-                                            format === 'DOC' ? 'text-blue-600 border-blue-100 bg-blue-50 hover:bg-blue-600 hover:text-white' : 
-                                            'text-emerald-600 border-emerald-100 bg-emerald-50 hover:bg-emerald-600 hover:text-white'}
-                                        `}
-                                      >
-                                        {format}
-                                      </button>
-                                    ))
-                                  )}
+                              
                                 </div>
                               </td>
                             </tr>
