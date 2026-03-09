@@ -43,7 +43,7 @@ export default function News() {
       title: 'ภาควิชาขอแสดงความยินดีกับอาจารย์ที่ได้รับ Best Paper Award ในการประชุมวิชาการระดับนานาชาติ The 2026 14th',
       date: '6 มีนาคม 2569',
       description: 'ขอแสดงความยินดีกับคณาจารย์ผู้สร้างชื่อเสียงให้กับภาควิชาในเวทีระดับนานาชาติด้วยผลงานวิจัยยอดเยี่ยม...',
-      image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=2070&auto=format&fit=crop',
+      image: 'https://scontent.fbkk5-6.fna.fbcdn.net/v/t39.30808-6/645638951_1458812212699526_4878319680973014599_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=13d280&_nc_ohc=24W3rW6U6nUQ7kNvwGVXLk6&_nc_oc=Adny-7UX0ytLS3pkVFInInlJM6A8_yZvGq9E8JPTqHuI5rqAyyRhkrSE2Adm8JUeFtxKWmwaBeU7XCyL2lXCIUoH&_nc_zt=23&_nc_ht=scontent.fbkk5-6.fna&_nc_gid=ImuAvhgRX7iON2hONso7yA&_nc_ss=8&oh=00_AfwmY3hXAndogDyOqa81ILq7D0w1zO-_UrH1wB93u_kgrg&oe=69B4109D',
     },
     {
       id: 2,
@@ -63,7 +63,7 @@ export default function News() {
       title: 'ประกาศ เรื่องการให้ทุนการศึกษาประเภทลดหย่อนค่าเล่าเรียน ประจำภาคเรียนที่ 2 ปีการศึกษา 2568',
       date: '4 พฤศจิกายน 2568',
       description: 'รายละเอียดการสมัครและเกณฑ์การคัดเลือกนักศึกษาเพื่อรับทุนลดหย่อนค่าเล่าเรียน...',
-      image: 'https://images.unsplash.com/photo-1523050335456-adaba3f0b97f?q=80&w=2070&auto=format&fit=crop',
+      image: 'https://scontent.fbkk5-5.fna.fbcdn.net/v/t39.30808-6/600332207_1392804229300325_5930956469706326122_n.jpg?_nc_cat=104&ccb=1-7&_nc_sid=13d280&_nc_ohc=nelY3RxZWq0Q7kNvwHq-Ruu&_nc_oc=Adn8mEn0LlAuq1zXukF1XSqS3N2HRQ4lhAT_oIAU94CJEGEqkrHZfNGboEWho15aeE2JdogGGcF_yoQu2A8avaaF&_nc_zt=23&_nc_ht=scontent.fbkk5-5.fna&_nc_gid=_Q6DFBBGioGLpG9C_1E6VA&_nc_ss=8&oh=00_AfxByXxJjqD3R8-D_OksGqkaz6dOY4bI1KQQHITjXOzMmQ&oe=69B432C2',
     },
     {
       id: 4,

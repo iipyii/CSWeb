@@ -3,8 +3,8 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function HeroSlider() {
   const slides = [
-    { url: 'https://scontent.fbkk24-1.fna.fbcdn.net/v/t39.30808-6/566256971_1347866220460793_5481407962201855946_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=13d280&_nc_ohc=-9BTDNuWrhAQ7kNvwFldIyI&_nc_oc=Adl4O3tuGGP963BHOpDVXIicc_6lPg45puUe-IcpwV6bRIydWWLMkbkbi20yab-yUWiU5kp8qr0gp_Utill6-r9M&_nc_zt=23&_nc_ht=scontent.fbkk24-1.fna&_nc_gid=McyfTYSEsMhMLFzVAXBXOA&oh=00_AfvOf7k6ZebZ8ICKCBF-f1ThFBYwf0mk5un_BtQLwdULEQ&oe=699BCD1F', title: 'Slide 1' },
-    { url: 'https://scontent.fbkk24-1.fna.fbcdn.net/v/t39.30808-6/569319179_1350317600215655_7340636591323933668_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=106&ccb=1-7&_nc_sid=2a1932&_nc_ohc=TbZ2FIUgCeQQ7kNvwGNrm2C&_nc_oc=AdkDneze6E12I_S1hlFwJ9zWKTtnf27nZP50i4ehBZLNRO2YJBfXeHBFLdbNZZRNZJCGgtbeoT6mMHt3cr2uq-hY&_nc_zt=23&_nc_ht=scontent.fbkk24-1.fna&_nc_gid=CVC7okhymKBTtduT2OUf2Q&oh=00_AfvPzVkGmvhC0RRdP3Q7rapTIIa2HxeF1a1CkydDRrIv5w&oe=699BA308', title: 'Slide 2' },
+    { url: 'https://scontent.fbkk5-8.fna.fbcdn.net/v/t39.30808-6/569319179_1350317600215655_7340636591323933668_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=106&ccb=1-7&_nc_sid=2a1932&_nc_ohc=bwvb1uFpQp8Q7kNvwHYeuLB&_nc_oc=AdknZK-EYdc65B1kUW8d_xTkvj34j8dQGZQbomFriExyg07EmR5lhGL_kKoV9sOU0Ngo-apAr8fB5j1YVP5X2Igs&_nc_zt=23&_nc_ht=scontent.fbkk5-8.fna&_nc_gid=IQ-cKSgocCL2EEW_EoMLNA&_nc_ss=8&oh=00_AfwoWZymgKJewXY0Pep3ZA7AwoFMzDN3I_3HwniZvf5tTw&oe=69B406C8', title: 'Slide 1' },
+    { url: 'https://scontent.fbkk5-1.fna.fbcdn.net/v/t39.30808-6/566256971_1347866220460793_5481407962201855946_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=13d280&_nc_ohc=TKsvorH6sWsQ7kNvwGt1H48&_nc_oc=AdlMU8KpyZf5Af9rmyg5DQFD5SW-iRtBZnT_PywajJNEptOZ9qcqqmXuIrp0WDJ3HS8W-AqjrHG3TJpBJ7We8GlY&_nc_zt=23&_nc_ht=scontent.fbkk5-1.fna&_nc_gid=szWVZDbBMH2rjRloKVqA1g&_nc_ss=8&oh=00_AfwQfp0eaRjzEBX1ujQbbKPenbiCD3P4jR_ZOs3q-2GCrw&oe=69B430DF', title: 'Slide 2' },
   ];
 
   const [currentIndex, setCurrentIndex] = useState(0);
