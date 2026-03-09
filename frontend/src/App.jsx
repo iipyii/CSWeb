@@ -36,6 +36,7 @@ import SubjectCourses from './pages/SubjectCourses';
 import SubjectDetail from './pages/SubjectDetail';
 import StudentGuide from './pages/StudentGuide';
 import StudentLinks from './pages/StudentLinks';
+import SearchResults from './pages/SearchResults';
 
 import FinanceRegs from './pages/FinanceRegs';
 import AcademicRegs from './pages/AcademicRegs';
@@ -133,7 +134,8 @@ export default function App() {
         <Route path="/subject-courses/detail/:year/:term" element={<SubjectDetail />} />
         <Route path="/student-guide" element={<StudentGuide />} />
         <Route path="/student-links" element={<StudentLinks />} />
-
+        <Route path="/search" element={<SearchResults />} />
+        
         <Route path="/finance-regulations" element={<FinanceRegs />} />
         <Route path="/academic-regulations" element={<AcademicRegs />} />
         <Route path="/personnel-regulations" element={<PersonnelRegs />} />

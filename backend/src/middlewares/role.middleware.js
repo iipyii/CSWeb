@@ -1,12 +1,11 @@
-export const checkRole = (allowedRoles) => {
+export const checkRole = (roles) => {
   return (req, res, next) => {
-    const user = req.user;
 
-    if (!user) {
+    if (!req.user) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    if (!allowedRoles.includes(user.role)) {
+    if (!roles.includes(req.user.role)) {
       return res.status(403).json({ message: "Forbidden" });
     }
 

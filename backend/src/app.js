@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-
+import path from "path";
 import usersRoutes from "./routes/users.routes.js";
 import newsRoutes from "./routes/news.routes.js";
 import faqRoutes from "./routes/faq.routes.js";
@@ -15,6 +15,7 @@ import programSectionRoutes from "./routes/programSection.routes.js"
 import consultRoutes from "./routes/consult.routes.js";
 import internshipsRoutes from "./routes/internships.routes.js";
 import subjectcoursesRoutes from "./routes/subjectcourses.routes.js";
+import searchRoutes from "./routes/search.routes.js";
 
 const app = express();
 
@@ -54,6 +55,7 @@ app.use("/api/program-sections", programSectionRoutes)
 app.use("/api/consult", consultRoutes);
 app.use("/api/internships", internshipsRoutes);
 app.use("/api/courses", subjectcoursesRoutes);
+app.use("/api/search", searchRoutes);
 app.use("/downloads", express.static("uploads/downloads"));
 
 export default app;

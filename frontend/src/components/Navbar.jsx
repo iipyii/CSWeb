@@ -1,10 +1,23 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // 👉 เพิ่ม useNavigate
 import { Search, ChevronDown } from "lucide-react";
 import styles from "./Navbar.module.css"; 
 
 export default function Navbar() {
   const [lang, setLang] = useState("TH");
+  
+  // 👉 1. สร้าง State สำหรับเก็บคำค้นหา และตัวนำทาง (navigate)
+  const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
+
+  // 👉 2. ฟังก์ชันจัดการเมื่อกด Enter
+  const handleSearch = (e) => {
+    if (e.key === "Enter" && searchQuery.trim() !== "") {
+      // พาไปที่หน้า /search พร้อมกับแนบคำค้นหาไปด้วย
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery(""); // ล้างช่องค้นหาหลังจากกด (จะใส่หรือไม่ใส่ก็ได้ครับ)
+    }
+  };
 
   const navItems = [
     { label: "หน้าหลัก", href: "/" },
@@ -78,7 +91,6 @@ export default function Navbar() {
         { label: "ข่าวคณะ/มหาวิทยาลัย", href: "/news?tab=ข่าวคณะและมหาวิทยาลัย" },
         { label: "ข่าวทุนการศึกษา", href: "/news?tab=ข่าวทุนการศึกษา" },
         { label: "ข่าวรับสมัครงาน/ประชาสัมพันธ์", href: "/news?tab=ข่าวรับสมัครงาน-ประชาสัมพันธ์" },
-
       ] 
     },
     { label: "ระเบียบ/ประกาศ", 
@@ -110,10 +122,20 @@ export default function Navbar() {
         <div className={styles.navContent}>
           {/* Top Row: Search & Lang */}
           <div className={styles.topRow}>
+            
+            {/* 👉 3. ปรับแต่งช่องค้นหาให้ผูกกับ State และตรวจจับปุ่ม Enter */}
             <div className={styles.searchBar}>
               <Search size={14} className={styles.searchIcon} />
-              <input type="text" className={styles.searchInput} placeholder="ค้นหา" />
+              <input 
+                type="text" 
+                className={styles.searchInput} 
+                placeholder="ค้นหา..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleSearch}
+              />
             </div>
+
             <div className={styles.langSwitcher}>
               <button 
                 className={`${styles.langBtn} ${lang === "TH" ? styles.active : ""}`}

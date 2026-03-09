@@ -37,28 +37,34 @@ export const createNews = async (req, res) => {
   try {
     const { title, content, category, start_date, end_date } = req.body;
 
-    const newNews = await prisma.news.create({
+    if (!title || !content) {
+      return res.status(400).json({
+        error: "Title and content are required",
+      });
+    }
+
+    const news = await prisma.news.create({
       data: {
         title,
         content,
         category,
         status: "active",
-        start_date: start_date ? new Date(start_date) : null,
-        end_date: end_date ? new Date(end_date) : null,
-        created_by: req.user.id, // ต้องมี auth middleware ก่อน
+        start_date: start_date ? new Date(start_date) : undefined,
+        end_date: end_date ? new Date(end_date) : undefined,
+        
+        users: {
+          connect: { id: req.user.id }
+        }
+        // created_by: req.user.id, // ต้องมี auth middleware ก่อน
       },
     });
 
-    res.status(201).json(newNews);
+    res.status(201).json(news);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Server error" });
   }
-  if (!title || !content) {
-    return res.status(400).json({
-      error: "Title and content are required",
-    });
-  }
+
 };
 
 // ✅ GET all news (admin)
@@ -91,7 +97,7 @@ export const updateNews = async (req, res) => {
         content,
         category,
         status,
-        start_date: new Date(start_date),
+        start_date: start_date ? new Date(start_date) : null,
         end_date: end_date ? new Date(end_date) : null,
       },
     });
@@ -116,7 +122,7 @@ export const deleteNews = async (req, res) => {
     await prisma.news.update({
       where: { id: Number(id) },
       data: {
-        status: "deleted",
+        status: "archived",
       },
     });
 
