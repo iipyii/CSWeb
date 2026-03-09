@@ -185,6 +185,7 @@ model students {
   room       String?
 
   advisor_students advisor_students[]
+
   @@index([firstname])
   @@index([lastname])
   @@index([student_id])
@@ -200,4 +201,31 @@ model advisor_students {
   advisor advisors @relation(fields: [advisorId], references: [id])
 
   @@unique([studentId, advisorId])
+}
+
+model internships {
+  id        Int     @id @default(autoincrement())
+  section   String // เช่น "คุณสมบัติ", "ขั้นตอนสมัคร", "เอกสาร"
+  title     String
+  content   String  @db.Text
+  embedding String?
+}
+
+model course_documents {
+  id        Int    @id @default(autoincrement())
+  year_id   Int
+  semester  Int
+  category  String
+  title     String
+  file_path String
+  order_no  Int?
+
+  year course_years @relation(fields: [year_id], references: [id])
+}
+
+model course_years {
+  id   Int @id @default(autoincrement())
+  year Int @unique
+
+  course_documents course_documents[]
 }

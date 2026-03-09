@@ -13,6 +13,8 @@ import staffRoutes from "./routes/staff.routes.js";
 import programRoutes from "./routes/program.routes.js"
 import programSectionRoutes from "./routes/programSection.routes.js"
 import consultRoutes from "./routes/consult.routes.js";
+import internshipsRoutes from "./routes/internships.routes.js";
+import subjectcoursesRoutes from "./routes/subjectcourses.routes.js";
 
 const app = express();
 
@@ -50,5 +52,7 @@ app.use("/api/staff", staffRoutes);
 app.use("/api/programs", programRoutes)
 app.use("/api/program-sections", programSectionRoutes)
 app.use("/api", consultRoutes);
+app.use("/api/internships", internshipsRoutes);
+app.use("/api/courses", subjectcoursesRoutes);
 
 export default app;
