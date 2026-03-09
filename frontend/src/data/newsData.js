@@ -6,7 +6,7 @@ export const newsData = [
     title: 'ประกาศภาควิชาวิทยาการคอมพิวเตอร์และสารสนเทศ เรื่อง การฝึกงาน ประจำปี 2568',
     date: '26 มกราคม 2569',
     author: 'ousanee', 
-    image: 'https://scontent.fbkk24-1.fna.fbcdn.net/v/t39.30808-6/615952669_1420443876536360_4055644891408316922_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=13d280&_nc_ohc=G9OcEyjdCyAQ7kNvwEawNlT&_nc_oc=AdnFBK1CdEr_T82UdbqpNBg_-N3tugy4iZCAQWNXwmJhBwwY3OYFyZrO1VjBgSyhft16VhAyb2iHLSETCaJPsy8P&_nc_zt=23&_nc_ht=scontent.fbkk24-1.fna&_nc_gid=smx3McFb8Fp4Q2QHyW4esw&oh=00_AftXI9N8QQ9sUKddoPquViGgdwBj_qCnAogU7whivGruhA&oe=699E4868',
+    image: 'https://scontent.fbkk5-3.fna.fbcdn.net/v/t39.30808-6/615952669_1420443876536360_4055644891408316922_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=13d280&_nc_ohc=RhhraFi1D6MQ7kNvwHwWsaf&_nc_oc=Adl8JIGNPBQyA52G7vDhrVIFnb2yD-QHCsEkIet4vGlTzkbqIDG7bhJFqUJmg4YWKTaVMQR41xofdi_o-mVzvA6i&_nc_zt=23&_nc_ht=scontent.fbkk5-3.fna&_nc_gid=MRCH6puhMcm5Kt2BhFqyeQ&_nc_ss=8&oh=00_AfyN24HegJ8uMWP-kiHgI3iF-WJ7TmlDisvjyuwaK4MBRA&oe=69B40928',
     content: `นักศึกษาชั้นปีที่ 3 และชั้นปีตกค้าง ที่ผ่านเกณฑ์การฝึกงานของภาควิชาฯ และจะฝึกงานในปีการศึกษาที่ 2568 นี้ ให้นักศึกษาเข้าร่วมประชุมชี้แจงเกี่ยวกับการฝึกงาน ใน *วันพฤหัสบดีที่ 29 มกราคม 2569* ณ *ห้องเรียน 604 อาคาร 75* เวลา *12.00 น.*\n\n*หมายเหตุ* - เกณฑ์นักศึกษาที่สามารถฝึกงานได้ ต้องมีหน่วยกิตรวมไม่น้อยกว่า *81 หน่วยกิต* ณ วันที่ยื่นเอกสารขอฝึกงาน`,
   },
   {
@@ -16,7 +16,7 @@ export const newsData = [
     title: 'วันสุดท้าย ถอนรายวิชาเรียน ไม่ติด W ภาคการศึกษาที่ 2 ปีการศึกษา 2568',
     date: '16 มกราคม 2569',
     author: 'ousanee', 
-    image: 'https://scontent.fbkk24-1.fna.fbcdn.net/v/t39.30808-6/615343792_1313306924172966_2469695418331184768_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=13d280&_nc_ohc=Zd3VgzcJqO8Q7kNvwEgUVuu&_nc_oc=AdmBTUmU63JPu-FjsiJQJpEtUJmJBx3KHfQgJ787EzVrQYtBciDV7GIlmafhU9NOE0-F5rsXtS6Rs7jRkYMXdZva&_nc_zt=23&_nc_ht=scontent.fbkk24-1.fna&_nc_gid=7Y8AFSQ5P-HZFgvaUWP5TQ&oh=00_AfsXuFh4iwkHJmw-ZYY_A8UUVQXl8Pyi6wFXKkHf3qWXbw&oe=699E6635',
+    image: 'https://scontent.fbkk5-6.fna.fbcdn.net/v/t39.30808-6/639214204_909286222108275_2418605584011242839_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=13d280&_nc_ohc=y1pmk5ckXh0Q7kNvwEdt9zD&_nc_oc=AdkCUH7pKhIs9BrW5jp8otuaabx9Zat7BmSek1j8MHXvQTmO8YuvMexBsNh-v8Aoj_IpbvUg-2vyJZBbdn-L3Cub&_nc_zt=23&_nc_ht=scontent.fbkk5-6.fna&_nc_gid=4fa_mqZNGLj22JcrerMD5g&_nc_ss=8&oh=00_AfyJUjZYwEGYoS_IpdISPupcFPpqkRefD0wD1RussMHeXw&oe=69B42BD3',
     content: `วันสุดท้าย ถอนรายวิชาเรียน ไม่ติด W ภาคการศึกษาที่ 2 ปีการศึกษา 2568 \nดำเนินการถอนรายวิชาผ่านระบบ Reg  https://reg.kmutnb.ac.th`,
   },
   {
@@ -26,7 +26,7 @@ export const newsData = [
     title: 'ประชาสัมพันธ์ SCIENCE EXHIBITION DAY 2026',
     date: '16 มกราคม 2569',
     author: 'ousanee', 
-    image: 'https://scontent.fbkk24-1.fna.fbcdn.net/v/t39.30808-6/615463552_1414123583835056_4148235800047827583_n.jpg?_nc_cat=100&ccb=1-7&_nc_sid=13d280&_nc_ohc=VcWPMPy0m2gQ7kNvwEYAmek&_nc_oc=AdnQPT9GRh-arrjrblQ09bOc8RL_XpFTwdFA6j1awZKVGdsrbcB-UXcAqAWdaEAVXYR17XAOCmfCSzHfyV6my6mz&_nc_zt=23&_nc_ht=scontent.fbkk24-1.fna&_nc_gid=zOVqFvRptU3vaGLdHIcExA&oh=00_AfuJTJWYBUwHsw5r2Y3_6BL3O1b-IUSymoJXigIoQ_oF8A&oe=699E40D0',
+    image: 'https://scontent.fbkk5-5.fna.fbcdn.net/v/t39.30808-6/615463552_1414123583835056_4148235800047827583_n.jpg?_nc_cat=100&ccb=1-7&_nc_sid=13d280&_nc_ohc=3mOumpYnqr0Q7kNvwFAQyra&_nc_oc=AdkAwBhVnX1hEZDY9-ubp6Wx17iDBZrwJ1APcqjxSQt62ZWTacvc5vnw1cfcBMZjx6eKHPRpTXim6QRkx_sV8_bo&_nc_zt=23&_nc_ht=scontent.fbkk5-5.fna&_nc_gid=BhHmIeTG8A9zIu3lc8H6CQ&_nc_ss=8&oh=00_Afx5WsTlj6PNtIm5rHTFbxgnDs5bNni33Q-WJ2LHM0Ui0w&oe=69B439D0',
     content: `คณะวิทยาศาสตร์ประยุกต์ มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ \nรับสมัครการประกวดหัวข้อโครงการวิจัยระดับนักศึกษา \nSCIENCE EXHIBITION DAY 2026 \n\nการจัดงาน \nวันที่ *27 กุมภาพันธ์ 2569* เวลา *08.00 - 15.00 น.* \nณ *ห้อง Sci-SPHERE ชั้น 6 อาคาร 72* คณะวิทยาศาสตร์ประยุกต์ \nมหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ \n\nการรับสมัครหัวข้อโครงการวิจัย \nตั้งแต่วันที่ *13 - 27 มกราคม 2569* \n(โดยส่งผลงานผ่านการอัพโหลดที่เว็บไซต์โครงการ SCIENCE EXHIBITION DAY 2026) \n\nนักศึกษาส่งบทคัดย่อผลงานวิจัยและโปสเตอร์ \n(ต้องได้รับการตรวจสอบจากอาจารย์ที่ปรึกษาก่อนส่ง \nและไม่สามารถแก้ไขหลังจากอัพโหลดไฟล์ข้อมูลเสร็จสิ้นแล้วได้) \nวันที่ *13 มกราคม - 8 กุมภาพันธ์ 2569* \nดูรายละเอียดเพิ่มเติมที่เว็บไซต์โครงการฯ \n https://sites.google.com/sci.kmutnb.ac.th/sciexhibition`,
   },
   {
