@@ -20,17 +20,17 @@ import Footer from '../components/Footer';
 const studentLinkData = [
   { title: "ตารางสอน/ตารางสอบ", icon: <Table2 className="text-rose-400" />, url: "https://reg.kmutnb.ac.th/" },
   { title: "ปฏิทินการศึกษา", icon: <CalendarDays className="text-orange-400" />, url: "https://reg.kmutnb.ac.th/" },
-  { title: "ระบบการชำระเงินนักศึกษาใหม่", icon: <BadgeDollarSign className="text-amber-500" />, url: "https://reg.kmutnb.ac.th/" },
+  { title: "ระบบการชำระเงินนักศึกษาใหม่", icon: <BadgeDollarSign className="text-amber-500" />, url: "https://newstudent.kmutnb.ac.th/Student/StudentLogin.aspx" },
   { title: "ระบบขึ้นทะเบียนนักศึกษาใหม่", icon: <UserPlus className="text-orange-500" />, url: "https://reg.kmutnb.ac.th/" },
   { title: "ระบบลงทะเบียน", icon: <UserCheck className="text-amber-500" />, url: "https://reg.kmutnb.ac.th/" },
   { title: "ระบบดูผลการเรียน", icon: <FileText className="text-emerald-400" />, url: "https://reg.kmutnb.ac.th/" },
   { title: "ระบบประเมินการสอน", icon: <ClipboardList className="text-teal-400" />, url: "https://assessment.kmutnb.ac.th/" },
   { title: "ระบบคำร้องออนไลน์", icon: <MessageSquareMore className="text-cyan-500" />, url: "https://reg.kmutnb.ac.th/" },
-  { title: "ระบบขอเอกสารสำคัญทางการศึกษา", icon: <ShieldAlert className="text-rose-400" />, url: "https://reg.kmutnb.ac.th/" },
-  { title: "ระบบ e-Studentloan สำหรับผู้กู้ กยศ. และ กรอ.", icon: <Landmark className="text-blue-400" />, url: "https://studentloan.kmutnb.ac.th/" },
+  { title: "ระบบขอเอกสารสำคัญทางการศึกษา", icon: <ShieldAlert className="text-rose-400" />, url: "http://e-service.acdserv.kmutnb.ac.th/regReqDoc/login/" },
+  { title: "ระบบ e-Studentloan สำหรับผู้กู้ กยศ. และ กรอ.", icon: <Landmark className="text-blue-400" />, url: "https://eservices.studentloan.or.th/SLFSTUDENT/html/index.html" },
   { title: "บริการซอฟต์แวร์ลิขสิทธิ์", icon: <ShieldCheck className="text-cyan-500" />, url: "https://icit.kmutnb.ac.th/services/software-license/" },
-  { title: "บัณฑิตวิทยาลัย", icon: <GraduationCap className="text-rose-400" />, url: "https://grad.kmutnb.ac.th/" },
-  { title: "แบบฟอร์มขออนุมัติตัวนักศึกษา", icon: <Link2 className="text-indigo-600" />, url: "https://finance.kmutnb.ac.th/" },
+  { title: "บัณฑิตวิทยาลัย", icon: <GraduationCap className="text-rose-400" />, url: "https://www.grad.kmutnb.ac.th/index.php" },
+  { title: "แบบฟอร์มขออนุมัติตัวนักศึกษา", icon: <Link2 className="text-indigo-600" />, url: "https://docs.google.com/forms/d/e/1FAIpQLSfBW8Dj47DlKvgdTu2EHHeQpTrCeBlJP0yu_lbuDPC4gn-8fA/viewform?vc=0&c=0&w=1&flr=0" },
 ];
 
 export default function StudentLinks() {

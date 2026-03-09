@@ -20,19 +20,19 @@ import Footer from '../components/Footer';
 
 const linkData = [
   { title: "ระบบเพื่องานทะเบียนนักศึกษา", icon: <Users className="text-rose-500" />, url: "https://reg.kmutnb.ac.th/" },
-  { title: "สหกรณ์ออมทรัพย์", icon: <Wallet className="text-purple-500" />, url: "https://www.coop.kmutnb.ac.th/" },
-  { title: "ระบบเพื่อรายงานข้อมูลและสถิตินักศึกษา", icon: <BarChart3 className="text-blue-500" />, url: "https://mis.kmutnb.ac.th/" },
-  { title: "Microsoft Azure Dev Tool for Teaching", icon: <Monitor className="text-orange-500" />, url: "https://azureforeducation.microsoft.com/" },
-  { title: "KMUTNB Online Learning", icon: <MonitorPlay className="text-amber-500" />, url: "https://moodle.kmutnb.ac.th/" },
-  { title: "บริการซอฟต์แวร์ลิขสิทธิ์", icon: <ShieldCheck className="text-emerald-500" />, url: "https://icit.kmutnb.ac.th/services/software-license/" },
-  { title: "ระบบบริหารลูกหนี้เงินยืม", icon: <Landmark className="text-teal-600" />, url: "https://finance.kmutnb.ac.th/" },
-  { title: "ระบบเบิกเงินสวัสดิการเกี่ยวกับการรักษาพยาบาล", icon: <HeartPulse className="text-cyan-600" />, url: "https://hris.kmutnb.ac.th/" },
-  { title: "ระบบสวัสดิการเกี่ยวกับการศึกษาของบุตร", icon: <GraduationCap className="text-pink-500" />, url: "https://hris.kmutnb.ac.th/" },
-  { title: "ระบบสารสนเทศทรัพยากรมนุษย์ : Human Resources Information System (HRIS)", icon: <UserCog className="text-stone-500" />, url: "https://hris.kmutnb.ac.th/" },
-  { title: "ระบบลาออนไลน์", icon: <CalendarDays className="text-indigo-500" />, url: "https://hris.kmutnb.ac.th/" },
-  { title: "ระบบยื่นคำร้องสอนชดเชย", icon: <FileEdit className="text-orange-600" />, url: "https://acdserv.kmutnb.ac.th/" },
-  { title: "แบบฟอร์มขออนุมัติตัวบุคคลและค่าใช้จ่าย", icon: <FileSpreadsheet className="text-blue-700" />, url: "https://finance.kmutnb.ac.th/" },
-  { title: "ระบบส่งเอกสาร OBE และ IDP", icon: <ClipboardCheck className="text-orange-500" />, url: "https://obe.kmutnb.ac.th/" }
+  { title: "สหกรณ์ออมทรัพย์", icon: <Wallet className="text-purple-500" />, url: "https://www.ppn-scc.com/" },
+  { title: "ระบบเพื่อรายงานข้อมูลและสถิตินักศึกษา", icon: <BarChart3 className="text-blue-500" />, url: "https://ureport.kmutnb.ac.th/" },
+  { title: "Microsoft Azure Dev Tool for Teaching", icon: <Monitor className="text-orange-500" />, url: "https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize?client_id=8e0e8db5-b713-4e91-98e6-470fed0aa4c2&response_type=code%20id_token&scope=openid%20profile&state=OpenIdConnect.AuthenticationProperties%3D4_ygztJC8Cgpcw9_yX7Ac4k0WHB31OE7EW_WrRVASPjbUNyI679kYPMOhBTNc2nIMOtSIzrvhv2sjhfS9OzjxZUSJHxuMyfKXciyUPIBFqGw-vlxWj0rRs2V_jVf6eKN20oEZ-v--ZaSACYltUGLtMVJIEDeAEFptP0Vi5KMTwLKF-h5XFzS4frHjkRf-5t9&response_mode=form_post&nonce=639086171108057923.ZDMwZjllNmUtNDNhZC00YTRkLTgwNjktY2UyYjdkNjYxYTA3YjZjZTdkMTUtZTNkNC00NzYxLWIzZjktYTM5NDEwN2FhMmZi&redirect_uri=https%3A%2F%2Fsignup.azure.com%2Fapi%2Fuser%2Flogin&max_age=86400&post_logout_redirect_uri=https%3A%2F%2Fsignup.azure.com%2Fstudentverification%3FofferType%3D1&x-client-SKU=ID_NET472&x-client-ver=8.3.0.0&sso_reload=true" },
+  { title: "KMUTNB Online Learning", icon: <MonitorPlay className="text-amber-500" />, url: "https://www.kmutnb.ac.th/kmutnb-online-learning.aspx" },
+  { title: "บริการซอฟต์แวร์ลิขสิทธิ์", icon: <ShieldCheck className="text-emerald-500" />, url: "https://software.kmutnb.ac.th/" },
+  { title: "ระบบบริหารลูกหนี้เงินยืม", icon: <Landmark className="text-teal-600" />, url: "http://loan.kmutnb.ac.th/" },
+  { title: "ระบบเบิกเงินสวัสดิการเกี่ยวกับการรักษาพยาบาล", icon: <HeartPulse className="text-cyan-600" />, url: "https://medical.kmutnb.ac.th/index.php?r=site%2Flogin" },
+  { title: "ระบบสวัสดิการเกี่ยวกับการศึกษาของบุตร", icon: <GraduationCap className="text-pink-500" />, url: "https://edufee.kmutnb.ac.th/" },
+  { title: "ระบบสารสนเทศทรัพยากรมนุษย์ : Human Resources Information System (HRIS)", icon: <UserCog className="text-stone-500" />, url: "https://hris.kmutnb.ac.th/web/site/contact" },
+  { title: "ระบบลาออนไลน์", icon: <CalendarDays className="text-indigo-500" />, url: "https://pls.kmutnb.ac.th/site/login" },
+  { title: "ระบบยื่นคำร้องสอนชดเชย", icon: <FileEdit className="text-orange-600" />, url: "https://reservation.sci.kmutnb.ac.th/auth/login" },
+  { title: "แบบฟอร์มขออนุมัติตัวบุคคลและค่าใช้จ่าย", icon: <FileSpreadsheet className="text-blue-700" />, url: "https://docs.google.com/forms/d/e/1FAIpQLSfu4s3T6sO2XLPKsKOtEDga00z01cg2W5FzxsnAJZGY6pphUw/viewform" },
+  { title: "ระบบส่งเอกสาร OBE และ IDP", icon: <ClipboardCheck className="text-orange-500" />, url: "https://cs.kmutnb.ac.th/login.jsp" }
 ];
 
 export default function PersonnelLinks() {
