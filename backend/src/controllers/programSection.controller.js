@@ -1,4 +1,5 @@
 import { prisma } from "../lib/prisma.js";
+import { XMLParser } from "fast-xml-parser";
 
 export const getSectionById = async (req, res) => {
 
@@ -24,47 +25,67 @@ export const getSectionById = async (req, res) => {
 
 export const searchCourses = async (req, res) => {
     try {
-        // รับค่า year มาด้วย (ถ้ามี)
         const { keyword, year } = req.query;
+        if (!keyword) return res.json([]);
 
-        if (!keyword) {
-            return res.json([]);
-        }
-
-        // 💡 สร้างเงื่อนไขการค้นหา
-        let whereCondition = {
-            content: {
-                contains: String(keyword)
-            }
-        };
-
-        // ถ้ามีการเลือกปีจากหน้าเว็บ ให้เจาะจงค้นหาเฉพาะปีนั้น
+        let whereCondition = { xml_data: { not: null } }; // ดึงเฉพาะอันที่มี XML
         if (year) {
-            whereCondition.version = {
-                year: parseInt(year)
-            };
+            whereCondition.version = { year: parseInt(year) };
         }
 
-        const results = await prisma.program_sections.findMany({
-            where: whereCondition, // ใช้เงื่อนไขที่สร้างไว้
+        const dbResults = await prisma.program_sections.findMany({
+            where: whereCondition,
             select: {
                 id: true,
                 title: true,
-                content: true,
                 pdf_path: true,
-                version: { 
-                    select: { year: true }
-                }
-            },
-            orderBy: {
-                 version: { year: 'desc' }
+                xml_data: true, // ดึง XML ก้อนนี้มา
+                version: { select: { year: true } }
             }
         });
 
-        res.json(results);
+        const parser = new XMLParser();
+        let finalResults = [];
+
+        dbResults.forEach((section) => {
+            // 💡 1. แปลง XML กลับมาเป็น Object ที่ใช้งานง่าย
+            const jsonObj = parser.parse(section.xml_data);
+            
+            // เข้าถึงรายวิชา (เช็กกรณีที่มีวิชาเดียว หรือหลายวิชา)
+            let courses = jsonObj.curriculum?.course;
+            if (!courses) return;
+            if (!Array.isArray(courses)) courses = [courses];
+
+            // 💡 2. กรองหาคำที่ต้องการอย่างแม่นยำ!
+            courses.forEach(course => {
+                const searchKeyword = keyword.toLowerCase();
+                
+                // ค้นหาเฉพาะใน ชื่อวิชา, รหัสวิชา หรือ คำอธิบาย เท่านั้น (ไม่มั่วไปเจอสารบัญ)
+                const isMatch = 
+                    String(course.course_code).includes(searchKeyword) ||
+                    String(course.title_th).toLowerCase().includes(searchKeyword) ||
+                    String(course.description).toLowerCase().includes(searchKeyword);
+
+                if (isMatch) {
+                    finalResults.push({
+                        id: section.id,
+                        code: String(course.course_code),
+                        year: section.version?.year || "ไม่ระบุปี",
+                        titleTH: String(course.title_th),
+                        titleEN: course.title_en ? String(course.title_en) : "",
+                        credit: String(course.credit),
+                        prerequisite: String(course.prerequisite),
+                        descriptionTH: String(course.description),
+                        pdf_path: section.pdf_path,
+                    });
+                }
+            });
+        });
+
+        res.json(finalResults);
         
     } catch (error) {
-        console.error("💥 Prisma Error Details:\n", error.message);
-        res.status(500).json({ error: "Prisma Validation Failed", details: error.message });
+        console.error("XML Search Error:", error);
+        res.status(500).json({ error: "Search Failed", details: error.message });
     }
 };
