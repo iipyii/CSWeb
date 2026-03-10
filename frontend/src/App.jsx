@@ -30,6 +30,7 @@ import StudentProjects from './pages/StudentProjects';
 import ProjectDetail from './pages/ProjectDetail';
 import ConsultStudent from './pages/ConsultStudent';
 import ConsultDetail from './pages/ConsultDetail';
+
 import Internship from './pages/Internship';
 import SubjectCourses from './pages/SubjectCourses';
 import SubjectDetail from './pages/SubjectDetail';

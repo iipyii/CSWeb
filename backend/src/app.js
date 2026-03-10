@@ -52,7 +52,7 @@ app.use("/auth", authRoutes);
 app.use("/api/staff", staffRoutes);
 app.use("/api/programs", programRoutes)
 app.use("/api/program-sections", programSectionRoutes)
-app.use("/api", consultRoutes);
+app.use("/api/consult", consultRoutes);
 app.use("/api/internships", internshipsRoutes);
 app.use("/api/courses", subjectcoursesRoutes);
 app.use("/api/search", searchRoutes);
