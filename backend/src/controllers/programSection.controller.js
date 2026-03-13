@@ -28,7 +28,8 @@ export const searchCourses = async (req, res) => {
         const { keyword, year } = req.query;
         if (!keyword) return res.json([]);
 
-        let whereCondition = { xml_data: { not: null } }; // ดึงเฉพาะอันที่มี XML
+        
+        let whereCondition = { xml_data: { not: null } };
         if (year) {
             whereCondition.version = { year: parseInt(year) };
         }
@@ -39,7 +40,7 @@ export const searchCourses = async (req, res) => {
                 id: true,
                 title: true,
                 pdf_path: true,
-                xml_data: true, // ดึง XML ก้อนนี้มา
+                xml_data: true,
                 version: { select: { year: true } }
             }
         });
@@ -48,40 +49,58 @@ export const searchCourses = async (req, res) => {
         let finalResults = [];
 
         dbResults.forEach((section) => {
-            // 💡 1. แปลง XML กลับมาเป็น Object ที่ใช้งานง่าย
-            const jsonObj = parser.parse(section.xml_data);
+            if (!section.xml_data) return;
             
-            // เข้าถึงรายวิชา (เช็กกรณีที่มีวิชาเดียว หรือหลายวิชา)
+            
+            const jsonObj = parser.parse(section.xml_data);
             let courses = jsonObj.curriculum?.course;
+            
             if (!courses) return;
-            if (!Array.isArray(courses)) courses = [courses];
+            if (!Array.isArray(courses)) courses = [courses]; 
 
-            // 💡 2. กรองหาคำที่ต้องการอย่างแม่นยำ!
+            
+            let degree = "bachelor-normal";
+            const lowerTitle = (section.title || "").toLowerCase();
+            if (lowerTitle.includes("csb") || lowerTitle.includes("english")) degree = "bachelor-inter";
+            else if (lowerTitle.includes("master") && lowerTitle.includes("se")) degree = "master-se";
+            else if (lowerTitle.includes("master")) degree = "master-cs";
+            else if (lowerTitle.includes("doctor")) degree = "doctor-cs";
+
+            
             courses.forEach(course => {
                 const searchKeyword = keyword.toLowerCase();
+                const code = String(course.course_code || "");
+                const titleTH = String(course.title_th || "").toLowerCase();
                 
-                // ค้นหาเฉพาะใน ชื่อวิชา, รหัสวิชา หรือ คำอธิบาย เท่านั้น (ไม่มั่วไปเจอสารบัญ)
-                const isMatch = 
-                    String(course.course_code).includes(searchKeyword) ||
-                    String(course.title_th).toLowerCase().includes(searchKeyword) ||
-                    String(course.description).toLowerCase().includes(searchKeyword);
+                const titleEN = String(course.title_en || "").toLowerCase(); 
+                const desc = String(course.description || "").toLowerCase();
 
-                if (isMatch) {
+                
+                if (
+                    code.includes(searchKeyword) || 
+                    titleTH.includes(searchKeyword) || 
+                    titleEN.includes(searchKeyword) || 
+                    desc.includes(searchKeyword)
+                ) {
                     finalResults.push({
                         id: section.id,
-                        code: String(course.course_code),
-                        year: section.version?.year || "ไม่ระบุปี",
-                        titleTH: String(course.title_th),
-                        titleEN: course.title_en ? String(course.title_en) : "",
-                        credit: String(course.credit),
-                        prerequisite: String(course.prerequisite),
-                        descriptionTH: String(course.description),
-                        pdf_path: section.pdf_path,
+                        code: code,
+                        year: section.version?.year?.toString() || "ไม่ระบุปี",
+                        degree: degree,
+                        titleTH: String(course.title_th || ""),
+                        titleEN: String(course.title_en || ""),
+                        credit: String(course.credit || "ไม่ระบุหน่วยกิต"),
+                        prerequisiteTH: String(course.prerequisite_th || "ไม่มี"),
+                        prerequisiteEN: String(course.prerequisite_en || "None"),
+                        descriptionTH: String(course.description_th || ""),
+                        descriptionEN: String(course.description_en || ""),
+                        pdf_path: section.pdf_path
                     });
                 }
             });
         });
 
+        
         res.json(finalResults);
         
     } catch (error) {

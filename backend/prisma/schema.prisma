@@ -230,3 +230,26 @@ model course_years {
 
   course_documents course_documents[]
 }
+
+model CourseKnowledge {
+  id          Int      @id @default(autoincrement())
+  course_code String
+  title_th    String
+  content     String   @db.Text 
+  embedding   Unsupported("vector(384)")? 
+}
+
+model GeneralKnowledge {
+  id          Int      @id @default(autoincrement())
+  category    String   // หมวดหมู่ เช่น "อาจารย์", "สถานที่", "ระเบียบการ", "ข่าวสาร"
+  topic       String   // หัวข้อ เช่น "ข้อมูลติดต่อ ผศ.ดร.สมชาย"
+  content     String   @db.Text // เนื้อหาเต็มๆ
+  embedding   Unsupported("vector(384)")? 
+}
+
+model TeacherKnowledge {
+  id          Int      @id @default(autoincrement())
+  name        String   // ชื่อ-นามสกุลอาจารย์
+  content     String   @db.Text // ข้อมูลรวมๆ (ความเชี่ยวชาญ, ห้องพัก, อีเมล)
+  embedding   Unsupported("vector(384)")? 
+}

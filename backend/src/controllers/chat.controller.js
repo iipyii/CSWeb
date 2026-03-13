@@ -18,64 +18,143 @@ export const chatWithAI = async (req, res) => {
       SELECT question, answer, 
              embedding <-> ${vectorString}::vector AS distance
       FROM faq
-      ORDER BY distance LIMIT 3
+      ORDER BY distance ASC
+      LIMIT 3
     `;
 
-    // 3. ค้นหาใน Program Sections (คำอธิบายรายวิชา)
-    // หมายเหตุ: ถ้าตาราง program_sections ยังไม่มีคอลัมน์ embedding 
-    // ให้ใช้การค้นหาแบบ LIKE (contains) ไปก่อนครับ เพื่อให้โชว์อาจารย์ได้ทันที
-    const courseResult = await prisma.program_sections.findMany({
-        where: {
-            content: { contains: message.substring(0, 10) } 
-        },
-        take: 3
+    // 3. 🎯 เปลี่ยนมาค้นหาใน CourseKnowledge ด้วย Vector (ฉลาดกว่าแบบเดิม 100 เท่า!)
+    const courseResult = await prisma.$queryRaw`
+      SELECT course_code, title_th, content,
+             embedding <=> ${vectorString}::vector AS distance
+      FROM "CourseKnowledge"
+      ORDER BY distance ASC
+      LIMIT 5
+    `;
+
+    const allLecturers = await prisma.lecturers.findMany({
+      select: { id: true, fullname_th: true }
     });
+
+    let exactMatchId = -1; // ตัวแปรเก็บ ID อาจารย์ถ้าหาเจอ
+
+    for (const t of allLecturers) {
+      if (!t.fullname_th) continue;
+
+      // ตัดยศและคำนำหน้าออกจากชื่อใน DB ให้เหลือแค่ชื่อเพียวๆ
+      // เช่น "รองศาสตราจารย์ ดร.เฉียบวุฒิ รัตนวิไลสกุล" -> จะเหลือ "เฉียบวุฒิ รัตนวิไลสกุล"
+      let cleanName = t.fullname_th.replace(/(รองศาสตราจารย์|ผู้ช่วยศาสตราจารย์|ศาสตราจารย์|ดร\.|อาจารย์|อ\.|นาย|นางสาว|นาง)\s*/g, '').trim();
+
+      // ตัดเอานามสกุลออก ให้เหลือแค่ "คำแรก" (ชื่อจริง) -> จะได้ "เฉียบวุฒิ"
+      let firstName = cleanName.split(/\s+/)[0];
+
+      // เช็กว่าข้อความที่ผู้ใช้พิมพ์มา มีชื่อจริงคนนี้โผล่มาไหม?
+      // เช่น พิมพ์ว่า "ขอเบอร์อาจารย์เฉียบวุฒิหน่อย" -> message.includes("เฉียบวุฒิ") จะเป็น TRUE ทันที!
+      if (firstName.length > 2 && message.includes(firstName)) {
+        exactMatchId = t.id;
+        break; // เจอเป้าหมายแล้ว หยุดหาเลย
+      }
+    }
+
+    // 3.2 สั่ง Database ดึงข้อมูล (Hybrid Search)
+    const teacherResult = await prisma.$queryRaw`
+      SELECT id, fullname_th, position_th, email, education_th, tel,
+             embedding <=> ${vectorString}::vector AS distance
+      FROM lecturers
+      WHERE embedding IS NOT NULL
+      ORDER BY 
+        -- ถ้ารหัสตรงกับคนที่จับชื่อได้ ให้เด้งขึ้นอันดับ 1 ทันที! (ต่อให้พิมพ์นามสกุลผิดก็หาเจอ)
+        CASE WHEN id = ${exactMatchId} THEN 0 ELSE 1 END,
+        distance ASC
+      LIMIT 3
+    `;
 
     // 4. มัดรวม Context
     let contextText = "";
 
-    // ใส่ข้อมูลจาก FAQ
-    faqResult.filter(row => row.distance < 0.8).forEach((faq) => {
+    // ใส่ข้อมูลจาก FAQ (คัดเฉพาะอันที่ระยะห่างน้อยกว่า 0.8 ถือว่าใกล้เคียง)
+    // faqResult.filter(row => row.distance < 0.8).forEach((faq) => {
+    //   contextText += `[FAQ] คำถาม: ${faq.question} | คำตอบ: ${faq.answer}\n`;
+    // });
+
+    // // 🎯 ใส่ข้อมูลจาก รายวิชา (คัดเฉพาะอันที่ความหมายใกล้เคียง)
+    // courseResult.filter(row => row.distance < 0.8).forEach((course) => {
+    //   contextText += `[รายวิชา] เนื้อหา: ${course.content}\n`;
+    // });
+
+    // // 🎯 ใส่อาจารย์
+    // teacherResult.filter(row => row.distance < 0.8).forEach((teacher) => {
+    //   contextText += `[ข้อมูลบุคลากร] ชื่อ: ${teacher.fullname_th}, ตำแหน่ง: ${teacher.position_th}, การศึกษา: ${teacher.education_th}, ติดต่อ: อีเมล ${teacher.email || '-'}, โทร ${teacher.tel || '-'}\n`;
+    // });
+
+    faqResult.forEach((faq) => {
       contextText += `[FAQ] คำถาม: ${faq.question} | คำตอบ: ${faq.answer}\n`;
     });
 
-    // ใส่ข้อมูลจาก รายวิชา
+    // 🎯 ใส่รายวิชา (เอา .filter ออก)
     courseResult.forEach((course) => {
-      contextText += `[หลักสูตร/วิชา] เนื้อหา: ${course.content}\n`;
+      contextText += `[รายวิชา] รหัส: ${course.course_code} ชื่อ: ${course.title_th} เนื้อหา: ${course.content}\n`;
     });
 
-    // 5. เตรียม Prompt (ใช้ gemini-1.5-flash จะประหยัดและเร็วกว่าครับ)
+    // 🎯 ใส่อาจารย์ (เอา .filter ออก)
+    teacherResult.forEach((teacher) => {
+      contextText += `[ข้อมูลบุคลากร/อาจารย์] ชื่อ: ${teacher.fullname_th}, ตำแหน่ง: ${teacher.position_th || 'ไม่ระบุ'}, การศึกษา: ${teacher.education_th || 'ไม่ระบุ'}, ติดต่อ: อีเมล ${teacher.email || '-'}, โทร ${teacher.tel || '-'}\n`;
+    });
+
+    // 5. เตรียม Prompt แบบรัดกุม
     const prompt = `
 คุณคือ "CS-AI Assistant" ผู้ช่วยอัจฉริยะของภาควิชาคอมพิวเตอร์และสารสนเทศ มจพ. (KMUTNB)
-จงตอบคำถามอย่างสุภาพ โดยใช้ข้อมูลอ้างอิงที่ให้มาเท่านั้น 
+จงตอบคำถามอย่างสุภาพ เป็นมิตร และอ่านง่าย โดยใช้ข้อมูลอ้างอิงที่ให้มาเท่านั้น 
+
+[ข้อมูลพื้นฐานของภาควิชา (ใช้ข้อมูลส่วนนี้ตอบคำถามเกี่ยวกับการติดต่อได้ทันที)]
+- ชื่อหน่วยงาน: ภาควิชาวิทยาการคอมพิวเตอร์และสารสนเทศ (CS) คณะวิทยาศาสตร์ประยุกต์ มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ (KMUTNB)
+- ที่อยู่: 1518 ถนนประชาราษฎร์ 1 แขวงวงศ์สว่าง เขตบางซื่อ กรุงเทพฯ 10800 (ชั้น 6 ตึก 78 คณะวิทยาศาสตร์ประยุกต์ มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ  )
+- เบอร์โทรศัพท์: 02-555-2000 ต่อ 4601, 4602 (ติดต่อได้ในเวลาราชการ)
+- เวลาทำการ: วันจันทร์ - ศุกร์ เวลา 08:30 - 16:30 น.
+- ช่องทางติดตามข่าวสาร: Facebook เพจ "CIS KMUTNB"
 
 กฎการตอบ:
-- ถ้าพบข้อมูลในข้อมูลอ้างอิง ให้สรุปคำตอบให้เข้าใจง่าย
-- ถ้าไม่พบข้อมูลให้ตอบว่า "ขออภัยครับ ผมยังไม่มีข้อมูลในส่วนนี้ คุณสามารถติดต่อสอบถามเพิ่มเติมได้ที่สำนักงานภาควิชาครับ"
-- ห้ามแต่งข้อมูลขึ้นมาเองเด็ดขาด
+- ถ้าผู้ใช้พิมพ์มาแค่ "ชื่ออาจารย์" หรือ "ชื่อวิชา" สั้นๆ ให้คุณดึงประวัติ/ข้อมูลของอาจารย์หรือวิชานั้นๆ มาสรุปแนะนำตัวให้ผู้ใช้อ่านได้เลย
+- ถ้าพบข้อมูล ให้สรุปคำตอบให้เข้าใจง่าย (สามารถใช้ Bullet point ได้)
+- ถ้าคำถามไม่เกี่ยวกับข้อมูลที่มีในอ้างอิง ให้ตอบว่า "ขออภัยครับ จากข้อมูลที่ผมมี ไม่พบข้อมูลในส่วนนี้ครับ..."
+- ห้ามมโนหรือแต่งข้อมูลขึ้นมาเองเด็ดขาด
 
-ข้อมูลอ้างอิง:
+ข้อมูลอ้างอิง (FAQ, รายวิชา, ข้อมูลอาจารย์):
 ${contextText || "ไม่พบข้อมูลที่เกี่ยวข้องในฐานข้อมูล"}
 
-คำถาม: ${message}
+คำถาม: "${message}"
 `;
 
-    // 6. ส่งหา Gemini API (ปรับ URL ให้เป็นรุ่นล่าสุด)
+    // 6. ส่งหา Gemini API (ใช้รุ่นล่าสุด gemini-2.5-flash)
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.3 }
         })
       }
     );
 
     const data = await response.json();
-    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "AI ไม่สามารถตอบได้ในขณะนี้";
 
-    res.json({ reply });
+    // 🚨 ดักจับ Error จาก Google
+    if (data.error) {
+      // เช็กว่าเป็น Error โควต้าเต็ม/ยิงรัวเกินไป (Rate Limit - Code 429) ใช่หรือไม่
+      if (data.error.code === 429 || data.error.message.includes("Quota exceeded")) {
+        return res.json({
+          reply: "⏳ ตอนนี้ระบบกำลังประมวลผลคำถามจำนวนมาก (ติดข้อจำกัด API ชั่วคราว) รบกวนรอประมาณ 10 วินาทีแล้วลองถามใหม่อีกครั้งนะครับ 🙏"
+        });
+      }
+
+      // ถ้าเป็น Error อื่นๆ
+      return res.json({ reply: `เกิดข้อผิดพลาดจากระบบ AI: ${data.error.message}` });
+    }
+
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "AI ไม่สามารถตอบได้ในขณะนี้";
+    // ส่งคำตอบกลับไปที่หน้าเว็บ (แอบแนบอ้างอิงกลับไปด้วยเผื่อ Frontend อยากใช้)
+    res.json({ reply, references: courseResult });
 
   } catch (error) {
     console.error("💥 Chat Error:", error);
@@ -83,9 +162,7 @@ ${contextText || "ไม่พบข้อมูลที่เกี่ยว�
   }
 };
 
-// ... โค้ด chatWithAI เดิมของคุณ ...
-
-// 👉 อย่าลืมเติม export นำหน้าฟังก์ชันนี้ครับ
+// 👉 ฟังก์ชันสำหรับอัปเดต FAQ Vector (ใช้ของเดิมได้เลยครับ)
 export const updateFaqVectors = async (req, res) => {
   try {
     console.log("⏳ เริ่มต้นอัปเดต Vector สำหรับ FAQ...");
