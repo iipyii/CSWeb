@@ -67,7 +67,65 @@ export const chatWithAI = async (req, res) => {
         distance ASC
       LIMIT 3
     `;
+    // 🎯 4. ฟีเจอร์พิเศษ: ค้นหาอาจารย์ที่ปรึกษาของนักศึกษา
+    // 🎯 4. ฟีเจอร์พิเศษ: ค้นหาอาจารย์ที่ปรึกษาของนักศึกษา (อัปเกรดความฉลาดขั้นสุด!)
+    let advisorContext = "";
 
+    // ดักจับว่าผู้ใช้กำลังถามหา "ที่ปรึกษา" อยู่หรือเปล่า?
+    if (message.includes("ที่ปรึกษา")) {
+
+      // 4.1 โหลดรายชื่อนักศึกษามาเพื่อทำ Smart Extraction (หาชื่อในประโยค)
+      const allStudents = await prisma.students.findMany({
+        select: { id: true, student_id: true, firstname: true, lastname: true }
+      });
+
+      let targetStudentId = null;
+
+      for (const st of allStudents) {
+        // ตัดช่องว่างหน้า-หลังทิ้ง เพื่อป้องกัน Database เก็บค่ามาเพี้ยน
+        const fname = st.firstname ? st.firstname.trim() : "";
+        const lname = st.lastname ? st.lastname.trim() : "";
+        const sid = st.student_id ? st.student_id.trim() : "";
+
+        // 🌟 เช็กแบบที่ 1: พิมพ์รหัสนักศึกษามาไหม? (แม่นยำ 100%)
+        if (sid && message.includes(sid)) {
+          targetStudentId = st.id;
+          break;
+        }
+
+        // 🌟 เช็กแบบที่ 2: พิมพ์มาทั้ง "ชื่อ + นามสกุล" ไหม? (แม่นยำ 100%)
+        if (fname && lname && message.includes(fname) && message.includes(lname)) {
+          targetStudentId = st.id;
+          break;
+        }
+
+        // 🌟 เช็กแบบที่ 3: พิมพ์แค่ "ชื่อจริง" ไหม? (เช็กเฉพาะชื่อที่ยาวเกิน 2 ตัวอักษร ป้องกันคำซ้ำ)
+        if (fname && fname.length > 2 && message.includes(fname)) {
+          targetStudentId = st.id;
+          // ไม่ใส่ break เผื่อลูปถัดไปเจอคนที่พิมพ์ทั้งชื่อและนามสกุลตรงกว่า
+        }
+      }
+
+      // 4.2 ถ้าสกัดหา ID นักศึกษาเจอแล้ว ค่อยให้ Database ดึงชื่ออาจารย์ออกมา!
+      if (targetStudentId) {
+        const studentInfo = await prisma.$queryRaw`
+                SELECT 
+                    s.student_id, s.firstname, s.lastname, 
+                    l.fullname_th AS advisor_name, l.email, l.tel, l.position_th
+                FROM students s
+                JOIN advisor_students asu ON s.id = asu."studentId"
+                JOIN advisors a ON a.id = asu."advisorId"
+                JOIN lecturers l ON l.id = a."lecturerId"
+                WHERE s.id = ${targetStudentId}
+                LIMIT 1;
+            `;
+
+        if (studentInfo && studentInfo.length > 0) {
+          const st = studentInfo[0];
+          advisorContext = `[ข้อมูลอาจารย์ที่ปรึกษา] นักศึกษาชื่อ ${st.firstname} ${st.lastname} (รหัสนักศึกษา: ${st.student_id}) มีอาจารย์ที่ปรึกษาคือ ${st.position_th || ''}${st.advisor_name} (ช่องทางติดต่อ: อีเมล ${st.email || '-'}, โทร ${st.tel || '-'}) \n`;
+        }
+      }
+    }
     // 4. มัดรวม Context
     let contextText = "";
 
@@ -85,6 +143,9 @@ export const chatWithAI = async (req, res) => {
     // teacherResult.filter(row => row.distance < 0.8).forEach((teacher) => {
     //   contextText += `[ข้อมูลบุคลากร] ชื่อ: ${teacher.fullname_th}, ตำแหน่ง: ${teacher.position_th}, การศึกษา: ${teacher.education_th}, ติดต่อ: อีเมล ${teacher.email || '-'}, โทร ${teacher.tel || '-'}\n`;
     // });
+    if (advisorContext) {
+      contextText += advisorContext + "\n";
+    }
 
     faqResult.forEach((faq) => {
       contextText += `[FAQ] คำถาม: ${faq.question} | คำตอบ: ${faq.answer}\n`;
