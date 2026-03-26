@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma.js";
 import { getLocalEmbedding } from "../services/embedding.service.js";
+import Fuse from 'fuse.js';
 
 export const chatWithAI = async (req, res) => {
   try {
@@ -27,10 +28,18 @@ export const chatWithAI = async (req, res) => {
       SELECT course_code, title_th, content,
              embedding <=> ${vectorString}::vector AS distance
       FROM "CourseKnowledge"
-      ORDER BY distance ASC
-      LIMIT 5
+      ORDER BY 
+        -- ล็อกเป้า! ถ้า "ชื่อวิชา" หรือ "รหัสวิชา" ไปซ่อนอยู่ในประโยคที่คนพิมพ์มา ให้เด้งขึ้นอันดับ 1 ทันที
+        CASE 
+          WHEN LENGTH(title_th) > 3 AND ${message} LIKE '%' || title_th || '%' THEN 0 
+          WHEN ${message} LIKE '%' || course_code || '%' THEN 0
+          ELSE 1 
+        END,
+        distance ASC
+      LIMIT 10
     `;
 
+    console.log("🔍 วิชาที่ดึงมาได้ (อัปเกรด Hybrid แล้ว):", courseResult.map(c => c.title_th));
     const allLecturers = await prisma.lecturers.findMany({
       select: { id: true, fullname_th: true }
     });
@@ -152,9 +161,11 @@ export const chatWithAI = async (req, res) => {
     });
 
     // 🎯 ใส่รายวิชา (เอา .filter ออก)
-    courseResult.forEach((course) => {
-      contextText += `[รายวิชา] รหัส: ${course.course_code} ชื่อ: ${course.title_th} เนื้อหา: ${course.content}\n`;
-    });
+    if (courseResult && courseResult.length > 0) {
+      courseResult.forEach((course) => {
+        contextText += `[รายวิชา] รหัส: ${course.course_code} ชื่อ: ${course.title_th} เนื้อหา: ${course.content}\n`;
+      });
+    }
 
     // 🎯 ใส่อาจารย์ (เอา .filter ออก)
     teacherResult.forEach((teacher) => {
