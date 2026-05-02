@@ -27,6 +27,7 @@ model lecturers {
   research_publications research_publications[]
   embedding             Unsupported("vector")?
   advisors              advisors[]
+  projects              projects[]
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -49,6 +50,10 @@ model news {
   category   String    @db.VarChar(100)
   status     String    @default("active") @db.VarChar(20)
   image      String?
+
+  additional_images String[] // เก็บรายชื่อไฟล์รูปภาพเพิ่มเติม
+  attachments       String[] // เก็บรายชื่อไฟล์เอกสารแนบ
+  
   slug       String?   @unique
   start_date DateTime?  @db.Date
   end_date   DateTime? @db.Date
@@ -184,6 +189,8 @@ model students {
   firstname  String
   lastname   String
   room       String?
+  year       Int?     // ชั้นปี หรือ ปีการศึกษาที่เข้าเรียน
+  projects   projects[]
 
   advisor_students advisor_students[]
 
@@ -252,4 +259,42 @@ model TeacherKnowledge {
   name        String   // ชื่อ-นามสกุลอาจารย์
   content     String   @db.Text // ข้อมูลรวมๆ (ความเชี่ยวชาญ, ห้องพัก, อีเมล)
   embedding   Unsupported("vector(384)")? 
+}
+
+model banners {
+  id         Int      @id @default(autoincrement())
+  title      String?  @db.VarChar(255)
+  image_path String   @db.Text
+  link_url   String?  @db.Text
+  is_active  Boolean  @default(true)
+  order_no   Int      @default(0)
+  created_at DateTime @default(now()) @db.Timestamp(6)
+}
+
+model site_config {
+  id           Int      @id @default(autoincrement())
+  config_key   String   @unique @db.VarChar(100) // เช่น "site_logo", "site_name"
+  config_value String   @db.Text
+  description  String?  @db.VarChar(255)
+  updated_at   DateTime @updatedAt
+}
+
+model projects {
+  id           Int      @id @default(autoincrement())
+  title_th     String   @db.VarChar(255)
+  title_en     String?  @db.VarChar(255)
+  abstract     String?  @db.Text
+  year         Int?     // ปีการศึกษาที่ทำโปรเจกต์
+  image_path   String?  @db.Text
+  document_url String?  @db.Text // ลิงก์ไฟล์เล่มปริญญานิพนธ์
+  github_url   String?  @db.Text // ลิงก์ Source Code (ถ้ามี)
+  
+  student_id   Int?
+  advisor_id   Int?
+  
+  created_at   DateTime @default(now()) @db.Timestamp(6)
+
+  // ความสัมพันธ์
+  student      students?  @relation(fields: [student_id], references: [id])
+  advisor      lecturers? @relation(fields: [advisor_id], references: [id])
 }

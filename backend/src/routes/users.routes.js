@@ -1,9 +1,9 @@
 import express from "express";
-import { getAllUsers } from "../controllers/users.controller.js";
-import { checkRole } from "../middlewares/role.middleware.js";
+import { getAllUsers, updateUserRole } from "../controllers/users.controller.js";
 
 const router = express.Router();
 
-router.get("/", checkRole(["admin"]), getAllUsers);
+router.get("/", getAllUsers);
+router.put("/:id/role", updateUserRole); // เปลี่ยน Role
 
 export default router;

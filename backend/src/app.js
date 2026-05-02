@@ -16,6 +16,10 @@ import consultRoutes from "./routes/consult.routes.js";
 import internshipsRoutes from "./routes/internships.routes.js";
 import subjectcoursesRoutes from "./routes/subjectcourses.routes.js";
 import searchRoutes from "./routes/search.routes.js";
+import appearanceRoutes from './routes/appearance.routes.js';
+import projectsRoutes from './routes/projects.routes.js';
+import curriculumRoutes from './routes/curriculum.routes.js';
+
 
 const app = express();
 
@@ -57,5 +61,9 @@ app.use("/api/internships", internshipsRoutes);
 app.use("/api/courses", subjectcoursesRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/downloads", express.static("uploads/downloads"));
+app.use('/api/appearance', appearanceRoutes);
+app.use('/api/projects', projectsRoutes);
+app.use('/api/curriculum', curriculumRoutes);
+
 
 export default app;

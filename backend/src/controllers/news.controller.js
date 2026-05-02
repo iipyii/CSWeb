@@ -37,6 +37,19 @@ export const createNews = async (req, res) => {
   try {
     const { title, content, category, start_date, end_date } = req.body;
 
+    // 1. ดึงไฟล์รูปหน้าปก (ถ้ามี)
+    const imagePath = req.files?.['image'] ? `/uploads/${req.files['image'][0].filename}` : null;
+    
+    // 2. ดึงรูปเพิ่มเติม (จับมา map เป็น Array ของชื่อไฟล์)
+    const additionalImages = req.files?.['additional_images'] 
+      ? req.files['additional_images'].map(file => `/uploads/${file.filename}`) 
+      : [];
+
+    // 3. ดึงไฟล์เอกสาร (จับมา map เป็น Array ของชื่อไฟล์)
+    const attachments = req.files?.['attachments'] 
+      ? req.files['attachments'].map(file => `/uploads/${file.filename}`) 
+      : [];
+
     if (!title || !content) {
       return res.status(400).json({
         error: "Title and content are required",
@@ -48,12 +61,16 @@ export const createNews = async (req, res) => {
         title,
         content,
         category,
+        image: imagePath,
         status: "active",
+        additional_images: additionalImages, // 🌟 บันทึก Array รูปลง DB
+        attachments: attachments,            // 🌟 บันทึก Array เอกสารลง DB
         start_date: start_date ? new Date(start_date) : undefined,
         end_date: end_date ? new Date(end_date) : undefined,
         
         users: {
-          connect: { id: req.user.id }
+          // connect: { id: req.user.id }
+          connect: { id: 1 }
         }
         // created_by: req.user.id, // ต้องมี auth middleware ก่อน
       },
