@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; 
-import { 
-  Plus, Search, Edit3, Trash2, Archive, 
-  Clock, FileText, LayoutGrid 
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import {
+  Plus, Search, Edit3, Trash2, Archive,
+  Clock, FileText, LayoutGrid
 } from 'lucide-react';
 
 const categories = [
@@ -14,44 +15,80 @@ const categories = [
 ];
 
 export default function ManageNews() {
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('all');
   const [searchTerm, setSearchTerm] = useState("");
 
   // ✅ ใช้ useState เพื่อจัดการรายการข่าวให้หายไปเมื่อกดจัดเก็บ
-  const [newsList, setNewsList] = useState([
-    {
-      id: 1,
-      title: "ประกาศเรื่อง กำหนดการโครงงานพิเศษและปริญญานิพนธ์ ภาคการศึกษาที่ 1/2568",
-      date: "25 มิถุนายน 2568",
-      category: 'department',
-      categoryLabel: "ข่าวภาควิชาฯ",
-      image: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800",
-    },
-    {
-      id: 2,
-      title: "ประชาสัมพันธ์คณะศิลปศาสตร์ประยุกต์ จัดสอบ K-StEP TEST ครั้งที่ 2",
-      date: "9 กรกฎาคม 2568",
-      category: 'faculty',
-      categoryLabel: "ข่าวคณะและมหาวิทยาลัย",
-      image: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=800",
-    },
-    {
-      id: 3,
-      title: "เรื่อง การให้ทุนการศึกษา ปีการศึกษา 2568 โดยนักศึกษาในสังกัดคณะวิทยาศาสตร์",
-      date: "6 กรกฎาคม 2568",
-      category: 'scholarship',
-      categoryLabel: "ข่าวทุนการศึกษา",
-      image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=800",
-    }
-  ]);
+  const [newsList, setNewsList] = useState([]);
 
-  // 🛠️ ฟังก์ชันจัดเก็บข่าว (กรองข่าวที่ถูกเลือกออกจากหน้าจอ)
-  const handleArchive = (id) => {
-    // ในแอปจริง ตรงนี้ต้องส่ง API ไปอัปเดต Status ใน Database เป็น 'archived'
-    const updatedList = newsList.filter(item => item.id !== id);
-    setNewsList(updatedList);
-    // คุณสามารถเพิ่ม Toast Notification แจ้งเตือนว่า "ย้ายไปคลังข่าวแล้ว" ได้ตรงนี้
+  const fetchNews = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/news/all");
+      const getCategoryLabel = (cat) => {
+        const labels = {
+          'department': 'ข่าวภาควิชาฯ',
+          'faculty': 'ข่าวคณะและมหาวิทยาลัย',
+          'scholarship': 'ข่าวทุนการศึกษา',
+          'recruitment': 'ข่าวรับสมัครงาน-ประชาสัมพันธ์'
+        };
+        return labels[cat] || 'ข่าวสารทั่วไป';
+      };
+
+      // กรองและแปลงร่างข้อมูล
+      const activeNews = res.data
+        .filter(item => item.status === 'active') // คัดเฉพาะข่าวที่ Active
+        .map(item => ({
+          id: item.id,
+          title: item.title,
+          category: item.category || 'department',
+          categoryLabel: getCategoryLabel(item.category),
+
+          // แปลงวันที่จาก DB ให้เป็นรูปแบบไทย (เช่น 2 พฤษภาคม 2569)
+          date: new Date(item.created_at).toLocaleDateString('th-TH', {
+            year: 'numeric', month: 'long', day: 'numeric'
+          }),
+
+          // ดักจับรูปภาพ (ตอนนี้ในหน้า Create เรายังไม่ได้ทำอัปโหลดรูป ให้ใส่รูปจำลองแทนไปก่อน)
+          image: item.image || "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800"
+        }));
+
+      // เอาข้อมูลที่สวยงามแล้วไปเก็บใน State เพื่อให้หน้าเว็บแสดงผล
+      setNewsList(activeNews);
+
+    } catch (error) {
+      console.error("Error fetching news:", error);
+    }
+  };
+
+  // 🟢 2. ให้ดึงข้อมูลทันทีที่เปิดหน้านี้ขึ้นมา
+  useEffect(() => {
+    fetchNews();
+  }, []);
+
+  // 🟢 3. อัปเดตฟังก์ชันจัดเก็บข่าว (Archive) ให้ยิง API ไปแก้ Status
+  const handleArchive = async (id) => {
+    if (window.confirm("ต้องการจัดเก็บข่าวนี้ลงคลังใช่หรือไม่?")) {
+      try {
+        await axios.put(`http://localhost:5000/api/news/${id}`, { status: 'archived' });
+        fetchNews(); // โหลดข้อมูลใหม่เพื่อให้ข่าวหายไปจากหน้าจอ
+        alert("ย้ายไปคลังข่าวสำเร็จ");
+      } catch (error) {
+        alert("เกิดข้อผิดพลาดในการจัดเก็บ");
+      }
+    }
+  };
+
+  // 🟢 4. อัปเดตฟังก์ชันลบข่าวถาวร
+  const handleDelete = async (id) => {
+    if (window.confirm("คุณต้องการลบข่าวนี้ทิ้งถาวรใช่หรือไม่? (ไม่สามารถกู้คืนได้)")) {
+      try {
+        await axios.delete(`http://localhost:5000/api/news/${id}`);
+        fetchNews(); // โหลดข้อมูลใหม่
+      } catch (error) {
+        alert("เกิดข้อผิดพลาดในการลบ");
+      }
+    }
   };
 
   const filteredNews = newsList.filter(item => {
@@ -62,15 +99,15 @@ export default function ManageNews() {
 
   return (
     <div className="font-['Prompt'] space-y-8 pb-20">
-      
+
       {/* 🚀 Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="text-left">
           <h1 className="text-3xl font-black text-slate-800 tracking-tight">จัดการข่าวสาร</h1>
           <p className="text-slate-400 text-sm font-medium mt-1">แยกหมวดหมู่และจัดการเนื้อหาข่าวสารภาควิชา CIS</p>
         </div>
-        <button 
-          onClick={() => navigate('/admin/news/create')} 
+        <button
+          onClick={() => navigate('/admin/news/create')}
           className="bg-[#3F51B5] text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-2 hover:bg-[#1A1D2E] transition-all shadow-xl shadow-indigo-100 active:scale-95"
         >
           <Plus size={20} />
@@ -84,11 +121,10 @@ export default function ManageNews() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold whitespace-nowrap transition-all ${
-              activeTab === tab.id 
-              ? 'bg-[#3F51B5] text-white shadow-lg' 
+            className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold whitespace-nowrap transition-all ${activeTab === tab.id
+              ? 'bg-[#3F51B5] text-white shadow-lg'
               : 'bg-white text-slate-400 hover:bg-slate-50 border border-slate-100'
-            }`}
+              }`}
           >
             {tab.icon}
             {tab.label}
@@ -100,8 +136,8 @@ export default function ManageNews() {
       <div className="bg-white p-4 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col md:flex-row gap-4 items-center">
         <div className="relative flex-1 w-full text-left">
           <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-          <input 
-            type="text" 
+          <input
+            type="text"
             placeholder="ค้นหาชื่อข่าวหรือหัวข้อ..."
             className="w-full bg-slate-50 border-none rounded-[1.5rem] py-4 pl-16 pr-5 text-sm outline-none focus:ring-2 focus:ring-[#3F51B5]/10 transition-all font-medium"
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -132,20 +168,22 @@ export default function ManageNews() {
               <h3 className="text-xl font-black text-slate-800 leading-tight mb-6 line-clamp-2">
                 {item.title}
               </h3>
-              
+
               <div className="mt-auto pt-6 border-t border-slate-50 flex flex-col gap-3">
-                <button 
-                  onClick={() => navigate(`/admin/news/edit/${item.id}`)} 
+                <button
+                  onClick={() => navigate(`/admin/news/edit/${item.id}`)}
                   className="w-full flex items-center justify-center gap-2 py-4 bg-indigo-50 text-[#3F51B5] rounded-2xl text-xs font-black hover:bg-[#3F51B5] hover:text-white transition-all shadow-sm"
                 >
                   <Edit3 size={16} /> แก้ไขเนื้อหา
                 </button>
                 <div className="flex gap-3">
-                  <button className="flex-1 flex items-center justify-center gap-2 py-3 bg-rose-50 text-rose-500 rounded-2xl text-[10px] font-black hover:bg-rose-500 hover:text-white transition-all">
+                  <button
+                    onClick={() => handleDelete(item.id)}
+                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-rose-50 text-rose-500 rounded-2xl text-[10px] font-black hover:bg-rose-500 hover:text-white transition-all">
                     <Trash2 size={14} /> ลบ
                   </button>
                   {/* ✅ ปุ่มจัดเก็บ: กดแล้วเรียก handleArchive เพื่อให้ข่าวหายไปจากหน้านี้ */}
-                  <button 
+                  <button
                     onClick={() => handleArchive(item.id)}
                     className="flex-1 flex items-center justify-center gap-2 py-3 bg-white text-slate-400 border border-slate-100 rounded-2xl text-[10px] font-black hover:bg-slate-50 hover:text-slate-600 transition-all shadow-sm"
                   >

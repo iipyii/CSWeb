@@ -15,6 +15,10 @@ export default function CreateNews() {
   const [category, setCategory] = useState("department");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [coverImage, setCoverImage] = useState(null); // เก็บไฟล์รูป
+  const [imagePreview, setImagePreview] = useState(null); // เก็บ URL สำหรับโชว์พรีวิว
+  const [extraImages, setExtraImages] = useState([]); 
+  const [extraPreviews, setExtraPreviews] = useState([]);
   const editor = useEditor({
     extensions: [StarterKit],
     content: '<p>พิมพ์รายละเอียดข่าวสารที่นี่...</p>',
@@ -29,21 +33,55 @@ export default function CreateNews() {
     try {
 
       const content = editor?.getHTML();
+      // 🌟 สร้างกล่องพัสดุ FormData
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("content", content);
+      formData.append("category", category);
+      formData.append("start_date", startDate);
+      formData.append("end_date", endDate);
 
-      const res = await axios.post("http://localhost:5000/api/news", {
-        title: title,
-        content: content,
-        category: category,
-        start_date: startDate,
-        end_date: endDate
+      // ถ้ามีการเลือกรูปภาพ ให้แนบไปด้วย
+      if (coverImage) {
+        formData.append("image", coverImage);
+      }
+      extraImages.forEach((file) => {
+        formData.append("additional_images", file);
       });
 
+      // 🌟 ส่งแบบ multipart/form-data
+      const res = await axios.post("http://localhost:5000/api/news", formData); 
+      
+
       alert("สร้างข่าวสำเร็จ");
+      navigate('/admin/news');
 
     } catch (error) {
       console.error(error);
       alert("เกิดข้อผิดพลาด");
     }
+  };
+
+  const handleExtraImagesChange = (e) => {
+    // ดึงไฟล์ทั้งหมดที่ User เลือก
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      // เช็กว่าถ้ารวมกับของเดิมแล้วเกิน 5 รูปไหม
+      if (extraImages.length + files.length > 5) {
+         alert("อัปโหลดรูปเพิ่มเติมได้สูงสุด 5 รูปครับ");
+         return;
+      }
+      setExtraImages(prev => [...prev, ...files]);
+      
+      // สร้าง URL สำหรับโชว์พรีวิว
+      const newPreviews = files.map(file => URL.createObjectURL(file));
+      setExtraPreviews(prev => [...prev, ...newPreviews]);
+    }
+  };
+
+  const removeExtraImage = (index) => {
+    setExtraImages(prev => prev.filter((_, i) => i !== index));
+    setExtraPreviews(prev => prev.filter((_, i) => i !== index));
   };
 
 
@@ -111,20 +149,49 @@ export default function CreateNews() {
             <EditorContent editor={editor} />
           </div>
 
-          {/* 🖼️ รูปภาพเพิ่มเติม (แก้ไขรายละเอียดประเภทไฟล์) */}
+          {/* 🖼️ รูปภาพเพิ่มเติม */}
           <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm">
             <h2 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-3">
               <ImageIcon className="text-[#3F51B5]" size={22} /> รูปภาพเพิ่มเติม
             </h2>
+            
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="aspect-square bg-slate-50 rounded-3xl border-2 border-dashed border-slate-100 flex flex-col items-center justify-center text-slate-300 hover:border-[#3F51B5]/20 hover:bg-indigo-50 transition-all cursor-pointer group">
-                <Plus size={24} className="group-hover:text-[#3F51B5] mb-1" />
-                <span className="text-[10px] font-bold">เพิ่มรูปภาพ</span>
-              </div>
+              
+              {/* 1. ลูปโชว์รูปที่เลือกมาแล้ว */}
+              {extraPreviews.map((preview, index) => (
+                <div key={index} className="relative aspect-square rounded-3xl overflow-hidden group border border-slate-100 shadow-sm">
+                  <img src={preview} alt={`preview-${index}`} className="w-full h-full object-cover" />
+                  <button 
+                    onClick={() => removeExtraImage(index)}
+                    className="absolute top-2 right-2 p-1.5 bg-rose-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X size={12}/>
+                  </button>
+                </div>
+              ))}
+
+              {/* 2. ปุ่มเพิ่มรูป (จะซ่อนถ้าเลือกครบ 5 รูปแล้ว) */}
+              {extraImages.length < 5 && (
+                <>
+                  <input 
+                    type="file" 
+                    id="extra-images-upload" 
+                    multiple 
+                    accept="image/png, image/jpeg, image/jpg"
+                    className="hidden" 
+                    onChange={handleExtraImagesChange} 
+                  />
+                  <label htmlFor="extra-images-upload" className="aspect-square bg-slate-50 rounded-3xl border-2 border-dashed border-slate-100 flex flex-col items-center justify-center text-slate-300 hover:border-[#3F51B5]/20 hover:bg-indigo-50 transition-all cursor-pointer group">
+                    <Plus size={24} className="group-hover:text-[#3F51B5] mb-1" />
+                    <span className="text-[10px] font-bold">เพิ่มรูปภาพ</span>
+                  </label>
+                </>
+              )}
             </div>
+            
             <div className="flex items-center gap-2 mt-4 ml-2 text-slate-400">
               <AlertCircle size={14} />
-              <p className="text-[11px] font-medium">* รองรับไฟล์ประเภท <span className="font-bold text-slate-600">.png, .jpg, .jpeg</span> เท่านั้น</p>
+              <p className="text-[11px] font-medium">* รองรับไฟล์ประเภท <span className="font-bold text-slate-600">.png, .jpg, .jpeg</span> (สูงสุด 5 รูป)</p>
             </div>
           </div>
 
@@ -152,10 +219,40 @@ export default function CreateNews() {
           {/* รูปหน้าปกข่าว */}
           <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm">
             <h2 className="text-lg font-black text-slate-800 mb-4 tracking-tight">รูปหน้าปกข่าว</h2>
-            <div className="aspect-[4/3] bg-slate-50 rounded-[2rem] border border-slate-100 flex flex-col items-center justify-center text-slate-300 group hover:bg-slate-100 cursor-pointer transition-all overflow-hidden relative">
-              <ImageIcon size={48} className="mb-2" />
-              <p className="text-[10px] font-black uppercase tracking-widest text-center px-6">Upload Cover Image</p>
-            </div>
+
+            <input
+              type="file"
+              id="cover-upload"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files[0];
+                if (file) {
+                  setCoverImage(file);
+                  setImagePreview(URL.createObjectURL(file)); // สร้างพรีวิว
+                }
+              }}
+            />
+
+            <label htmlFor="cover-upload" className="block w-full cursor-pointer">
+              <div className="aspect-[4/3] bg-slate-50 rounded-[2rem] border border-slate-100 flex flex-col items-center justify-center text-slate-300 group hover:bg-slate-100 transition-all overflow-hidden relative">
+                {imagePreview ? (
+                  // ถ้ามีรูปแล้วให้โชว์รูป
+                  <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                ) : (
+                  // ถ้ายังไม่มีรูป ให้โชว์ไอคอนอัปโหลด
+                  <>
+                    <ImageIcon size={48} className="mb-2 group-hover:scale-110 transition-transform" />
+                    <p className="text-[10px] font-black uppercase tracking-widest text-center px-6">Upload Cover Image</p>
+                  </>
+                )}
+              </div>
+            </label>
+            {imagePreview && (
+              <p onClick={() => { setCoverImage(null); setImagePreview(null); }} className="text-center text-xs text-rose-500 font-bold mt-3 cursor-pointer hover:underline">
+                ลบรูปภาพ
+              </p>
+            )}
           </div>
 
           {/* ข้อมูลผู้เขียนและหมวดหมู่ */}
@@ -164,14 +261,15 @@ export default function CreateNews() {
               <label className="text-sm font-black text-slate-700 flex items-center gap-2">
                 <CheckCircle2 size={16} className="text-[#3F51B5]" /> หมวดหมู่ข่าว
               </label>
-              <select className="w-full bg-slate-50 border-none rounded-2xl py-3 px-4 text-xs font-bold text-slate-600 outline-none cursor-pointer focus:ring-1 focus:ring-indigo-100">
+              <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-
-                {/* <option value="department">ข่าวภาควิชาฯ</option>
+                className="w-full bg-slate-50 border-none rounded-2xl py-3 px-4 text-xs font-bold text-slate-600 outline-none cursor-pointer focus:ring-1 focus:ring-indigo-100"
+              >
+                <option value="department">ข่าวภาควิชาฯ</option>
                 <option value="faculty">ข่าวคณะและมหาวิทยาลัย</option>
                 <option value="scholarship">ข่าวทุนการศึกษา</option>
-                <option value="recruitment">ข่าวรับสมัครงาน</option> */}
+                <option value="recruitment">ข่าวรับสมัครงาน</option>
               </select>
             </div>
 
