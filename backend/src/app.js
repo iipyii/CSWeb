@@ -64,6 +64,7 @@ app.use("/downloads", express.static("uploads/downloads"));
 app.use('/api/appearance', appearanceRoutes);
 app.use('/api/projects', projectsRoutes);
 app.use('/api/curriculum', curriculumRoutes);
+app.use("/uploads", express.static(path.join(process.cwd(), "public/uploads")));
 
 
 export default app;

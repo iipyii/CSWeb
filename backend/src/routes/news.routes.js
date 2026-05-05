@@ -30,10 +30,14 @@ router.get("/category/:category", getNewsByCategory);
 
 router.get("/:id", getNewsById);
 
+router.put("/:id", upload.fields([
+  { name: 'image', maxCount: 1 },                // รูปหน้าปก (1 รูป)
+  { name: 'additional_images', maxCount: 5 },    // รูปเพิ่มเติม (สูงสุด 5 รูป)
+  { name: 'attachments', maxCount: 3 }           // เอกสารแนบ (สูงสุด 3 ไฟล์)
+]), updateNews);
 
-router.post("/", createNews);
-router.put("/:id", updateNews);
 router.delete("/:id", deleteNews);
+
 router.post("/", upload.fields([
   { name: 'image', maxCount: 1 },                // รูปหน้าปก (1 รูป)
   { name: 'additional_images', maxCount: 5 },    // รูปเพิ่มเติม (สูงสุด 5 รูป)
