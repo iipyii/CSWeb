@@ -49,8 +49,9 @@ export default function ManageNews() {
             year: 'numeric', month: 'long', day: 'numeric'
           }),
 
-          // ดักจับรูปภาพ (ตอนนี้ในหน้า Create เรายังไม่ได้ทำอัปโหลดรูป ให้ใส่รูปจำลองแทนไปก่อน)
-          image: item.image || "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800"
+          image: item.image 
+            ? `http://localhost:5000${item.image}` 
+            : "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800" 
         }));
 
       // เอาข้อมูลที่สวยงามแล้วไปเก็บใน State เพื่อให้หน้าเว็บแสดงผล

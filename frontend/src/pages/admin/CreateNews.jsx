@@ -17,8 +17,9 @@ export default function CreateNews() {
   const [endDate, setEndDate] = useState("");
   const [coverImage, setCoverImage] = useState(null); // เก็บไฟล์รูป
   const [imagePreview, setImagePreview] = useState(null); // เก็บ URL สำหรับโชว์พรีวิว
-  const [extraImages, setExtraImages] = useState([]); 
+  const [extraImages, setExtraImages] = useState([]);
   const [extraPreviews, setExtraPreviews] = useState([]);
+  const [attachments, setAttachments] = useState([]);
   const editor = useEditor({
     extensions: [StarterKit],
     content: '<p>พิมพ์รายละเอียดข่าวสารที่นี่...</p>',
@@ -40,7 +41,9 @@ export default function CreateNews() {
       formData.append("category", category);
       formData.append("start_date", startDate);
       formData.append("end_date", endDate);
-
+      attachments.forEach((file) => {
+        formData.append("attachments", file); // 🌟 ชื่อคำว่า "attachments" ต้องตรงกับที่ Backend รับด้วยนะครับ!
+      });
       // ถ้ามีการเลือกรูปภาพ ให้แนบไปด้วย
       if (coverImage) {
         formData.append("image", coverImage);
@@ -50,8 +53,8 @@ export default function CreateNews() {
       });
 
       // 🌟 ส่งแบบ multipart/form-data
-      const res = await axios.post("http://localhost:5000/api/news", formData); 
-      
+      const res = await axios.post("http://localhost:5000/api/news", formData);
+
 
       alert("สร้างข่าวสำเร็จ");
       navigate('/admin/news');
@@ -68,15 +71,31 @@ export default function CreateNews() {
     if (files.length > 0) {
       // เช็กว่าถ้ารวมกับของเดิมแล้วเกิน 5 รูปไหม
       if (extraImages.length + files.length > 5) {
-         alert("อัปโหลดรูปเพิ่มเติมได้สูงสุด 5 รูปครับ");
-         return;
+        alert("อัปโหลดรูปเพิ่มเติมได้สูงสุด 5 รูปครับ");
+        return;
       }
       setExtraImages(prev => [...prev, ...files]);
-      
+
       // สร้าง URL สำหรับโชว์พรีวิว
       const newPreviews = files.map(file => URL.createObjectURL(file));
       setExtraPreviews(prev => [...prev, ...newPreviews]);
     }
+  };
+
+  const handleAttachmentsChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      // ผมตั้งให้รับได้สูงสุด 3 ไฟล์ (ให้ตรงกับ Backend ที่ตั้งไว้ maxCount: 3)
+      if (attachments.length + files.length > 3) {
+        alert("อัปโหลดเอกสารแนบได้สูงสุด 3 ไฟล์");
+        return;
+      }
+      setAttachments(prev => [...prev, ...files]);
+    }
+  };
+
+  const removeAttachment = (index) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
   const removeExtraImage = (index) => {
@@ -154,18 +173,18 @@ export default function CreateNews() {
             <h2 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-3">
               <ImageIcon className="text-[#3F51B5]" size={22} /> รูปภาพเพิ่มเติม
             </h2>
-            
+
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              
+
               {/* 1. ลูปโชว์รูปที่เลือกมาแล้ว */}
               {extraPreviews.map((preview, index) => (
                 <div key={index} className="relative aspect-square rounded-3xl overflow-hidden group border border-slate-100 shadow-sm">
                   <img src={preview} alt={`preview-${index}`} className="w-full h-full object-cover" />
-                  <button 
+                  <button
                     onClick={() => removeExtraImage(index)}
                     className="absolute top-2 right-2 p-1.5 bg-rose-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    <X size={12}/>
+                    <X size={12} />
                   </button>
                 </div>
               ))}
@@ -173,13 +192,13 @@ export default function CreateNews() {
               {/* 2. ปุ่มเพิ่มรูป (จะซ่อนถ้าเลือกครบ 5 รูปแล้ว) */}
               {extraImages.length < 5 && (
                 <>
-                  <input 
-                    type="file" 
-                    id="extra-images-upload" 
-                    multiple 
+                  <input
+                    type="file"
+                    id="extra-images-upload"
+                    multiple
                     accept="image/png, image/jpeg, image/jpg"
-                    className="hidden" 
-                    onChange={handleExtraImagesChange} 
+                    className="hidden"
+                    onChange={handleExtraImagesChange}
                   />
                   <label htmlFor="extra-images-upload" className="aspect-square bg-slate-50 rounded-3xl border-2 border-dashed border-slate-100 flex flex-col items-center justify-center text-slate-300 hover:border-[#3F51B5]/20 hover:bg-indigo-50 transition-all cursor-pointer group">
                     <Plus size={24} className="group-hover:text-[#3F51B5] mb-1" />
@@ -188,7 +207,7 @@ export default function CreateNews() {
                 </>
               )}
             </div>
-            
+
             <div className="flex items-center gap-2 mt-4 ml-2 text-slate-400">
               <AlertCircle size={14} />
               <p className="text-[11px] font-medium">* รองรับไฟล์ประเภท <span className="font-bold text-slate-600">.png, .jpg, .jpeg</span> (สูงสุด 5 รูป)</p>
@@ -196,21 +215,54 @@ export default function CreateNews() {
           </div>
 
           {/* 📎 เอกสารแนบ (แก้ไขรายละเอียดประเภทไฟล์) */}
+          {/* 📎 เอกสารแนบ */}
           <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm">
             <h2 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-3">
               <FileText className="text-[#3F51B5]" size={22} /> เอกสารแนบ
             </h2>
-            <div className="border-2 border-dashed border-slate-100 rounded-[2rem] p-8 flex flex-col items-center justify-center text-center group hover:border-[#3F51B5]/20 transition-all cursor-pointer">
-              <div className="p-4 bg-slate-50 rounded-2xl text-slate-300 mb-3 group-hover:bg-indigo-50 group-hover:text-[#3F51B5] transition-all">
-                <Upload size={28} />
+
+            {/* แสดงรายการไฟล์ที่ถูกเลือกไว้แล้ว */}
+            {attachments.length > 0 && (
+              <div className="mb-6 space-y-2">
+                {attachments.map((file, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 group">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-indigo-100 text-[#3F51B5] rounded-lg"><FileText size={18} /></div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-slate-600 line-clamp-1">{file.name}</span>
+                        <span className="text-[10px] text-slate-400">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                      </div>
+                    </div>
+                    <button onClick={() => removeAttachment(index)} className="text-slate-300 hover:text-rose-500 transition-colors"><X size={18} /></button>
+                  </div>
+                ))}
               </div>
-              <p className="text-sm font-bold text-slate-500">คลิกเพื่ออัปโหลดไฟล์เอกสาร</p>
-              <div className="flex items-center gap-3 mt-2">
-                <span className="px-3 py-1 bg-red-50 text-red-500 rounded-lg text-[10px] font-bold">.PDF</span>
-                <span className="px-3 py-1 bg-blue-50 text-blue-500 rounded-lg text-[10px] font-bold">.DOC / .DOCX</span>
-              </div>
-              <p className="text-[10px] text-slate-300 mt-3 italic">* ขนาดไฟล์รวมไม่เกิน 10MB ต่อหนึ่งรายการ</p>
-            </div>
+            )}
+
+            {/* ปุ่มอัปโหลดไฟล์ (จะซ่อนถ้าเลือกครบ 3 ไฟล์แล้ว) */}
+            {attachments.length < 3 && (
+              <>
+                <input
+                  type="file"
+                  id="attachments-upload"
+                  multiple
+                  accept=".pdf,.doc,.docx"
+                  className="hidden"
+                  onChange={handleAttachmentsChange}
+                />
+                <label htmlFor="attachments-upload" className="border-2 border-dashed border-slate-100 rounded-[2rem] p-8 flex flex-col items-center justify-center text-center group hover:border-[#3F51B5]/20 transition-all cursor-pointer block w-full">
+                  <div className="p-4 bg-slate-50 rounded-2xl text-slate-300 mb-3 group-hover:bg-indigo-50 group-hover:text-[#3F51B5] transition-all">
+                    <Upload size={28} />
+                  </div>
+                  <p className="text-sm font-bold text-slate-500">คลิกเพื่ออัปโหลดไฟล์เอกสาร</p>
+                  <div className="flex items-center justify-center gap-3 mt-2">
+                    <span className="px-3 py-1 bg-red-50 text-red-500 rounded-lg text-[10px] font-bold">.PDF</span>
+                    <span className="px-3 py-1 bg-blue-50 text-blue-500 rounded-lg text-[10px] font-bold">.DOC / .DOCX</span>
+                  </div>
+                  <p className="text-[10px] text-slate-300 mt-3 italic">* ขนาดไฟล์รวมไม่เกิน 10MB (สูงสุด 3 ไฟล์)</p>
+                </label>
+              </>
+            )}
           </div>
         </div>
 

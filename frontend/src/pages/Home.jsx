@@ -1,16 +1,64 @@
-import React, { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom'; 
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import HeroSlider from '../components/HeroSlider';
 import Footer from '../components/Footer';
-import { Monitor, Calendar, Download, ClipboardCheck, ArrowRightCircle, Clock } from 'lucide-react';
+import {
+  Monitor,
+  Calendar,
+  Download,
+  ClipboardCheck,
+  ArrowRightCircle,
+  Clock,
+  AlertCircle
+} from 'lucide-react';
 
 // นำเข้าข้อมูลข่าวสารจากไฟล์ data (ตรวจสอบให้แน่ใจว่า path ถูกต้อง)
 import { newsData } from '../data/newsData';
 
 export default function Home() {
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
-  // 1. ข้อมูลปุ่มทางลัด (Quick Actions)
+  // 🌟 3. สร้าง State มารับข้อมูลข่าว
+  const [newsList, setNewsList] = useState([]);
+
+  // 🌟 4. ดึงข้อมูลข่าวสารจาก Backend ทันทีที่โหลดหน้าเว็บ
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/news");
+
+        // จัดการ URL รูปภาพ และ Format วันที่
+        const formattedNews = res.data
+          .filter(item => item.status === 'active') // เอาเฉพาะข่าวที่เปิดใช้งาน
+          .map(item => ({
+            id: item.id,
+            title: item.title,
+            isPinned: item.is_urgent, // ใช้สถานะด่วนเป็นตัวปักหมุด
+            image: item.image ? `http://localhost:5000${item.image}` : "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800",
+            date: new Date(item.created_at).toLocaleDateString('th-TH', {
+              year: 'numeric', month: 'long', day: 'numeric'
+            }),
+            tag: item.category === 'department' ? 'ข่าวภาควิชาฯ' :
+              item.category === 'faculty' ? 'ข่าวคณะฯ' :
+                item.category === 'scholarship' ? 'ข่าวทุนการศึกษา' : 'ข่าวรับสมัครงาน'
+          }))
+          .sort((a, b) => {
+            if (a.isPinned === b.isPinned) return 0;
+            return a.isPinned ? -1 : 1;
+          });
+
+        // ดึงมาโชว์หน้าแรกแค่ 3 ข่าว
+        setNewsList(formattedNews.slice(0, 3));
+      } catch (error) {
+        console.error("Error fetching homepage news:", error);
+      }
+    };
+
+    fetchNews();
+  }, []);
+
+  // ข้อมูลปุ่มทางลัด (Quick Actions)
   const actions = [
     { icon: <Monitor size={24} />, label: 'ระบบคำร้องออนไลน์', path: 'https://reg.kmutnb.ac.th/registrar/home', isExternal: true },
     { icon: <Calendar size={24} />, label: 'ปฏิทินการศึกษา', path: 'https://acdserv.kmutnb.ac.th/academic-calendar', isExternal: true },
@@ -18,7 +66,7 @@ export default function Home() {
     { icon: <ClipboardCheck size={24} />, label: 'ระบบประเมินอาจารย์', path: 'https://reg4.kmutnb.ac.th/registrar/home', isExternal: true },
   ];
 
-  // 2. ฟังก์ชันจัดการการคลิกปุ่มทางลัด
+  // ฟังก์ชันจัดการการคลิกปุ่มทางลัด
   const handleActionClick = (act) => {
     if (act.isExternal) {
       window.open(act.path, '_blank', 'noopener,noreferrer');
@@ -27,19 +75,8 @@ export default function Home() {
     }
   };
 
-  // 3. Logic การแสดงข่าวสารหน้าแรก (เหมือนหน้า News.jsx)
-  const highlightNews = useMemo(() => {
-    // กรองเฉพาะข่าวที่กำหนดว่าเป็นข่าวล่าสุด (isLatest: true)
-    const latestNews = newsData.filter(news => news.isLatest === true);
 
-    // เรียงลำดับ: ข่าวที่ปักหมุด (isPinned: true) จะถูกยกขึ้นอันดับแรกสุด
-    return [...latestNews].sort((a, b) => {
-      if (a.isPinned === b.isPinned) return 0;
-      return a.isPinned ? -1 : 1;
-    }).slice(0, 3); // แสดงเพียง 3 ข่าวสำคัญที่หน้าแรกเพื่อความสวยงาม
-  }, []);
-
-  // 4. ข้อมูลหลักสูตรแนะนำ
+  // ข้อมูลหลักสูตรแนะนำ
   const courses = [
     { id: 'cs-normal', level: 'bachelor', title: 'หลักสูตรวิทยาศาสตรบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์ (ปริญญาตรี ภาคปกติ)', enTitle: 'BACHELOR OF SCIENCE PROGRAM IN COMPUTER SCIENCE', date: 'มีนาคม 2564', image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80' },
     { id: 'cs-english', level: 'cs-english', title: 'หลักสูตรวิทยาศาสตรบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์ (ปริญญาตรี โครงการพิเศษ สองภาษา)', enTitle: 'BACHELOR OF SCIENCE PROGRAM IN COMPUTER SCIENCE', date: 'มีนาคม 2564', image: 'https://images.unsplash.com/photo-1684503830683-108f3e0fd03f?auto=format&fit=crop&w=800&q=80' },
@@ -54,12 +91,12 @@ export default function Home() {
 
       <div className="bg-white relative z-30 pb-24 shadow-sm">
         <div className="max-w-[1440px] mx-auto px-10">
-          
+
           {/* Quick Actions Bar */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-[60px] mb-24 max-w-[1000px] mx-auto relative z-40">
             {actions.map((act, i) => (
-              <div 
-                key={i} 
+              <div
+                key={i}
                 onClick={() => handleActionClick(act)}
                 className="bg-[#3F51B5] text-white py-7 px-4 rounded-2xl shadow-xl flex flex-col items-center justify-center cursor-pointer hover:-translate-y-2 hover:bg-[#2e3b8a] transition-all duration-300 group"
               >
@@ -79,7 +116,7 @@ export default function Home() {
               <div>
                 <h2 className="text-4xl font-bold text-[#1e293b] tracking-tight uppercase">ข่าวสาร CIS</h2>
               </div>
-              <button 
+              <button
                 onClick={() => navigate('/news')}
                 className="mt-4 md:mt-0 flex items-center text-[#3F51B5] font-bold hover:underline group"
               >
@@ -88,26 +125,35 @@ export default function Home() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
-              {highlightNews.length > 0 ? (
-                highlightNews.map((item) => (
-                  <div 
-                    key={item.id} 
+              {newsList.length > 0 ? (
+                newsList.map((item) => (
+                  <div
+                    key={item.id}
                     onClick={() => navigate(`/news/${item.id}`)}
                     className={`w-full max-w-[380px] mx-auto bg-white rounded-[32px] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col group cursor-pointer border 
                       ${item.isPinned ? 'border-indigo-100 bg-indigo-50/10' : 'border-gray-50'}`}
                   >
                     <div className="relative h-[220px] w-full overflow-hidden">
                       <img src={item.image} alt={item.title} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
-                      
+
                       {/* Tag หมวดหมู่ */}
                       <div className="absolute top-4 left-4 bg-[#3F51B5] text-white text-[10px] px-3 py-1.5 rounded-xl font-bold shadow-md">
                         {item.tag}
                       </div>
 
-                      {/* ✨ Badge ปักหมุด (Pinned) */}
+                      {/* ✨ Badge ข่าวด่วน (Urgent) */}
                       {item.isPinned && (
-                        <div className="absolute top-4 right-4 bg-white/95 text-[#3F51B5] text-[9px] px-2.5 py-1.5 rounded-lg font-bold shadow-sm uppercase tracking-widest border border-indigo-50">
-                          Pinned
+                        <div className="absolute top-4 right-4 z-10 flex items-center gap-1.5">
+                          {/* จุดไฟกะพริบสีแดง */}
+                          <span className="relative flex h-3 w-3">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
+                          </span>
+
+                          {/* ตัวป้าย */}
+                          <div className="bg-rose-500 text-white text-[10px] px-3 py-1.5 rounded-full font-black shadow-[0_0_15px_rgba(244,63,94,0.4)] uppercase tracking-wider flex items-center gap-1">
+                            <AlertCircle size={12} strokeWidth={3} /> URGENT
+                          </div>
                         </div>
                       )}
                     </div>
@@ -120,7 +166,7 @@ export default function Home() {
                       <h3 className="text-[17px] font-bold text-[#1e293b] leading-[1.6] mb-4 line-clamp-2 group-hover:text-[#3F51B5] transition-colors">
                         {item.title}
                       </h3>
-                      
+
                       <div className="mt-auto pt-4 border-t border-slate-50 flex justify-between items-center">
                         <span className="text-[#3F51B5] text-[13px] font-bold">อ่านรายละเอียด</span>
                         <ArrowRightCircle size={18} className="text-gray-300 group-hover:text-[#3F51B5] group-hover:translate-x-1 transition-all" />
@@ -145,19 +191,19 @@ export default function Home() {
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
               {courses.slice(0, 4).map((course) => (
-                <CourseCard 
-                  key={course.id} 
-                  course={course} 
-                  onViewDetail={() => navigate(`/course-sections/${course.level}`)} 
+                <CourseCard
+                  key={course.id}
+                  course={course}
+                  onViewDetail={() => navigate(`/course-sections/${course.level}`)}
                 />
               ))}
             </div>
             {/* ปริญญาเอก (จัดกึ่งกลาง) */}
             <div className="flex justify-center mt-12">
               <div className="w-full lg:w-1/2">
-                <CourseCard 
-                  course={courses[4]} 
-                  onViewDetail={() => navigate(`/course-sections/${courses[4].level}`)} 
+                <CourseCard
+                  course={courses[4]}
+                  onViewDetail={() => navigate(`/course-sections/${courses[4].level}`)}
                 />
               </div>
             </div>
@@ -185,7 +231,7 @@ function CourseCard({ course, onViewDetail }) {
           <h4 className="text-[#1e293b] font-bold text-[20px] leading-[1.4] mb-4 group-hover:text-[#3F51B5] transition-colors">{course.title}</h4>
           <p className="text-[13px] text-slate-400 italic font-light leading-relaxed line-clamp-2 uppercase tracking-tight">{course.enTitle}</p>
         </div>
-        <button 
+        <button
           onClick={onViewDetail}
           className="bg-[#3F51B5] text-white text-[14px] px-10 py-3.5 rounded-full w-fit font-bold hover:bg-indigo-800 transition-all flex items-center shadow-lg hover:shadow-indigo-200 mt-8 active:scale-95"
         >
