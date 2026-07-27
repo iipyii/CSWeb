@@ -31,7 +31,7 @@ export default function SearchResults() {
   const hasResults = results.news.length > 0 || results.lecturers.length > 0 || results.courses.length > 0;
 
   return (
-    <div className="container-1440 mx-auto px-6 py-16 min-h-screen font-['Prompt']">
+    <div className="container-1440 mx-auto px-6 py-16 min-h-screen">
       <h1 className="text-3xl font-bold mb-10 text-gray-800">
         ผลการค้นหาสำหรับ: <span className="text-indigo-600">"{query}"</span>
       </h1>

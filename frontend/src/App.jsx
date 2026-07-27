@@ -71,7 +71,7 @@ import ManageChatbot from './pages/admin/ManageChatbot';
 
 // 🟢 Layout สำหรับหน้าบ้าน (Public)
 const MainLayout = () => (
-  <div className="min-h-screen flex flex-col font-['Prompt']">
+  <div className="min-h-screen flex flex-col">
     <ScrollToTop />
     <Navbar />
     <main className="flex-grow">
@@ -83,7 +83,7 @@ const MainLayout = () => (
 
 // 🔴 Layout สำหรับหน้า Admin (จัดวาง Sidebar และ Navbar)
 const AdminLayout = () => (
-  <div className="flex h-screen w-full bg-slate-50 font-['Prompt'] overflow-hidden">
+  <div className="flex h-screen w-full bg-slate-50 overflow-hidden">
     <ScrollToTop />
 
     <aside className="w-72 flex-shrink-0 bg-white border-r border-slate-100 z-20">

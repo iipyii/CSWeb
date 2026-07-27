@@ -70,7 +70,7 @@ export default function CourseDetail() {
 
   if (!currentData) {
     return (
-      <div className="bg-[#f8fafc] font-['Prompt'] min-h-screen flex flex-col items-center justify-center p-10">
+      <div className="bg-[#f8fafc] min-h-screen flex flex-col items-center justify-center p-10">
         <h2 className="text-2xl font-bold text-slate-800 mb-4">
           ไม่พบข้อมูลหลักสูตร (ID: {id})
         </h2>
@@ -85,7 +85,7 @@ export default function CourseDetail() {
   }
 
   return (
-    <div className="bg-[#f8fafc] font-['Prompt'] min-h-screen flex flex-col">
+    <div className="bg-[#f8fafc] min-h-screen flex flex-col">
       {/* Banner Header สีน้ำเงินเข้ม */}
       <div className="bg-[#183153] text-white py-8 shadow-lg">
         <div className="max-w-[1440px] mx-auto px-10">

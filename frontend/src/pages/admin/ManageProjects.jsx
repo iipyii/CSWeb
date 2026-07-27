@@ -78,7 +78,7 @@ export default function ManageProjects() {
   });
 
   return (
-    <div className="space-y-6 font-['Prompt'] text-left">
+    <div className="space-y-6 text-left">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">

@@ -48,7 +48,7 @@ export default function ManageCurriculum() {
   );
 
   return (
-    <div className="font-['Prompt'] space-y-8 pb-20 animate-in fade-in duration-700">
+    <div className="space-y-8 pb-20 animate-in fade-in duration-700">
       
       {/* 🚀 Header Area: CIS Blue & Bold Style */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">

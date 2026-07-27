@@ -1,5 +1,17 @@
 @import "tailwindcss";
 
+@theme {
+  /* สีหลักที่ใช้จริงในโค้ดอยู่แล้ว (header/sidebar = primary, ปุ่ม/accent = secondary)
+     ประกาศ token ไว้ก่อน ยังไม่ได้ migrate ไฟล์ที่ใช้ hex ตรงๆ (bg-[#183153] ฯลฯ) */
+  --color-primary: #183153;
+  --color-primary-dark: #12253e; /* เข้มขึ้น ~25% สำหรับ hover/active state */
+  --color-secondary: #3f51b5;
+  --color-secondary-dark: #324191; /* เข้มขึ้น ~20% สำหรับ hover/active state */
+
+  /* ฟอนต์เดียวที่ใช้ทั่วเว็บ (แทน font-sans ของ Tailwind) */
+  --font-sans: 'THSarabun', sans-serif;
+}
+
 @font-face {
   font-family: 'THSarabun';
   src: url('/fonts/THSarabunNew.ttf') format('truetype');

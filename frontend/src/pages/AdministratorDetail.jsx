@@ -61,7 +61,7 @@ export default function AdministratorDetail() {
   : [];
 
   return (
-    <div className="bg-white font-['Prompt'] min-h-screen text-slate-700">
+    <div className="bg-white min-h-screen text-slate-700">
       <main className="max-w-6xl mx-auto px-6 py-12 md:py-20">
 
         {/* Navigation - ปุ่มย้อนกลับ */}

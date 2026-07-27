@@ -8,7 +8,7 @@ export default function AdminDashboard() {
   const userRole = 'admin'; // 'admin' หรือ 'teacher'
 
   return (
-    <div className="font-['Prompt'] space-y-8">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -63,7 +63,7 @@ export default function AdminDashboard() {
 
         {/* กิจกรรมล่าสุด */}
         <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm flex flex-col">
-          <h2 className="text-xl font-black text-slate-800 mb-8 font-['Prompt']">กิจกรรมล่าสุด</h2>
+          <h2 className="text-xl font-black text-slate-800 mb-8">กิจกรรมล่าสุด</h2>
           <div className="space-y-6 flex-grow">
             <ActivityItem color="bg-blue-500" title="เพิ่มข่าวรับสมัคร" time="10 นาทีที่แล้ว" />
             <ActivityItem color="bg-emerald-500" title="อัปเดตไฟล์ มคอ.2" time="2 ชม. ที่แล้ว" />

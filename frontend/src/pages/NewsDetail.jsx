@@ -94,12 +94,12 @@ const NewsDetail = () => {
     });
   };
 
-  if (loading) return <div className="text-center py-20 font-['Prompt']">กำลังโหลดข้อมูล...</div>;
+  if (loading) return <div className="text-center py-20">กำลังโหลดข้อมูล...</div>;
 
   // กรณีไม่พบข่าว (เช่น พิมพ์ ID ผิดใน URL)
   if (!news) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center font-['Prompt'] bg-[#F8FAFC] p-6 text-center">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC] p-6 text-center">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">ไม่พบข้อมูลข่าวสารที่คุณต้องการ</h2>
         <button
           onClick={() => navigate(-1)}
@@ -112,7 +112,7 @@ const NewsDetail = () => {
   }
 
   return (
-    <div className="bg-[#F8FAFC] font-['Prompt'] min-h-screen pb-20">
+    <div className="bg-[#F8FAFC] min-h-screen pb-20">
 
       {/* --- Lightbox สำหรับดูรููปขนาดเต็ม (รองรับทุกรูป) --- */}
       {zoomedImage && (

@@ -9,7 +9,7 @@ export default function AdminLayout() {
      * 1. ใช้ flex และ h-screen เพื่อแบ่งพื้นที่ซ้าย (Sidebar) และขวา (Content) 
      * บังคับให้ความสูงเท่าหน้าจอพอดีเพื่อป้องกัน Dashboard ต่อท้ายด้านล่าง
      */
-    <div className="flex h-screen w-full bg-slate-50 font-['Prompt'] overflow-hidden">
+    <div className="flex h-screen w-full bg-slate-50 overflow-hidden">
       
       {/* 2. Sidebar Area: ล็อกความกว้างคงที่และไม่ให้หดตัว */}
       <aside className="w-72 flex-shrink-0 h-full border-r border-slate-100 bg-white z-20 shadow-sm">

@@ -26,7 +26,7 @@ export default function ManageFiles() {
   ]);
 
   return (
-    <div className="space-y-7 font-['Prompt'] text-left pb-10">
+    <div className="space-y-7 text-left pb-10">
       
       {/* 🚀 Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-6">

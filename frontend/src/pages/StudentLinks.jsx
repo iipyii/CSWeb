@@ -35,7 +35,7 @@ const studentLinkData = [
 
 export default function StudentLinks() {
   return (
-    <div className="bg-slate-50 font-['Prompt'] min-h-screen flex flex-col">
+    <div className="bg-slate-50 min-h-screen flex flex-col">
       
       <section className="bg-[#3F51B5] text-white py-8 px-6 relative overflow-hidden text-left">
         <div className="max-w-5xl mx-auto relative z-10">

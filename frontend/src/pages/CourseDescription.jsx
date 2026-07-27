@@ -180,7 +180,7 @@ export default function CourseDescription() {
   });
 
   return (
-    <div className="bg-[#f8fafc] font-['Prompt'] min-h-screen flex flex-col">
+    <div className="bg-[#f8fafc] min-h-screen flex flex-col">
       <div className="max-w-[1200px] mx-auto w-full px-6 md:px-10 pt-16 pb-12 flex-grow text-left">
 
         <motion.div

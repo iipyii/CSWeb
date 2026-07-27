@@ -82,7 +82,7 @@ export default function ConsultStudent() {
   }, [results]);
 
   return (
-    <div className="bg-white font-['Prompt'] min-h-screen flex flex-col text-left">
+    <div className="bg-white min-h-screen flex flex-col text-left">
       {/* Header */}
       <section className="bg-[#3F51B5] text-white py-10 px-6 relative overflow-hidden">
         <div className="max-w-6xl mx-auto relative z-10">
