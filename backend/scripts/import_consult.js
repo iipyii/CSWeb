@@ -135,12 +135,9 @@ async function importFile(filePath) {
     }
 
     const studentData = [];
-    const advisorSet = new Map();
 
     for (const r of rows) {
 
-        const year = Number(r.year);
-        const level = r.level.trim();
         const email = r.advisor_email.trim();
 
         const lecturerId = lecturerMap[email];
@@ -154,26 +151,11 @@ async function importFile(filePath) {
             room: r.room
         });
 
-        const key = `${lecturerId}-${year}-${level}`;
-
-        advisorSet.set(key, {
-            lecturerId,
-            year,
-            level
-        });
-
     }
-
-    const advisorData = Array.from(advisorSet.values());
 
     // batch insert
     await prisma.students.createMany({
         data: studentData,
-        skipDuplicates: true
-    });
-
-    await prisma.advisors.createMany({
-        data: advisorData,
         skipDuplicates: true
     });
 
@@ -183,25 +165,10 @@ async function importFile(filePath) {
         }
     });
 
-    const advisors = await prisma.advisors.findMany({
-        where: {
-            OR: advisorData.map(a => ({
-                lecturerId: a.lecturerId,
-                year: a.year,
-                level: a.level
-            }))
-        }
-    });
-
     const studentMap = {};
     students.forEach(s => studentMap[s.student_id] = s.id);
 
-    const advisorMap = {};
-    advisors.forEach(a => {
-        advisorMap[`${a.lecturerId}-${a.year}-${a.level}`] = a.id;
-    });
-
-    const relations = [];
+    const advisorRows = [];
 
     for (const r of rows) {
 
@@ -210,21 +177,21 @@ async function importFile(filePath) {
         const email = r.advisor_email.trim();
 
         const lecturerId = lecturerMap[email];
-
         const studentId = studentMap[r.student_id];
-        const advisorId = advisorMap[`${lecturerId}-${year}-${level}`];
 
-        if (studentId && advisorId) {
-            relations.push({
-                studentId,
-                advisorId
+        if (lecturerId && studentId) {
+            advisorRows.push({
+                lecturer_id: lecturerId,
+                student_id: studentId,
+                academic_year: year,
+                level
             });
         }
 
     }
 
-    await prisma.advisor_students.createMany({
-        data: relations,
+    await prisma.advisor.createMany({
+        data: advisorRows,
         skipDuplicates: true
     });
 

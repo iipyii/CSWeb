@@ -21,13 +21,11 @@ export const searchStudent = async (req, res) => {
         ]
       },
       include: {
-        advisor_students: {
+        advisor: {
+          orderBy: { academic_year: "desc" },
+          take: 1,
           include: {
-            advisor: {
-              include: {
-                lecturer: true
-              }
-            }
+            lecturer: true
           }
         }
       },
@@ -37,8 +35,8 @@ export const searchStudent = async (req, res) => {
     });
 
     const formatted = students.map((student) => {
-      // ดึงข้อมูลกลุ่มที่ปรึกษาอันแรกที่พบ
-      const advisorGroup = student.advisor_students?.[0]?.advisor;
+      // ดึงข้อมูลอาจารย์ที่ปรึกษาล่าสุด (เรียงตามปีการศึกษามาแล้ว)
+      const advisorRow = student.advisor?.[0];
 
       return {
         id: student.id,
@@ -49,11 +47,11 @@ export const searchStudent = async (req, res) => {
         room: student.room || "-",
         level: student.level,
         // ปรับให้ชื่อฟิลด์ตรงกับที่ Frontend เรียกใช้
-        admission_year: student.year, 
-        advisor: advisorGroup ? {
-          fullname_th: advisorGroup.lecturer?.fullname_th || "ไม่ทราบชื่อ",
-          lecturer_code: advisorGroup.lecturer?.lecturer_code || "",
-          email: advisorGroup.lecturer?.email || "-"
+        admission_year: student.year,
+        advisor: advisorRow ? {
+          fullname_th: advisorRow.lecturer?.fullname_th || "ไม่ทราบชื่อ",
+          lecturer_code: advisorRow.lecturer?.lecturer_code || "",
+          email: advisorRow.lecturer?.email || "-"
         } : null
       };
     });
@@ -75,13 +73,10 @@ export const getStudent = async (req, res) => {
     const student = await prisma.students.findUnique({
       where: { student_id },
       include: {
-        advisor_students: {
+        advisor: {
+          orderBy: { academic_year: "desc" },
           include: {
-            advisor: {
-              include: {
-                lecturer: true
-              }
-            }
+            lecturer: true
           }
         }
       }
@@ -99,22 +94,33 @@ export const getConsultByYear = async (req, res) => {
   const { level, year } = req.params;
 
   try {
-    const advisors = await prisma.advisors.findMany({
+    const advisorRows = await prisma.advisor.findMany({
       where: {
-        year: Number(year),
+        academic_year: Number(year),
         level: level
       },
       include: {
         lecturer: true,
-        advisor_students: {
-          include: {
-            student: true
-          }
-        }
+        student: true
       }
     });
 
-    const sortedAdvisors = advisors.map((advisor) => ({
+    // จัดกลุ่ม assignment แถวเดี่ยวๆ กลับเป็นทรงเดิม: { lecturer, level, year, advisor_students: [{ student }] }
+    const grouped = new Map();
+
+    for (const row of advisorRows) {
+      if (!grouped.has(row.lecturer_id)) {
+        grouped.set(row.lecturer_id, {
+          lecturer: row.lecturer,
+          level: row.level,
+          year: row.academic_year,
+          advisor_students: []
+        });
+      }
+      grouped.get(row.lecturer_id).advisor_students.push({ student: row.student });
+    }
+
+    const sortedAdvisors = Array.from(grouped.values()).map((advisor) => ({
       ...advisor,
       advisor_students: advisor.advisor_students.sort((a, b) =>
         a.student.student_id.localeCompare(b.student.student_id)

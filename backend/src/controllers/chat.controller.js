@@ -101,24 +101,21 @@ export const chatWithAI = async (req, res) => {
 
     // 2. ค้นหาใน FAQ (ใช้ pgvector)
     const faqResult = await prisma.$queryRaw`
-      SELECT question, answer, 
+      SELECT question, answer,
              embedding <-> ${vectorString}::vector AS distance
-      FROM faq
+      FROM faqs
       ORDER BY distance ASC
       LIMIT 3
     `;
 
-    // 3. 🎯 เปลี่ยนมาค้นหาใน CourseKnowledge ด้วย Vector (ฉลาดกว่าแบบเดิม 100 เท่า!)
+    // 3. 🎯 ค้นหารายวิชาใน chatbot_knowledge ด้วย Vector (source_type = 'course')
     const courseResult = await prisma.$queryRaw`
-      SELECT course_code, title_th, content,
+      SELECT content,
              embedding <=> ${vectorString}::vector AS distance
-      FROM "CourseKnowledge"
-      ORDER BY 
-        CASE 
-          WHEN LENGTH(title_th) > 3 AND ${message} LIKE '%' || title_th || '%' THEN 0 
-          WHEN ${message} LIKE '%' || course_code || '%' THEN 0
-          ELSE 1 
-        END,
+      FROM chatbot_knowledge
+      WHERE source_type = 'course'
+      ORDER BY
+        CASE WHEN content ILIKE '%' || ${message} || '%' THEN 0 ELSE 1 END,
         distance ASC
       LIMIT 10
     `;
@@ -218,13 +215,12 @@ export const chatWithAI = async (req, res) => {
         // วนลูปดึงข้อมูลอาจารย์ของนักศึกษา "ทุกคน" ที่หาเจอ
         for (const sId of matchedStudents) {
           const studentInfo = await prisma.$queryRaw`
-            SELECT 
-                s.student_id, s.firstname, s.lastname, 
+            SELECT
+                s.student_id, s.firstname, s.lastname,
                 l.fullname_th AS advisor_name, l.email, l.tel, l.position_th
             FROM students s
-            JOIN advisor_students asu ON s.id = asu."studentId"
-            JOIN advisors a ON a.id = asu."advisorId"
-            JOIN lecturers l ON l.id = a."lecturerId"
+            JOIN advisor adv ON adv.student_id = s.id
+            JOIN lecturers l ON l.id = adv.lecturer_id
             WHERE s.id = ${sId}
             LIMIT 1;
           `;
@@ -265,7 +261,7 @@ export const chatWithAI = async (req, res) => {
     // 🎯 ใส่รายวิชา (เอา .filter ออก)
     if (courseResult && courseResult.length > 0) {
       courseResult.forEach((course) => {
-        contextText += `[รายวิชา] รหัส: ${course.course_code} ชื่อ: ${course.title_th} เนื้อหา: ${course.content}\n`;
+        contextText += `[รายวิชา] เนื้อหา: ${course.content}\n`;
       });
     }
 
@@ -329,7 +325,7 @@ ${contextText || "ไม่พบข้อมูลที่เกี่ยว�
 export const updateFaqVectors = async (req, res) => {
   try {
     console.log("⏳ เริ่มต้นอัปเดต Vector สำหรับ FAQ...");
-    const faqs = await prisma.faq.findMany({
+    const faqs = await prisma.faqs.findMany({
       select: {
         id: true,
         question: true,
@@ -344,7 +340,7 @@ export const updateFaqVectors = async (req, res) => {
       const vectorString = `[${vector.join(",")}]`;
 
       await prisma.$executeRaw`
-        UPDATE faq
+        UPDATE faqs
         SET embedding = ${vectorString}::vector
         WHERE id = ${row.id}
       `;

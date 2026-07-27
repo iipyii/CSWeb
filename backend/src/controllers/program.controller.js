@@ -11,10 +11,10 @@ export const getProgramBySlugYear = async (req, res) => {
     const program = await prisma.programs.findFirst({
       where: { slug },
       include: {
-        versions: {
+        curriculums: {
           where: { year: parseInt(year) },
           include: {
-            sections: {
+            courses: {
               orderBy: { order_index: "asc" }
             }
           }
@@ -26,7 +26,12 @@ export const getProgramBySlugYear = async (req, res) => {
       return res.status(404).json({ message: "program not found" })
     }
 
-    res.json(program)
+    // เก็บ response shape เดิม (versions[].sections[]) ไว้ให้ frontend ไม่ต้องแก้
+    const { curriculums, ...rest } = program
+    res.json({
+      ...rest,
+      versions: curriculums.map(({ courses, ...c }) => ({ ...c, sections: courses }))
+    })
 
   } catch (err) {
     res.status(500).json(err)

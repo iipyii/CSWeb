@@ -34,12 +34,12 @@ export const globalSearch = async (req, res) => {
             }),
 
             // 3. หาวิชา (👉 แก้เป็นค้นหาจาก content ตาม Database ของคุณ)
-            prisma.program_sections.findMany({
-                where: { content: { contains: keyword } }, 
-                select: { id: true, title: true, version: { select: { year: true } } },
+            prisma.courses.findMany({
+                where: { content: { contains: keyword } },
+                select: { id: true, title: true, curriculum: { select: { year: true } } },
                 take: 5
             }).catch((err) => {
-                console.warn("⚠️ ค้นหาตาราง program_sections ไม่สำเร็จ:", err.message);
+                console.warn("⚠️ ค้นหาตาราง courses ไม่สำเร็จ:", err.message);
                 return [];
             })
         ]);

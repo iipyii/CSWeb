@@ -8,15 +8,10 @@ async function runEmbedding() {
     console.log("⏳ กำลังสร้างสมอง (Vector) ให้ Chatbot...");
 
 
-    // 1. ล้างข้อมูลเก่าเผื่อรันซ้ำ
-    await prisma.$executeRawUnsafe(`TRUNCATE TABLE "CourseKnowledge" RESTART IDENTITY;`);
+    // 1. ล้างข้อมูลเก่าเผื่อรันซ้ำ (เฉพาะความรู้ประเภทรายวิชา)
+    await prisma.$executeRaw`DELETE FROM chatbot_knowledge WHERE source_type = 'course';`;
 
-    // 2. สั่งลบคอลัมน์ Vector อันเก่า (768) ทิ้ง
-    await prisma.$executeRawUnsafe(`ALTER TABLE "CourseKnowledge" DROP COLUMN IF EXISTS embedding;`);
-
-    // 3. สั่งสร้างคอลัมน์ Vector ใหม่ให้เป็นขนาด 384 มิติเป๊ะๆ
-    await prisma.$executeRawUnsafe(`ALTER TABLE "CourseKnowledge" ADD COLUMN embedding vector(384);`);
-    const allSections = await prisma.program_sections.findMany({
+    const allSections = await prisma.courses.findMany({
         where: { xml_data: { not: null } }
     });
 
@@ -44,11 +39,11 @@ async function runEmbedding() {
 
             // 2. บันทึกลง Database
             await prisma.$executeRaw`
-                INSERT INTO "CourseKnowledge" (course_code, title_th, content, embedding)
+                INSERT INTO chatbot_knowledge (source_type, reference_id, content, embedding)
                 VALUES (
-                    ${String(course.course_code)}, 
-                    ${String(course.title_th)}, 
-                    ${textToEmbed}, 
+                    'course',
+                    ${section.id},
+                    ${textToEmbed},
                     ${embeddingArray}::vector
                 )
             `;

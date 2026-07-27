@@ -6,10 +6,11 @@ export const getAllPrograms = async (req, res) => {
     const programs = await prisma.programs.findMany({
       include: {
         degree: true, // ดึงระดับปริญญามาด้วย (เช่น ป.ตรี, ป.โท)
-        versions: true // ดึงเวอร์ชันปีหลักสูตรมาด้วย (เช่น หลักสูตรปี 60, 65)
+        curriculums: true // ดึงเวอร์ชันปีหลักสูตรมาด้วย (เช่น หลักสูตรปี 60, 65)
       }
     });
-    res.json(programs);
+    // เก็บ response shape เดิม (versions[]) ไว้ให้ frontend ไม่ต้องแก้
+    res.json(programs.map(({ curriculums, ...p }) => ({ ...p, versions: curriculums })));
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch programs" });
   }

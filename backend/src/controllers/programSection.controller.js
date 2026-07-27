@@ -7,7 +7,7 @@ export const getSectionById = async (req, res) => {
 
     const id = parseInt(req.params.id)
 
-    const section = await prisma.program_sections.findUnique({
+    const section = await prisma.courses.findUnique({
       where: { id }
     })
 
@@ -31,17 +31,17 @@ export const searchCourses = async (req, res) => {
         
         let whereCondition = { xml_data: { not: null } };
         if (year) {
-            whereCondition.version = { year: parseInt(year) };
+            whereCondition.curriculum = { year: parseInt(year) };
         }
 
-        const dbResults = await prisma.program_sections.findMany({
+        const dbResults = await prisma.courses.findMany({
             where: whereCondition,
             select: {
                 id: true,
                 title: true,
                 pdf_path: true,
                 xml_data: true,
-                version: { select: { year: true } }
+                curriculum: { select: { year: true } }
             }
         });
 
@@ -85,7 +85,7 @@ export const searchCourses = async (req, res) => {
                     finalResults.push({
                         id: section.id,
                         code: code,
-                        year: section.version?.year?.toString() || "ไม่ระบุปี",
+                        year: section.curriculum?.year?.toString() || "ไม่ระบุปี",
                         degree: degree,
                         titleTH: String(course.title_th || ""),
                         titleEN: String(course.title_en || ""),

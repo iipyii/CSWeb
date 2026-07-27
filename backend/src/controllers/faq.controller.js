@@ -3,7 +3,7 @@ import { prisma } from "../lib/prisma.js";
 // ✅ GET active FAQ
 export const getActiveFAQ = async (req, res) => {
   try {
-    const faq = await prisma.faq.findMany({
+    const faq = await prisma.faqs.findMany({
       where: {
         status: "active",
       },
@@ -30,7 +30,7 @@ export const getActiveFAQ = async (req, res) => {
 // ✅ GET all FAQ (admin)
 export const getAllFAQ = async (req, res) => {
   try {
-    const faq = await prisma.faq.findMany({
+    const faq = await prisma.faqs.findMany({
       orderBy: {
         created_at: "desc",
       },
@@ -48,7 +48,7 @@ export const createFAQ = async (req, res) => {
   try {
     const { question, answer, category } = req.body;
 
-    const newFAQ = await prisma.faq.create({
+    const newFAQ = await prisma.faqs.create({
       data: {
         question,
         answer,
@@ -70,7 +70,7 @@ export const updateFAQ = async (req, res) => {
     const { id } = req.params;
     const { question, answer, category, status } = req.body;
 
-    const updated = await prisma.faq.update({
+    const updated = await prisma.faqs.update({
       where: {
         id: Number(id),
       },
@@ -99,7 +99,7 @@ export const deleteFAQ = async (req, res) => {
   try {
     const { id } = req.params;
 
-    await prisma.faq.update({
+    await prisma.faqs.update({
       where: { id: Number(id) },
       data: {
         status: "inactive",
