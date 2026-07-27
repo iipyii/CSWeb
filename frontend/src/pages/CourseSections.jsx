@@ -84,7 +84,7 @@ export default function CourseSections() {
   const currentLevel = educationLevels[level] || educationLevels.bachelor;
 
   return (
-    <div className="bg-[#f8fafc] font-['Prompt'] min-h-screen flex flex-col">
+    <div className="bg-[#f8fafc] min-h-screen flex flex-col">
       {/* Banner Header */}
       <div className="bg-[#183153] text-white py-8 shadow-lg">
         <div className="max-w-[1440px] mx-auto px-10">

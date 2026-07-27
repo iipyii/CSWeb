@@ -58,7 +58,7 @@ export default function History() {
   });
 
   return (
-    <div className="bg-white font-['Prompt'] min-h-screen text-slate-700 overflow-x-hidden">
+    <div className="bg-white min-h-screen text-slate-700 overflow-x-hidden">
       {/* Scroll Progress Bar */}
       <motion.div 
         className="fixed top-0 left-0 right-0 h-1 bg-[#3F51B5] z-50 origin-[0%]"

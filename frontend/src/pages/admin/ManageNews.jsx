@@ -99,7 +99,7 @@ export default function ManageNews() {
   });
 
   return (
-    <div className="font-['Prompt'] space-y-8 pb-20">
+    <div className="space-y-8 pb-20">
 
       {/* 🚀 Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">

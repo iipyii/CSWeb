@@ -53,7 +53,7 @@ const fadeInUp = {
 
 export default function Organization() {
   return (
-    <div className="bg-white font-['Prompt'] min-h-screen text-slate-700">
+    <div className="bg-white min-h-screen text-slate-700">
       {/* Header Section */}
       <section className="bg-[#3F51B5] text-white py-8 px-6 relative overflow-hidden">
         <div className="max-w-5xl mx-auto relative z-10">

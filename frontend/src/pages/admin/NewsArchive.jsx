@@ -47,7 +47,7 @@ export default function NewsArchive() {
   };
 
   return (
-    <div className="font-['Prompt'] space-y-8 pb-20">
+    <div className="space-y-8 pb-20">
 
       {/* 🚀 Header Area */}
       <div className="flex items-center gap-5">

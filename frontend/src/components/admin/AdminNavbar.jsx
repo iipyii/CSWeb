@@ -6,7 +6,7 @@ export default function AdminNavbar() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   return (
-    <header className="h-20 bg-white border-b border-slate-100 flex items-center justify-between px-10 flex-shrink-0 relative z-30 font-['Prompt']">
+    <header className="h-20 bg-white border-b border-slate-100 flex items-center justify-between px-10 flex-shrink-0 relative z-30">
       
       {/* 🔍 Search Bar - อ้างอิงจากรูป 3fe7dc */}
       <div className="flex-1 max-w-xl">

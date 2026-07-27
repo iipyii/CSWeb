@@ -57,7 +57,7 @@ export default function Internship() {
   // ];
 
   return (
-    <div className="bg-white font-['Prompt'] min-h-screen flex flex-col text-left">
+    <div className="bg-white min-h-screen flex flex-col text-left">
 
       {/* 🏛️ Header Section */}
       <section className="bg-[#3F51B5] text-white py-8 px-6 relative overflow-hidden">

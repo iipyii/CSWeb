@@ -1,12 +1,12 @@
 /* ===============================
    NAVBAR — CS WEB (University Style)
-   Font: Prompt (Sans Thai)
+   Font: THSarabun (Sans Thai)
 ================================ */
 
 .navbar,
 .navbar * {
   box-sizing: border-box;
-  font-family: 'Prompt', sans-serif;
+  font-family: 'THSarabun', sans-serif;
 }
 
 /* ===== Wrapper ===== */

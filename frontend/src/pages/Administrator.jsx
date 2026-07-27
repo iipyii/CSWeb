@@ -85,7 +85,7 @@ export default function Administrator() {
   );
 
   return (
-    <div className="bg-slate-50 font-['Prompt'] min-h-screen text-slate-700">
+    <div className="bg-slate-50 min-h-screen text-slate-700">
       
       {/* Hero Section */}
       <section className="bg-[#3F51B5] text-white py-8 px-6 relative overflow-hidden">

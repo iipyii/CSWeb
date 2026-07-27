@@ -55,7 +55,7 @@ export default function StudentProjects() {
   });
 
   return (
-    <div className="bg-[#FDFDFD] font-['Prompt'] min-h-screen flex flex-col text-left">
+    <div className="bg-[#FDFDFD] min-h-screen flex flex-col text-left">
       
       {/* 🏛️ Header Section */}
       <section className="bg-[#3F51B5] text-white py-8 px-6 relative overflow-hidden text-left">

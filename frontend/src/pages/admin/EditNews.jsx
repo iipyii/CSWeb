@@ -38,7 +38,7 @@ export default function EditNews() {
     content: '<p>กำลังโหลดเนื้อหา...</p>', // ข้อความระหว่างรอโหลด
     editorProps: {
       attributes: {
-        class: "prose prose-sm focus:outline-none w-full py-6 px-8 min-h-[300px] text-[15px] font-['Prompt'] leading-[1.8] text-slate-700 max-w-none bg-white rounded-b-[2rem]",
+        class: "prose prose-sm focus:outline-none w-full py-6 px-8 min-h-[300px] text-[15px] leading-[1.8] text-slate-700 max-w-none bg-white rounded-b-[2rem]",
       },
     },
   });
@@ -194,7 +194,7 @@ export default function EditNews() {
   };
 
   return (
-    <div className="font-['Prompt'] space-y-8 pb-20 max-w-7xl mx-auto p-4">
+    <div className="space-y-8 pb-20 max-w-7xl mx-auto p-4">
 
       {/* 🚀 Top Bar: Actions (เปลี่ยนชื่อเป็น แก้ไขข่าว) */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">

@@ -86,7 +86,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="bg-[#f8fafc] font-['Prompt'] text-left">
+    <div className="bg-[#f8fafc] text-left">
       <HeroSlider />
 
       <div className="bg-white relative z-30 pb-24 shadow-sm">

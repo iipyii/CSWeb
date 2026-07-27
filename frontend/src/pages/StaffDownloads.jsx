@@ -98,7 +98,7 @@ export default function StaffDownloads() {
 
   }, {});
   return (
-    <div className="bg-slate-50 font-['Prompt'] min-h-screen flex flex-col">
+    <div className="bg-slate-50 min-h-screen flex flex-col">
       {/* Hero Section */}
       <section className="bg-[#3F51B5] text-white py-8 px-6 relative overflow-hidden">
         <div className="max-w-5xl mx-auto relative z-10">

@@ -25,7 +25,7 @@ export default function FinanceRegs() {
   ];
 
   return (
-    <div className="bg-slate-50 font-['Prompt'] min-h-screen flex flex-col text-left">
+    <div className="bg-slate-50 min-h-screen flex flex-col text-left">
       
       {/* 🏛️ Header Section */}
       <section className="bg-[#3F51B5] text-white py-8 px-6 relative overflow-hidden">
@@ -52,9 +52,9 @@ export default function FinanceRegs() {
           
           {/* ✨ หัวตารางจำลอง (Table Header) */}
           <div className="hidden lg:grid grid-cols-12 gap-4 bg-slate-50/80 p-5 border-b border-slate-100 text-slate-400 font-bold text-[13px] uppercase tracking-wider">
-            <div className="col-span-1 text-center font-['Prompt']">ลำดับ</div>
-            <div className="col-span-9 font-['Prompt']">รายการเอกสาร</div>
-            <div className="col-span-2 text-center font-['Prompt']">ไฟล์</div>
+            <div className="col-span-1 text-center">ลำดับ</div>
+            <div className="col-span-9">รายการเอกสาร</div>
+            <div className="col-span-2 text-center">ไฟล์</div>
           </div>
 
           {/* List Items */}

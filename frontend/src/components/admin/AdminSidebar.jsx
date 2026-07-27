@@ -27,7 +27,7 @@ export default function AdminSidebar() {
   ];
 
   return (
-    <div className="w-full h-full bg-white flex flex-col font-['Prompt'] border-r border-slate-50 text-left">
+    <div className="w-full h-full bg-white flex flex-col border-r border-slate-50 text-left">
       {/* 🏛️ Admin Header Section */}
       <div className="p-8 pb-4">
         <div className="flex items-center gap-3 px-2 mb-8">

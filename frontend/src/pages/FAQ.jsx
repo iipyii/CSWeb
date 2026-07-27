@@ -38,7 +38,7 @@ export default function FAQ() {
   };
 
   return (
-    <div className="bg-slate-50 font-['Prompt'] min-h-screen flex flex-col text-left">
+    <div className="bg-slate-50 min-h-screen flex flex-col text-left">
       
       {/* 🏛️ Header Section */}
       <section className="bg-[#3F51B5] text-white py-8 px-6 relative overflow-hidden">

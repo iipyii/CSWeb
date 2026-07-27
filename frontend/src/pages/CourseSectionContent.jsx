@@ -53,7 +53,7 @@ export default function CourseSectionContent() {
 
   if (!section) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 font-['Prompt']">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
         <div className="w-10 h-10 border-4 border-[#3F51B5] border-t-transparent rounded-full animate-spin mb-4"></div>
         <span className="text-slate-500">กำลังโหลดเนื้อหาหลักสูตร...</span>
       </div>
@@ -61,7 +61,7 @@ export default function CourseSectionContent() {
   }
 
   return (
-    <div className="bg-[#f8fafc] min-h-screen font-['Prompt'] flex flex-col">
+    <div className="bg-[#f8fafc] min-h-screen flex flex-col">
       {/* 🏛️ Header Section - ส่วนแบนเนอร์ด้านบน */}
       <div className="bg-[#183153] text-white pt-16 pb-24 relative overflow-hidden">
         <div className="max-w-6xl mx-auto px-6 relative z-10 text-left">

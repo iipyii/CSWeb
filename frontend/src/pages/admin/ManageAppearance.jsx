@@ -9,7 +9,7 @@ export default function ManageAppearance() {
   ]);
 
   return (
-    <div className="space-y-10 font-['Prompt'] text-left">
+    <div className="space-y-10 text-left">
       <header className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">จัดการภาพลักษณ์เว็บไซต์</h1>

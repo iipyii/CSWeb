@@ -118,7 +118,7 @@ export default function News() {
   }, [activeTab, searchQuery, newsData]);
 
   return (
-    <div className="bg-slate-50 font-['Prompt'] min-h-screen flex flex-col text-left text-slate-800">
+    <div className="bg-slate-50 min-h-screen flex flex-col text-left text-slate-800">
 
       {/* 🏛️ Official Header Section */}
       <section className="bg-[#3F51B5] text-white py-8 px-6 relative overflow-hidden">

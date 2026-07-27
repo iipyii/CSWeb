@@ -13,7 +13,7 @@ export default function CreateFile() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-7 font-['Prompt'] text-left pb-10">
+    <div className="max-w-5xl mx-auto space-y-7 text-left pb-10">
       
       {/* 🔙 Header Section - ปรับฟอนต์หัวข้อเป็น text-2xl */}
       <div className="flex items-center justify-between border-b border-slate-100 pb-6">
