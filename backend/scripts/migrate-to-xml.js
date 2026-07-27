@@ -15,15 +15,15 @@ const escapeXml = (unsafe) => {
 async function runXMLMigration() {
     console.log("🗑️ กำลังล้างข้อมูลเก่า และแปลง XML ชุดใหม่ (แก้ปัญหาวิชาบังคับก่อน 2 บรรทัด)...");
     
-    await prisma.program_sections.updateMany({ data: { xml_data: null } });
+    await prisma.courses.updateMany({ data: { xml_data: null } });
 
-    const allSections = await prisma.program_sections.findMany({ include: { version: true } });
+    const allSections = await prisma.courses.findMany({ include: { curriculum: true } });
     let totalSaved = 0;
 
     for (const section of allSections) {
         if (!section.content) continue;
 
-        const year = section.version?.year || "ไม่ระบุ";
+        const year = section.curriculum?.year || "ไม่ระบุ";
         const safeText = "\n" + section.content;
         
         // 🚨 จุดที่แก้ปัญหา: จำกัดช่องว่างหน้าตัวเลข 9 หลักต้องไม่เกิน 10 ตัวอักษร ({0,10})
@@ -103,7 +103,7 @@ async function runXMLMigration() {
         }
         
         xmlString += `</curriculum>`;
-        await prisma.program_sections.update({ where: { id: section.id }, data: { xml_data: xmlString } });
+        await prisma.courses.update({ where: { id: section.id }, data: { xml_data: xmlString } });
     }
     console.log(`✅ อัปเดต XML สำเร็จ! บันทึกวิชาไปทั้งหมด ${totalSaved} วิชา`);
 }

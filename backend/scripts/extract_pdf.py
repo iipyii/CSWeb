@@ -42,6 +42,9 @@ text = re.sub(r"(หมวดที่\s*\d+)", r"\n\n\1\n", text)
 # ขึ้นบรรทัดก่อนเลขข้อ
 text = re.sub(r"\s(\d+\.)", r"\n\1", text)
 
+# ขึ้นบรรทัดก่อนรหัสวิชา 9 หลัก (ให้ migrate-to-xml.js แยกแต่ละวิชาออกจากกันได้)
+text = re.sub(r"\s+(\d{9}\s+[ก-๙A-Za-z])", r"\n\1", text)
+
 # รวม whitespace
 text = re.sub(r"[ \t]+", " ", text)
 

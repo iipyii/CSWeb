@@ -5,7 +5,7 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-const baseDir = "./uploads/courses";
+const baseDir = "./uploads/courses/bachelor/regular";
 
 function getSection(filename) {
 
@@ -44,8 +44,9 @@ function cleanText(text) {
 
   return text
     .replace(/\x00/g, "")
-    .replace(/[\u0000-\u001F\u007F]/g, " ")
-    .replace(/\s+/g, " ")
+    .replace(/[\u0000-\u0009\u000B-\u001F\u007F]/g, " ")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n[ \t]+/g, "\n")
     .trim()
 }
 
@@ -113,8 +114,8 @@ async function scan(dir) {
       continue
     }
 
-    // find version
-    const version = await prisma.program_versions.upsert({
+    // find curriculum
+    const curriculum = await prisma.curriculums.upsert({
       where: {
         programId_year: {
           programId: program.id,
@@ -128,10 +129,10 @@ async function scan(dir) {
       }
     })
 
-    // save section
-    await prisma.program_sections.create({
+    // save course
+    await prisma.courses.create({
       data: {
-        versionId: version.id,
+        curriculumId: curriculum.id,
         section_no: sectionNo ?? 0,
         title: item,
         content: cleanContent,
