@@ -1,13 +1,24 @@
 import React, { useState } from 'react';
-import { Search, ChevronDown, User, LogOut, Bell } from 'lucide-react';
+import { Search, ChevronDown, User, LogOut, Bell, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function AdminNavbar() {
+export default function AdminNavbar({ isSidebarOpen, onToggleSidebar }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   return (
-    <header className="h-20 bg-white border-b border-slate-100 flex items-center justify-between px-10 flex-shrink-0 relative z-30">
-      
+    <header className="h-20 bg-white border-b border-slate-100 flex items-center justify-between px-4 md:px-10 flex-shrink-0 relative z-30 gap-4">
+
+      {/* Hamburger: แสดงเฉพาะจอเล็กกว่า md (768px) เพื่อเปิด/ปิด sidebar */}
+      <button
+        type="button"
+        onClick={onToggleSidebar}
+        aria-label={isSidebarOpen ? "ปิดเมนู" : "เปิดเมนู"}
+        aria-expanded={isSidebarOpen}
+        className="md:hidden flex-shrink-0 p-2 text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"
+      >
+        {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
+      </button>
+
       {/* 🔍 Search Bar - อ้างอิงจากรูป 3fe7dc */}
       <div className="flex-1 max-w-xl">
         <div className="relative group">
