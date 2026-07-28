@@ -137,11 +137,11 @@ export default function News() {
         </div>
       </section>
 
-      <main className="max-w-[1400px] mx-auto w-full px-6 lg:px-10 py-12 flex-grow">
+      <main className="max-w-[1400px] mx-auto w-full px-6 md:px-10 py-12 flex-grow">
 
         {/* 🔍 Navigation (Tabs) & Search Bar */}
-        <div className="flex flex-col xl:flex-row justify-between items-center mb-16 gap-8">
-          <div className="flex items-center gap-2 overflow-x-auto pb-4 scrollbar-hide w-full xl:w-auto">
+        <div className="flex flex-col md:flex-row justify-between items-center mb-16 gap-8">
+          <div className="flex items-center gap-2 overflow-x-auto pb-4 scrollbar-hide w-full md:w-auto">
             {tabs.map((tab) => (
               <button
                 key={tab}
@@ -156,7 +156,7 @@ export default function News() {
             ))}
           </div>
 
-          <div className="relative w-full xl:w-96 group">
+          <div className="relative w-full md:w-96 group">
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#3F51B5] transition-colors" size={20} />
             <input
               type="text"
@@ -185,7 +185,7 @@ export default function News() {
                   className={`bg-white rounded-[32px] overflow-hidden shadow-sm transition-all duration-500 flex flex-col group
                     ${item.isPinned ? 'border-2 border-[#3F51B5]/20 shadow-indigo-50' : 'border border-slate-100'}`}
                 >
-                  <div className="relative h-[260px] w-full overflow-hidden">
+                  <div className="relative aspect-[3/2] w-full overflow-hidden">
                     <img
                       src={item.image}
                       alt={item.title}

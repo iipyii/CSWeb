@@ -190,7 +190,7 @@ const NewsDetail = () => {
 
             {/* รายละเอียดเนื้อหาฉบับเต็ม */}
             <article
-              className="prose prose-slate max-w-none text-gray-600 text-base md:text-lg leading-[1.7] mb-12 font-light"
+              className="news-content overflow-x-hidden prose prose-slate max-w-none text-gray-600 text-base md:text-lg leading-[1.7] mb-12 font-light"
               dangerouslySetInnerHTML={{ __html: news.content }}
             />
 
@@ -201,7 +201,7 @@ const NewsDetail = () => {
                   <div className="w-1.5 h-6 bg-[#3F51B5] rounded-full"></div>
                   รูปภาพเพิ่มเติม
                 </h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {news.additional_images.map((imgUrl, index) => (
                     <div 
                       key={index} 

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 @theme {
   /* สีหลักที่ใช้จริงในโค้ดอยู่แล้ว (header/sidebar = primary, ปุ่ม/accent = secondary)
@@ -37,4 +38,16 @@ a {
 }
 a:visited {
   color: inherit !important;
+}
+
+/* กันเนื้อหาข่าว (HTML ดิบจาก dangerouslySetInnerHTML) ทำให้เกิด horizontal overflow
+   เช่น รูป/ตารางที่แปะมามีความกว้างคงที่เกินคอนเทนเนอร์ */
+.news-content img {
+  max-width: 100%;
+  height: auto;
+}
+.news-content table {
+  max-width: 100%;
+  display: block;
+  overflow-x: auto;
 }
