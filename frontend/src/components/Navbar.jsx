@@ -1,13 +1,43 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom"; // 👉 เพิ่ม useNavigate
-import { Search, ChevronDown } from "lucide-react";
-import styles from "./Navbar.module.css"; 
+import { Search, ChevronDown, Menu, X } from "lucide-react";
+import styles from "./Navbar.module.css";
+
+// เมนูมือถือ: รองรับ item.dropdown / sub.submenu / deepSub.nestedSubmenu แบบ recursive
+// (ใช้ key เดียว "children" เพื่อไม่ต้องเขียน JSX ซ้อนกัน 3 ชั้นตรงๆ)
+function MobileNavItem({ item, onNavigate }) {
+  const children = item.dropdown || item.submenu || item.nestedSubmenu;
+
+  if (!children) {
+    return (
+      <Link to={item.href} className={styles.mobileLink} onClick={onNavigate}>
+        {item.label}
+      </Link>
+    );
+  }
+
+  return (
+    <details className={styles.mobileDetails}>
+      <summary className={children === item.dropdown ? styles.mobileSummary : styles.mobileSubSummary}>
+        {item.label}
+      </summary>
+      <ul className={styles.mobileSubList}>
+        {children.map((child, idx) => (
+          <li key={idx}>
+            <MobileNavItem item={child} onNavigate={onNavigate} />
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+}
 
 export default function Navbar() {
   const [lang, setLang] = useState("TH");
-  
+
   // 👉 1. สร้าง State สำหรับเก็บคำค้นหา และตัวนำทาง (navigate)
   const [searchQuery, setSearchQuery] = useState("");
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const navigate = useNavigate();
 
   // 👉 2. ฟังก์ชันจัดการเมื่อกด Enter
@@ -16,6 +46,7 @@ export default function Navbar() {
       // พาไปที่หน้า /search พร้อมกับแนบคำค้นหาไปด้วย
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery(""); // ล้างช่องค้นหาหลังจากกด (จะใส่หรือไม่ใส่ก็ได้ครับ)
+      setIsMobileOpen(false);
     }
   };
 
@@ -203,7 +234,54 @@ export default function Navbar() {
             </ul>
           </nav>
         </div>
+
+        {/* Hamburger: แสดงเฉพาะจอเล็ก (ดู @media ใน Navbar.module.css) */}
+        <button
+          type="button"
+          className={styles.hamburgerBtn}
+          onClick={() => setIsMobileOpen((prev) => !prev)}
+          aria-label={isMobileOpen ? "ปิดเมนู" : "เปิดเมนู"}
+          aria-expanded={isMobileOpen}
+        >
+          {isMobileOpen ? <X size={26} /> : <Menu size={26} />}
+        </button>
       </div>
+
+      {/* Mobile Panel: เปิด/ปิดด้วย hamburger แทน hover dropdown */}
+      {isMobileOpen && (
+        <div className={styles.mobilePanel}>
+          <div className={styles.mobileSearchBar}>
+            <Search size={14} className={styles.searchIcon} />
+            <input
+              type="text"
+              className={styles.searchInput}
+              placeholder="ค้นหา..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleSearch}
+            />
+          </div>
+
+          <div className={styles.mobileLangSwitcher}>
+            <button
+              className={`${styles.langBtn} ${lang === "TH" ? styles.active : ""}`}
+              onClick={() => setLang("TH")}
+            >TH</button>
+            <button
+              className={`${styles.langBtn} ${lang === "EN" ? styles.active : ""}`}
+              onClick={() => setLang("EN")}
+            >EN</button>
+          </div>
+
+          <ul className={styles.mobileMenuList}>
+            {navItems.map((item, idx) => (
+              <li key={idx} className={styles.mobileMenuItem}>
+                <MobileNavItem item={item} onNavigate={() => setIsMobileOpen(false)} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </header>
   );
 }
