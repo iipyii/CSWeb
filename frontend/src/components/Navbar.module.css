@@ -23,7 +23,8 @@
 
 /* ===== Container ===== */
 .container {
-  width: 1440px;
+  width: 100%;
+  max-width: 1440px;
   height: 100%;
   padding: 0 40px;
   display: flex;
@@ -53,6 +54,18 @@
   flex-direction: column;
   justify-content: space-between;
   padding: 12px 0;
+}
+
+/* ===== Hamburger (มือถือ/แท็บเล็ตเท่านั้น) ===== */
+.hamburgerBtn {
+  display: none;
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  padding: 8px;
+  color: #0f172a;
+  cursor: pointer;
+  flex-shrink: 0;
 }
 
 /* ===============================
@@ -272,4 +285,149 @@
   transform: rotate(-90deg);
   margin-left: auto;
   opacity: 0.6;
+}
+
+/* ===============================
+   MOBILE (จอเล็กกว่า 768px) — hamburger menu แทน hover dropdown
+================================ */
+@media (max-width: 768px) {
+  .navbar {
+    height: 72px;
+  }
+
+  .container {
+    padding: 0 16px;
+    gap: 12px;
+  }
+
+  .logo {
+    height: 48px;
+    margin-top: 0;
+  }
+
+  /* ซ่อน topRow/bottomRow แบบ desktop ทั้งหมด ย้ายไปอยู่ใน mobilePanel แทน */
+  .navContent {
+    display: none;
+  }
+
+  .hamburgerBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* ===== Mobile Panel (เปิดจาก hamburger) ===== */
+.mobilePanel {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobilePanel {
+    display: block;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: calc(100vh - 72px);
+    overflow-y: auto;
+    background-color: #ffffff;
+    border-bottom: 1px solid #eef2ff;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+    padding: 16px;
+    z-index: 999;
+  }
+}
+
+.mobileSearchBar {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background-color: #f1f5ff;
+  border: 1px solid #e0e7ff;
+}
+
+.mobileLangSwitcher {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background-color: #f1f5ff;
+  border-radius: 999px;
+  border: 1px solid #e0e7ff;
+  padding: 4px;
+  width: fit-content;
+  margin-top: 12px;
+}
+
+.mobileMenuList {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+}
+
+.mobileMenuItem {
+  border-bottom: 1px solid #eef2ff;
+}
+
+.mobileMenuItem:last-child {
+  border-bottom: none;
+}
+
+.mobileDetails {
+  width: 100%;
+}
+
+.mobileTopLink,
+.mobileSummary,
+.mobileSubSummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 4px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #0f172a;
+  text-decoration: none;
+  cursor: pointer;
+  list-style: none;
+}
+
+.mobileSummary::-webkit-details-marker,
+.mobileSubSummary::-webkit-details-marker {
+  display: none;
+}
+
+.mobileSummary::after,
+.mobileSubSummary::after {
+  content: '▾';
+  font-size: 12px;
+  color: rgba(15, 23, 42, 0.45);
+  transition: transform 0.2s ease;
+}
+
+details[open] > .mobileSummary::after,
+details[open] > .mobileSubSummary::after {
+  transform: rotate(180deg);
+}
+
+.mobileSubList {
+  list-style: none;
+  margin: 0;
+  padding-left: 16px;
+}
+
+.mobileLink {
+  display: block;
+  padding: 10px 4px;
+  font-size: 14px;
+  color: #334155;
+  text-decoration: none;
+}
+
+.mobileLink:hover,
+.mobileTopLink:hover {
+  color: #1e3a8a;
 }
