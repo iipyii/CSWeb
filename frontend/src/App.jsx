@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Routes, Route, Outlet } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import ScrollToTop from './components/ScrollToTop';
@@ -82,26 +82,46 @@ const MainLayout = () => (
 );
 
 // 🔴 Layout สำหรับหน้า Admin (จัดวาง Sidebar และ Navbar)
-const AdminLayout = () => (
-  <div className="flex h-screen w-full bg-slate-50 overflow-hidden">
-    <ScrollToTop />
+// จอเล็กกว่า md (768px, breakpoint เดียวกับ Navbar): sidebar เป็น drawer เปิด/ปิดด้วย hamburger ใน AdminNavbar
+const AdminLayout = () => {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-    <aside className="w-72 flex-shrink-0 bg-white border-r border-slate-100 z-20">
-      <AdminSidebar />
-    </aside>
+  return (
+    <div className="flex h-screen w-full bg-slate-50 overflow-hidden">
+      <ScrollToTop />
 
-    <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+      {/* Overlay มือถือ: แตะข้างนอกเพื่อปิด sidebar */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-30 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
 
-      <AdminNavbar />
+      <aside
+        className={`fixed md:static inset-y-0 left-0 w-72 flex-shrink-0 bg-white border-r border-slate-100 z-40 md:z-20 transform transition-transform duration-300 md:translate-x-0 ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <AdminSidebar onNavigate={() => setIsSidebarOpen(false)} />
+      </aside>
 
-      <main className="flex-1 overflow-y-auto p-10 bg-[#FDF8F4]/30">
-        <div className="max-w-[1600px] mx-auto pb-10">
-          <Outlet />
-        </div>
-      </main>
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+
+        <AdminNavbar
+          isSidebarOpen={isSidebarOpen}
+          onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
+        />
+
+        <main className="flex-1 overflow-y-auto p-10 bg-[#FDF8F4]/30">
+          <div className="max-w-[1600px] mx-auto pb-10">
+            <Outlet />
+          </div>
+        </main>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default function App() {
   return (

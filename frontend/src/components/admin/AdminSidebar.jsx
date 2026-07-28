@@ -7,7 +7,7 @@ import {
   MessageSquare, UserCheck
 } from 'lucide-react';
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ onNavigate }) {
   const location = useLocation();
   const userRole = 'admin';
 
@@ -61,9 +61,10 @@ export default function AdminSidebar() {
             const finalActive = isActive && !isNewsMainActive;
             
             return (
-              <Link 
-                key={item.path} 
-                to={item.path} 
+              <Link
+                key={item.path}
+                to={item.path}
+                onClick={onNavigate}
                 className={`flex items-center gap-4 px-6 py-4 rounded-[1.5rem] transition-all duration-300 group ${
                   finalActive 
                   ? 'bg-[#3F51B5] text-white shadow-xl shadow-indigo-100/40' 
