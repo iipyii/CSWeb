@@ -24,7 +24,7 @@ export default function HeroSlider() {
   }, [currentIndex]);
 
   return (
-    <div className="w-full aspect-[24/9] relative group overflow-hidden bg-slate-100">
+    <div className="w-full aspect-[4/3] sm:aspect-[16/9] md:aspect-[24/9] relative group overflow-hidden bg-slate-100">
       {slides.map((slide, index) => (
         <div
           key={index}
@@ -43,13 +43,13 @@ export default function HeroSlider() {
 
       <button
         onClick={prevSlide}
-        className="hidden group-hover:flex absolute left-8 top-1/2 -translate-y-1/2 z-20 p-3 bg-black/20 hover:bg-black/40 rounded-full text-white transition-all shadow-lg"
+        className="flex md:hidden md:group-hover:flex absolute left-8 top-1/2 -translate-y-1/2 z-20 p-3 bg-black/20 hover:bg-black/40 rounded-full text-white transition-all shadow-lg"
       >
         <ChevronLeft size={32} />
       </button>
       <button
         onClick={nextSlide}
-        className="hidden group-hover:flex absolute right-8 top-1/2 -translate-y-1/2 z-20 p-3 bg-black/20 hover:bg-black/40 rounded-full text-white transition-all shadow-lg"
+        className="flex md:hidden md:group-hover:flex absolute right-8 top-1/2 -translate-y-1/2 z-20 p-3 bg-black/20 hover:bg-black/40 rounded-full text-white transition-all shadow-lg"
       >
         <ChevronRight size={32} />
       </button>
