@@ -76,11 +76,11 @@ export default function Internship() {
         </div>
       </section>
 
-      <main className="max-w-6xl mx-auto w-full px-6 py-16 flex-grow space-y-16">
+      <main className="max-w-6xl mx-auto w-full px-6 md:px-10 py-16 flex-grow space-y-16">
 
         {/* 📋 ส่วนที่ 1: คุณสมบัติและเกณฑ์คะแนน */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 bg-slate-50 p-8 rounded-3xl border border-slate-100">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="md:col-span-2 bg-slate-50 p-8 rounded-3xl border border-slate-100">
             <h2 className="flex items-center gap-3 text-xl font-bold text-slate-800 mb-6">
               <ClipboardCheck className="text-[#3F51B5]" /> คุณสมบัตินักศึกษาฝึกงาน
             </h2>
@@ -154,24 +154,26 @@ export default function Internship() {
             <Calendar className="text-[#3F51B5]" /> กำหนดการประจำปีการศึกษา 2568
           </h2>
           <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
-                <tr>
-                  <th className="px-6 py-4">กำหนดการ</th>
-                  <th className="px-6 py-4 text-center w-64">รายละเอียดและช่วงเวลา</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {schedule.map((item, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="px-6 py-4 text-slate-700">{item.title}</td>
-                    <td className="px-6 py-4 text-center text-[#3F51B5] font-semibold">
-                      {item.content}
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[720px] text-sm text-left">
+                <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                  <tr>
+                    <th className="px-6 py-4">กำหนดการ</th>
+                    <th className="px-6 py-4 text-center w-64">รายละเอียดและช่วงเวลา</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {schedule.map((item, idx) => (
+                    <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="px-6 py-4 text-slate-700">{item.title}</td>
+                      <td className="px-6 py-4 text-center text-[#3F51B5] font-semibold">
+                        {item.content}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 

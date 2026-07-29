@@ -113,7 +113,7 @@ export default function ConsultDetail() {
         </div>
       </section>
 
-      <main className="max-w-6xl mx-auto w-full px-6 py-10 grow space-y-8">
+      <main className="max-w-6xl mx-auto w-full px-6 md:px-10 py-10 grow space-y-8">
         {/* Search Bar */}
         <section className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
           <div className="px-6 md:px-8 py-6 border-b border-slate-100 bg-slate-50">
@@ -178,11 +178,11 @@ export default function ConsultDetail() {
                 key={advisor.id}
                 className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden"
               >
-                <div className="grid grid-cols-1 lg:grid-cols-12">
+                <div className="grid grid-cols-1 md:grid-cols-12">
                   {/* Advisor Info */}
-                  <div className="lg:col-span-3 border-b lg:border-b-0 lg:border-r border-slate-200 bg-slate-50/70 p-6">
+                  <div className="md:col-span-3 border-b md:border-b-0 md:border-r border-slate-200 bg-slate-50/70 p-6">
                     <div className="space-y-4">
-                      <div className="w-full max-w-[240px] mx-auto lg:mx-0 aspect-[3/4] rounded-2xl overflow-hidden border border-slate-200 shadow-sm bg-slate-100">
+                      <div className="w-full max-w-[240px] mx-auto md:mx-0 aspect-[3/4] rounded-2xl overflow-hidden border border-slate-200 shadow-sm bg-slate-100">
                         <img
                           src={
                             advisor.lecturer?.image_path
@@ -216,7 +216,7 @@ export default function ConsultDetail() {
                   </div>
 
                   {/* Student Table */}
-                  <div className="lg:col-span-9 p-0">
+                  <div className="md:col-span-9 p-0">
                     <div className="px-6 py-4 border-b border-slate-200 bg-[#EEF2FF]">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <h4 className="font-bold text-[#3F51B5]">
