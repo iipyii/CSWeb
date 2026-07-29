@@ -67,7 +67,7 @@ export default function Staff() {
               </div>
             </section>
 
-      <main className="max-w-7xl mx-auto w-full px-6 py-16 flex-grow">
+      <main className="max-w-7xl mx-auto w-full px-6 md:px-10 py-16 flex-grow">
         
         <AnimatePresence mode="wait">
           {loading ? (
@@ -148,9 +148,9 @@ export default function Staff() {
                     </div>
                     
                     <div className="pt-6 border-t border-slate-50">
-                      <a 
+                      <a
                         href={`mailto:${staff.email}`}
-                        className="inline-flex items-center gap-2 text-slate-400 hover:text-[#3F51B5] transition-all text-xs group/mail"
+                        className="inline-flex items-center gap-2 min-h-[44px] px-2 -mx-2 text-slate-400 hover:text-[#3F51B5] transition-all text-xs group/mail"
                       >
                         <div className="p-2 bg-slate-50 rounded-lg group-hover/mail:bg-indigo-50 transition-colors">
                           <Mail size={14} className="group-hover/mail:scale-110 transition-transform" />
