@@ -105,7 +105,7 @@ export default function ConsultStudent() {
         </div>
       </section>
 
-      <main className="max-w-6xl mx-auto w-full px-6 py-10 flex-grow space-y-10">
+      <main className="max-w-6xl mx-auto w-full px-6 md:px-10 py-10 flex-grow space-y-10">
         {/* Search Section */}
         <section className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 md:p-8">
           <div className="flex items-center gap-2 mb-5">
@@ -195,8 +195,8 @@ export default function ConsultStudent() {
                       key={idx}
                       className="p-5 hover:bg-slate-50 transition-colors"
                     >
-                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-                        <div className="lg:col-span-4">
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
+                        <div className="md:col-span-4">
                           <p className="text-xs text-slate-400 mb-1">นักศึกษา</p>
                           <h3 className="font-bold text-slate-800 text-base">
                             {student.title}
@@ -207,14 +207,14 @@ export default function ConsultStudent() {
                           </p>
                         </div>
 
-                        <div className="lg:col-span-2">
+                        <div className="md:col-span-2">
                           <p className="text-xs text-slate-400 mb-1">ห้อง</p>
                           <p className="text-sm font-medium text-slate-700">
                             {student.room || "-"}
                           </p>
                         </div>
 
-                        <div className="lg:col-span-4">
+                        <div className="md:col-span-4">
                           <p className="text-xs text-slate-400 mb-1">อาจารย์ที่ปรึกษา</p>
                           <p className="text-sm font-semibold text-[#3F51B5]">
                             {student.advisor?.fullname_th || "-"}{" "}
@@ -228,7 +228,7 @@ export default function ConsultStudent() {
                           </p>
                         </div>
 
-                        <div className="lg:col-span-2 flex lg:justify-end">
+                        <div className="md:col-span-2 flex md:justify-end">
                           <Link
                             to={`/consult-detail/${student.level}/${String(
                               student.admission_year

@@ -50,7 +50,7 @@ export default function ProjectDetail() {
             </section>
 
       {/* 📄 Content Area */}
-      <main className="max-w-5xl mx-auto w-full px-6 py-16 relative z-20 flex-grow space-y-10">
+      <main className="max-w-5xl mx-auto w-full px-6 md:px-10 py-16 relative z-20 flex-grow space-y-10">
         
         {/* ส่วนข้อมูล (Data Block) */}
         <div className="bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden">
