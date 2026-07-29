@@ -53,8 +53,8 @@ export default function StudentLinks() {
         </div>
       </section>
 
-      <main className="max-w-6xl mx-auto w-full px-6 py-16 flex-grow">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <main className="max-w-6xl mx-auto w-full px-6 md:px-10 py-16 flex-grow">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {studentLinkData.map((item, index) => (
             <motion.a
               key={index}
