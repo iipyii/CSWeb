@@ -355,10 +355,10 @@ export default function SubjectDetail() {
       </section>
 
       {/* 📚 Main Content Grid */}
-      <main className="max-w-6xl mx-auto w-full px-6 py-12 flex-grow">
+      <main className="max-w-6xl mx-auto w-full px-6 md:px-10 py-12 flex-grow">
         {subjects.length > 0 ? (
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-10 gap-y-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-12">
 
             {Object.entries(grouped).map(([category, items], idx) => (
 
