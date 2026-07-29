@@ -72,7 +72,7 @@ export default function SubjectCourses() {
             </section>
 
       {/* 📚 Main Content List */}
-      <main className="max-w-4xl mx-auto w-full px-6 py-16 flex-grow">
+      <main className="max-w-4xl mx-auto w-full px-6 md:px-10 py-16 flex-grow">
         <div className="grid gap-4">
           {courses.map((item, idx) => (
             <motion.div

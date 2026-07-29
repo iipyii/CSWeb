@@ -188,7 +188,7 @@ export default function CourseDescription() {
           animate={{ opacity: 1, x: 0 }}
           className="flex items-center mb-10 border-l-[6px] border-[#3F51B5] pl-5"
         >
-          <h1 className="text-3xl font-bold text-[#1e293b] tracking-tight uppercase">
+          <h1 className="text-3xl md:text-4xl font-bold text-[#1e293b] tracking-tight uppercase">
             คำอธิบายรายวิชา
           </h1>
         </motion.div>
