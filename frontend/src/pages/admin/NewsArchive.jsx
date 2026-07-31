@@ -74,50 +74,52 @@ export default function NewsArchive() {
 
       {/* 📋 Archived List Table */}
       <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-slate-50/50">
-              <th className="px-8 py-6 text-sm font-black text-slate-700">หัวข้อข่าว</th>
-              <th className="px-8 py-6 text-sm font-black text-slate-700 w-48 text-center">วันที่ประกาศ</th>
-              <th className="px-8 py-6 text-sm font-black text-slate-700 w-64 text-center">การดำเนินการ</th>
-            </tr>
-          </thead>
-          <tbody>
-            {archivedData.map((item) => (
-              <tr key={item.id} className="border-t border-slate-50 hover:bg-slate-50/30 transition-colors">
-                <td className="px-8 py-5">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-slate-100 rounded-lg text-slate-400">
-                      <FileText size={18} />
-                    </div>
-                    <span className="text-sm font-bold text-slate-600 line-clamp-1">{item.title}</span>
-                  </div>
-                </td>
-                <td className="px-8 py-5 text-sm font-medium text-slate-400 text-center">
-                  {item.date}
-                </td>
-                <td className="px-8 py-5">
-                  <div className="flex items-center justify-center gap-2">
-                    {/* ปุ่มกู้คืนข่าวกลับไปหน้าหลัก */}
-                    <button
-                      onClick={() => handleRestore(item.id)}
-                      className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-[11px] font-black hover:bg-emerald-500 hover:text-white transition-all"
-                    >
-                      <RotateCcw size={14} /> กู้คืน
-                    </button>
-                    {/* ปุ่มลบถาวร */}
-                    <button
-                      onClick={() => handleDelete(item.id)}
-                      className="flex items-center gap-2 px-4 py-2 bg-rose-50 text-rose-500 rounded-xl text-[11px] font-black hover:bg-rose-500 hover:text-white transition-all"
-                    >
-                      <Trash2 size={14} /> ลบ
-                    </button>
-                  </div>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[720px] text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50/50">
+                <th className="px-8 py-6 text-sm font-black text-slate-700">หัวข้อข่าว</th>
+                <th className="px-8 py-6 text-sm font-black text-slate-700 w-48 text-center">วันที่ประกาศ</th>
+                <th className="px-8 py-6 text-sm font-black text-slate-700 w-64 text-center">การดำเนินการ</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {archivedData.map((item) => (
+                <tr key={item.id} className="border-t border-slate-50 hover:bg-slate-50/30 transition-colors">
+                  <td className="px-8 py-5">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-slate-100 rounded-lg text-slate-400">
+                        <FileText size={18} />
+                      </div>
+                      <span className="text-sm font-bold text-slate-600 line-clamp-1">{item.title}</span>
+                    </div>
+                  </td>
+                  <td className="px-8 py-5 text-sm font-medium text-slate-400 text-center">
+                    {item.date}
+                  </td>
+                  <td className="px-8 py-5">
+                    <div className="flex items-center justify-center gap-2">
+                      {/* ปุ่มกู้คืนข่าวกลับไปหน้าหลัก */}
+                      <button
+                        onClick={() => handleRestore(item.id)}
+                        className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-[11px] font-black hover:bg-emerald-500 hover:text-white transition-all"
+                      >
+                        <RotateCcw size={14} /> กู้คืน
+                      </button>
+                      {/* ปุ่มลบถาวร */}
+                      <button
+                        onClick={() => handleDelete(item.id)}
+                        className="flex items-center gap-2 px-4 py-2 bg-rose-50 text-rose-500 rounded-xl text-[11px] font-black hover:bg-rose-500 hover:text-white transition-all"
+                      >
+                        <Trash2 size={14} /> ลบ
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

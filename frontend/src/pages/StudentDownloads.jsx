@@ -169,41 +169,43 @@ const downloadData = [
                   {isOpen && (
                     <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3, ease: "easeInOut" }} className="overflow-hidden">
                       <div className="bg-white rounded-[1.5rem] shadow-sm border border-slate-100 overflow-hidden mb-8 mt-2">
-                        <table className="w-full text-left">
-                          <thead className="bg-slate-50/80 border-b border-slate-100 text-slate-400">
-                            <tr>
-                              <th className="px-6 py-4 text-xs font-bold w-16 text-center uppercase tracking-wider">ลำดับ</th>
-                              <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">ชื่อรายการเอกสาร</th>
-                              <th className="px-6 py-4 text-xs font-bold text-center w-40 uppercase tracking-wider">ไฟล์</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-50">
-                            {items.map((item, iIdx) => (
-                              <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
-                                <td className="px-6 py-5 text-center text-slate-400 text-sm">{iIdx + 1}</td>
-                                <td className="px-6 py-5 text-slate-700 text-[15px] group-hover:text-[#3F51B5] transition-colors">{item.title}</td>
-                                <td className="px-6 py-5 text-center">
-                                  <div className="flex justify-center gap-1.5">
-                                    <a
-                                      href={`http://localhost:5000${item.file_path}`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className={`px-4 py-1.5 rounded-lg text-[11px] font-bold border
-                                        ${item.file_type === 'pdf'
-                                          ? 'text-rose-600 border-rose-100 bg-rose-50 hover:bg-rose-600 hover:text-white'
-                                          : item.file_type === 'docx'
-                                            ? 'text-blue-600 border-blue-100 bg-blue-50 hover:bg-blue-600 hover:text-white'
-                                            : 'text-emerald-600 border-emerald-100 bg-emerald-50 hover:bg-emerald-600 hover:text-white'
-                                        }`}
-                                    >
-                                      {item.file_type?.toUpperCase()}
-                                    </a>
-                                  </div>
-                                </td>
+                        <div className="overflow-x-auto">
+                          <table className="w-full min-w-[640px] text-left">
+                            <thead className="bg-slate-50/80 border-b border-slate-100 text-slate-400">
+                              <tr>
+                                <th className="px-6 py-4 text-xs font-bold w-16 text-center uppercase tracking-wider">ลำดับ</th>
+                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">ชื่อรายการเอกสาร</th>
+                                <th className="px-6 py-4 text-xs font-bold text-center w-40 uppercase tracking-wider">ไฟล์</th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                            </thead>
+                            <tbody className="divide-y divide-slate-50">
+                              {items.map((item, iIdx) => (
+                                <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
+                                  <td className="px-6 py-5 text-center text-slate-400 text-sm">{iIdx + 1}</td>
+                                  <td className="px-6 py-5 text-slate-700 text-[15px] group-hover:text-[#3F51B5] transition-colors">{item.title}</td>
+                                  <td className="px-6 py-5 text-center">
+                                    <div className="flex justify-center gap-1.5">
+                                      <a
+                                        href={`http://localhost:5000${item.file_path}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className={`px-4 py-1.5 rounded-lg text-[11px] font-bold border
+                                          ${item.file_type === 'pdf'
+                                            ? 'text-rose-600 border-rose-100 bg-rose-50 hover:bg-rose-600 hover:text-white'
+                                            : item.file_type === 'docx'
+                                              ? 'text-blue-600 border-blue-100 bg-blue-50 hover:bg-blue-600 hover:text-white'
+                                              : 'text-emerald-600 border-emerald-100 bg-emerald-50 hover:bg-emerald-600 hover:text-white'
+                                          }`}
+                                      >
+                                        {item.file_type?.toUpperCase()}
+                                      </a>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                     </motion.div>
                   )}

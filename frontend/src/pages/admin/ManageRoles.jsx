@@ -68,7 +68,7 @@ export default function ManageRoles() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full min-w-[780px] text-left border-collapse">
             <thead className="bg-slate-50/50 text-slate-400 text-[11px] uppercase tracking-widest font-black">
               <tr>
                 <th className="px-8 py-5">รายชื่อบุคลากร</th>

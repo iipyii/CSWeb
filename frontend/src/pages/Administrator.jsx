@@ -124,7 +124,7 @@ export default function Administrator() {
         </div>
         
         {/* ✨ ส่วนชื่อ: ปรับให้กว้างกว่ารูปและจัดกึ่งกลางพอดี */}
-        <div className="w-screen max-w-[400px] text-center px-4">
+        <div className="w-full max-w-[400px] text-center px-4">
           <h3 className="font-bold text-base md:text-[17px] text-slate-800 group-hover:text-[#3F51B5] whitespace-nowrap">
             {head.fullname_th}
           </h3>
@@ -150,7 +150,7 @@ export default function Administrator() {
           />
         </div>
         
-        <div className="w-screen max-w-[400px] text-center px-4">
+        <div className="w-full max-w-[400px] text-center px-4">
           <h3 className="font-bold text-base md:text-[17px] text-slate-800 group-hover:text-[#3F51B5] whitespace-nowrap">
             {deputy.fullname_th}
           </h3>

@@ -136,7 +136,7 @@ export default function ManageChatbot() {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left">
+              <table className="w-full min-w-[680px] text-left">
                 <thead className="bg-slate-50 text-slate-500 text-[10px] uppercase font-black tracking-widest">
                   <tr>
                     <th className="px-6 py-4">Keywords (คำค้นหา)</th>
@@ -160,7 +160,7 @@ export default function ManageChatbot() {
                         <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed">{item.answer}</p>
                       </td>
                       <td className="px-6 py-5">
-                        <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex justify-center gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                           <button onClick={() => openModal(item)} className="p-2 text-slate-400 hover:text-amber-500 transition-colors"><Edit2 size={16} /></button>
                           <button className="p-2 text-slate-400 hover:text-rose-500 transition-colors"><Trash2 size={16} /></button>
                         </div>
