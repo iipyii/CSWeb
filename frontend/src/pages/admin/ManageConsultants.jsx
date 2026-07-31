@@ -48,7 +48,7 @@ export default function ManageConsultants() {
       {/* 📊 Student Table */}
       <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full min-w-[720px] text-left border-collapse">
             <thead className="bg-slate-50 text-slate-400 text-[11px] uppercase tracking-widest font-black">
               <tr>
                 <th className="px-8 py-5">รหัสนักศึกษา</th>

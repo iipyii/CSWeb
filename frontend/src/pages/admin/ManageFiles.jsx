@@ -86,7 +86,7 @@ export default function ManageFiles() {
       {/* 📁 File Management Table */}
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full min-w-[800px] text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100">
                 <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-[0.15em]">ข้อมูลไฟล์เอกสาร</th>
