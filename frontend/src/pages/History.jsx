@@ -83,7 +83,7 @@ export default function History() {
       </section>
 
       {/* Main Content */}
-      <main className="max-w-5xl mx-auto px-6 py-20">
+      <main className="max-w-5xl mx-auto px-6 md:px-10 py-20">
         
         <div className="max-w-3xl mb-24">
           <motion.div 

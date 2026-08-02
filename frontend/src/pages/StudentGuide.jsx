@@ -43,7 +43,7 @@ export default function StudentGuide() {
       </section>
 
       {/* 📚 Main Content */}
-      <main className="max-w-4xl mx-auto w-full px-6 py-16 flex-grow">
+      <main className="max-w-4xl mx-auto w-full px-6 md:px-10 py-16 flex-grow">
         <div className="space-y-4">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">

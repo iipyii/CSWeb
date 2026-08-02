@@ -88,13 +88,13 @@ export default function CourseDetail() {
     <div className="bg-[#f8fafc] min-h-screen flex flex-col">
       {/* Banner Header สีน้ำเงินเข้ม */}
       <div className="bg-[#183153] text-white py-8 shadow-lg">
-        <div className="max-w-[1440px] mx-auto px-10">
+        <div className="max-w-[1440px] mx-auto px-6 md:px-10">
           <h1 className="text-3xl font-medium mb-3 tracking-tight">
             รายละเอียดหลักสูตร
           </h1>
 
           {/* Breadcrumbs ที่แสดงผลต่อเนื่องจากหน้า CourseSections */}
-          <div className="flex items-center space-x-2 text-sm font-light opacity-90">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-light opacity-90">
             <Link to="/" className="hover:text-blue-400 transition-colors">
               หน้าหลัก
             </Link>
@@ -126,7 +126,7 @@ export default function CourseDetail() {
         </div>
       </div>
 
-      <div className="max-w-[1440px] mx-auto px-10 py-12 flex-grow w-full">
+      <div className="max-w-[1440px] mx-auto px-6 md:px-10 py-12 flex-grow w-full">
         <button
           onClick={() => navigate(-1)}
           className="flex items-center text-[#3F51B5] font-bold mb-8 group transition-all"

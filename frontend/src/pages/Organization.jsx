@@ -71,7 +71,7 @@ export default function Organization() {
         </div>
       </section>
 
-      <main className="max-w-6xl mx-auto px-6 py-20">
+      <main className="max-w-6xl mx-auto px-6 md:px-10 py-20">
         
         {/* ระดับที่ 1: หัวหน้าภาควิชา */}
         <div className="flex justify-center mb-16 relative">
