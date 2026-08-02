@@ -46,10 +46,10 @@ export default function Contact() {
       </section>
 
       <main className="max-w-6xl mx-auto px-6 -mt-12 pb-24 relative z-20">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           
           {/* ข้อมูลการติดต่อ (คอลัมน์ซ้าย) */}
-          <div className="lg:col-span-1 space-y-6">
+          <div className="md:col-span-1 space-y-6">
             <motion.div 
               variants={cardVariants}
               initial="hidden"
@@ -131,7 +131,7 @@ export default function Contact() {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
-            className="lg:col-span-2 bg-white p-3 rounded-2xl shadow-lg border border-slate-100"
+            className="md:col-span-2 bg-white p-3 rounded-2xl shadow-lg border border-slate-100"
           >
             <div className="w-full h-[500px] rounded-xl overflow-hidden shadow-inner relative group">
               <iframe 

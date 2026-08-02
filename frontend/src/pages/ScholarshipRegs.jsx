@@ -36,11 +36,11 @@ export default function ScholarshipRegs() {
                   </section>
 
       {/* 📂 Main Content */}
-      <main className="max-w-7xl mx-auto w-full px-6 py-12 flex-grow">
+      <main className="max-w-7xl mx-auto w-full px-6 md:px-10 py-12 flex-grow">
 
         <div className="bg-white rounded-[1.5rem] shadow-sm border border-slate-100 overflow-hidden mb-8">
           {/* Table Header */}
-          <div className="hidden lg:grid grid-cols-12 gap-4 bg-slate-50/50 p-4 border-b border-slate-100 text-slate-400 font-bold text-[13px] uppercase tracking-wider">
+          <div className="hidden md:grid grid-cols-12 gap-4 bg-slate-50/50 p-4 border-b border-slate-100 text-slate-400 font-bold text-[13px] uppercase tracking-wider">
             <div className="col-span-1 text-center">ลำดับ</div>
             <div className="col-span-9">รายการเอกสาร</div>
             <div className="col-span-2 text-center">ไฟล์</div>
@@ -54,17 +54,17 @@ export default function ScholarshipRegs() {
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
                 viewport={{ once: true }}
-                className="grid grid-cols-1 lg:grid-cols-12 gap-4 p-5 lg:p-6 items-center hover:bg-slate-50/30 transition-colors group"
+                className="grid grid-cols-1 md:grid-cols-12 gap-4 p-5 md:p-6 items-center hover:bg-slate-50/30 transition-colors group"
               >
                 {/* ลำดับ */}
-                <div className="hidden lg:block col-span-1 text-center font-bold text-slate-300">
+                <div className="hidden md:block col-span-1 text-center font-bold text-slate-300">
                   {idx + 1}
                 </div>
 
                 {/* ชื่อเอกสาร */}
-                <div className="col-span-12 lg:col-span-9">
+                <div className="col-span-12 md:col-span-9">
                   <div className="flex items-start gap-4">
-                    <span className="lg:hidden text-xs font-bold text-slate-300 mt-1 w-6">{idx + 1}</span>
+                    <span className="md:hidden text-xs font-bold text-slate-300 mt-1 w-6">{idx + 1}</span>
                     <div className="border-b border-transparent pb-1 transition-all inline-block">
                       <span className="text-[15px] md:text-[16px] font-medium text-slate-700 leading-relaxed group-hover:text-[#3F51B5] transition-colors">
                         {doc.title}
@@ -74,7 +74,7 @@ export default function ScholarshipRegs() {
                 </div>
 
                 {/* ปุ่มเปิดดู PDF สไตล์ Indigo */}
-                <div className="col-span-12 lg:col-span-2 flex justify-end lg:justify-center">
+                <div className="col-span-12 md:col-span-2 flex justify-end md:justify-center">
                   <a 
                     href={`/files/scholarship/${doc.file}`} 
                     target="_blank" 

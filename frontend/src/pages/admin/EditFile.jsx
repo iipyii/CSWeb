@@ -58,10 +58,10 @@ export default function EditFile() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
         
         {/* 📝 Form Section: แสดงข้อมูลเดิมที่มีอยู่ */}
-        <div className="lg:col-span-7 space-y-7">
+        <div className="md:col-span-7 space-y-7">
           <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm space-y-6">
             
             <div className="flex items-center gap-3 mb-2 text-[#3F51B5]">
@@ -129,7 +129,7 @@ export default function EditFile() {
         </div>
 
         {/* 📁 Upload Section: ส่วนเปลี่ยนไฟล์ */}
-        <div className="lg:col-span-5">
+        <div className="md:col-span-5">
           <div 
             className={`bg-white p-8 rounded-3xl border-2 border-dashed transition-all flex flex-col items-center justify-center text-center space-y-5 h-full min-h-[400px] relative ${
               dragActive ? 'border-[#3F51B5] bg-indigo-50/40' : 'border-slate-200 hover:border-slate-300'

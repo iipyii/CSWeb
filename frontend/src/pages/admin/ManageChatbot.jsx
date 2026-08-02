@@ -69,7 +69,7 @@ export default function ManageChatbot() {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         
         {/* ⚙️ ส่วนตั้งค่าพื้นฐาน (General Settings) */}
         <section className="space-y-6">
@@ -117,7 +117,7 @@ export default function ManageChatbot() {
         </section>
 
         {/* 📚 ส่วนจัดการ Knowledge Base */}
-        <section className="xl:col-span-2 space-y-6">
+        <section className="md:col-span-2 space-y-6">
           <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
             <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
               <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
