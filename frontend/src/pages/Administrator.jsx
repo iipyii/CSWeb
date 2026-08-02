@@ -164,7 +164,7 @@ export default function Administrator() {
 )}
 
            {/* Assistants */}
-<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-10">
   {assistants.map((staff) => (
     <Link 
       key={staff.lecturer_code}
@@ -191,7 +191,7 @@ export default function Administrator() {
 
         {/* ✨ ส่วนชื่อ: ใช้พื้นที่กว้างกว่ารูปเพื่อให้เห็นชื่อเต็มและจัดกึ่งกลาง */}
         <div className="w-full max-w-[280px] text-center px-2">
-          <h4 className="font-bold text-slate-800 text-[14px] md:text-[15px] group-hover:text-[#3F51B5] whitespace-nowrap transition-colors">
+          <h4 className="font-bold text-slate-800 text-[14px] md:text-[15px] group-hover:text-[#3F51B5] transition-colors">
             {staff.fullname_th}
           </h4>
           <p className="text-[11px] text-[#3F51B5] font-black uppercase tracking-tighter mt-1.5 leading-tight">
@@ -211,7 +211,7 @@ export default function Administrator() {
     <div className="w-16 h-1 bg-[#3F51B5] mx-auto mt-4"></div>
   </div>
 
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-16">
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-8 gap-y-16">
     {faculty.map((staff) => (
       <Link 
         key={staff.lecturer_code} 
@@ -238,7 +238,7 @@ export default function Administrator() {
 
           {/* ✨ ส่วนชื่อ: ขยายพื้นที่ให้กว้างกว่ารูปเล็กน้อยเพื่อให้ชื่อยาวอยู่แถวเดียวได้กึ่งกลางพอดี */}
           <div className="w-full max-w-[260px] px-1">
-            <h4 className="font-bold text-slate-800 text-[13.5px] md:text-[14px] group-hover:text-[#3F51B5] whitespace-nowrap transition-colors">
+            <h4 className="font-bold text-slate-800 text-[13.5px] md:text-[14px] group-hover:text-[#3F51B5] transition-colors">
               {staff.fullname_th}
             </h4>
             <p className="text-[11px] text-[#3F51B5] font-medium mt-1.5 opacity-80">

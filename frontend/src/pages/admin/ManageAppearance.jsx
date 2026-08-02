@@ -20,7 +20,7 @@ export default function ManageAppearance() {
         </button>
       </header>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         
         {/* 🏢 ส่วนจัดการโลโก้ (Logo) */}
         <section className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col items-center">
@@ -44,7 +44,7 @@ export default function ManageAppearance() {
         </section>
 
         {/* 🖼️ ส่วนจัดการแบนเนอร์หน้าแรก (Home Banners) */}
-        <section className="xl:col-span-2 bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100">
+        <section className="md:col-span-2 bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100">
           <div className="flex justify-between items-center mb-8">
             <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
               <ImageIcon className="text-[#3F51B5]" /> แบนเนอร์หน้าแรก (Hero Sliders)
