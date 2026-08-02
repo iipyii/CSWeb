@@ -21,7 +21,7 @@ export default function GreenOffice() {
   return (
     <div className="bg-white min-h-screen text-slate-700 overflow-x-hidden">
       
-      <main className="max-w-5xl mx-auto px-6 py-12 md:py-20">
+      <main className="max-w-5xl mx-auto px-6 md:px-10 py-12 md:py-20">
         
         {/* ส่วน Banner Image */}
         <motion.div 

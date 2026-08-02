@@ -62,7 +62,7 @@ export default function AdministratorDetail() {
 
   return (
     <div className="bg-white min-h-screen text-slate-700">
-      <main className="max-w-6xl mx-auto px-6 py-12 md:py-20">
+      <main className="max-w-6xl mx-auto px-6 md:px-10 py-12 md:py-20">
 
         {/* Navigation - ปุ่มย้อนกลับ */}
         <button
@@ -97,7 +97,7 @@ export default function AdministratorDetail() {
                 <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[#3F51B5] group-hover:bg-[#3F51B5] group-hover:text-white transition-colors">
                   <Mail size={18} />
                 </div>
-                <a href={`mailto:${profile.email}`} className="text-slate-600 hover:text-[#3F51B5] hover:underline transition-colors break-all">
+                <a href={`mailto:${profile.email}`} className="inline-flex items-center min-h-[44px] px-2 -mx-2 text-slate-600 hover:text-[#3F51B5] hover:underline transition-colors break-all">
                   {profile.email}
                 </a>
               </div>

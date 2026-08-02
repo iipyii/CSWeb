@@ -75,7 +75,7 @@ export default function StudentProjects() {
       </section>
 
       {/* 🔍 Search & Filter Tools */}
-      <main className="max-w-6xl mx-auto w-full px-6 py-12 flex-grow">
+      <main className="max-w-6xl mx-auto w-full px-6 md:px-10 py-12 flex-grow">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-12 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm">
           <div className="relative flex-1 w-full">
             <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400" size={18} />

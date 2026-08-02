@@ -58,7 +58,7 @@ export default function FAQ() {
             </section>
 
       {/* 📂 Main Content */}
-      <main className="max-w-4xl mx-auto w-full px-6 py-16 flex-grow">
+      <main className="max-w-4xl mx-auto w-full px-6 md:px-10 py-16 flex-grow">
         
         {/* 🔍 Search Bar */}
         <div className="relative mb-12 group">

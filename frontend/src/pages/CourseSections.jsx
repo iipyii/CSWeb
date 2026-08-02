@@ -87,13 +87,13 @@ export default function CourseSections() {
     <div className="bg-[#f8fafc] min-h-screen flex flex-col">
       {/* Banner Header */}
       <div className="bg-[#183153] text-white py-8 shadow-lg">
-        <div className="max-w-[1440px] mx-auto px-10">
+        <div className="max-w-[1440px] mx-auto px-6 md:px-10">
           <h1 className="text-3xl font-medium mb-3 tracking-tight">
             {currentLevel.label}
           </h1>
 
           {/* Breadcrumbs ที่ปรับปรุงตามระดับการศึกษา */}
-          <div className="flex items-center space-x-2 text-sm font-light opacity-90">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-light opacity-90">
             <Link to="/" className="text-blue-400 hover:text-blue-300 transition-colors">
               หน้าหลัก
             </Link>
@@ -122,7 +122,7 @@ export default function CourseSections() {
         </div>
       </div>
 
-      <div className="max-w-[1440px] mx-auto px-10 py-16 flex-grow w-full">
+      <div className="max-w-[1440px] mx-auto px-6 md:px-10 py-16 flex-grow w-full">
         <section className="mb-20">
           <div className={`flex items-center mb-10 space-x-3 border-l-8 ${currentLevel.borderColor} pl-5 bg-white py-4 rounded-r-2xl shadow-sm`}>
             <div className="text-[#3F51B5]">{currentLevel.icon}</div>
