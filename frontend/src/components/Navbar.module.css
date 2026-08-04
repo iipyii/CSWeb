@@ -288,6 +288,21 @@
 }
 
 /* ===============================
+   TABLET / SMALL LAPTOP (769px-1279px) — เมนู desktop เปิดแล้วแต่พื้นที่แคบ
+   ลด padding/gap ให้เมนูพอดี ไม่กระทบ desktop ปกติ (≥1280px)
+================================ */
+@media (min-width: 769px) and (max-width: 1279px) {
+  .container {
+    padding: 0 24px;
+    gap: 24px;
+  }
+
+  .menuList {
+    gap: 20px;
+  }
+}
+
+/* ===============================
    MOBILE (จอเล็กกว่า 768px) — hamburger menu แทน hover dropdown
 ================================ */
 @media (max-width: 768px) {
