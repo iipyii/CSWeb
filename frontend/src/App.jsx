@@ -71,7 +71,7 @@ import ManageChatbot from './pages/admin/ManageChatbot';
 
 // 🟢 Layout สำหรับหน้าบ้าน (Public)
 const MainLayout = () => (
-  <div className="min-h-screen flex flex-col">
+  <div className="min-h-screen flex flex-col overflow-x-hidden">
     <ScrollToTop />
     <Navbar />
     <main className="flex-grow">
