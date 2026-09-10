@@ -87,7 +87,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="bg-[#f8fafc] text-left">
+    <div className="bg-slate-50 text-left">
       <HeroSlider />
 
       <div className="bg-white relative z-30 pb-24 shadow-sm">
@@ -104,7 +104,7 @@ export default function Home() {
               >
                 <div
                   onClick={() => handleActionClick(act)}
-                  className="bg-[#3F51B5] text-white py-7 px-4 rounded-2xl shadow-xl hover:shadow-indigo-300/40 flex flex-col items-center justify-center cursor-pointer hover:-translate-y-2 hover:bg-[#2e3b8a] transition-all duration-300 group"
+                  className="bg-secondary text-white py-7 px-4 rounded-2xl shadow-xl hover:shadow-indigo-300/40 flex flex-col items-center justify-center cursor-pointer hover:-translate-y-2 hover:bg-secondary-dark transition-all duration-300 group"
                 >
                   <motion.div whileHover={{ rotate: 5, scale: 1.15 }} className="mb-2 opacity-90">
                     {act.icon}
@@ -124,14 +124,14 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.7 }}
-              className="flex flex-col md:flex-row md:items-end justify-between mb-12 border-l-[8px] border-[#3F51B5] pl-5"
+              className="flex flex-col md:flex-row md:items-end justify-between mb-20 border-l-[8px] border-secondary pl-5"
             >
               <div>
-                <h2 className="text-2xl md:text-4xl font-bold text-[#1e293b] tracking-tight uppercase">ข่าวสาร CIS</h2>
+                <h2 className="text-2xl md:text-4xl font-bold text-slate-800 tracking-tight uppercase">ข่าวสาร CIS</h2>
               </div>
               <button
                 onClick={() => navigate('/news')}
-                className="mt-4 md:mt-0 flex items-center text-[#3F51B5] font-bold group"
+                className="mt-4 md:mt-0 flex items-center text-secondary font-bold group"
               >
                 <span className="bg-gradient-to-r from-current to-current bg-no-repeat bg-left-bottom bg-[length:0%_2px] group-hover:bg-[length:100%_2px] transition-[background-size] duration-300 pb-0.5">
                   ดูข่าวทั้งหมด
@@ -152,13 +152,13 @@ export default function Home() {
                     whileHover={{ y: -4 }}
                     onClick={() => navigate(`/news/${item.id}`)}
                     className={`w-full sm:max-w-[380px] mx-auto bg-white rounded-[28px] overflow-hidden shadow-sm hover:shadow-lg transition-all duration-500 flex flex-col group cursor-pointer border
-                      ${item.isPinned ? 'border-indigo-100 bg-indigo-50/10' : 'border-gray-50'}`}
+                      ${item.isPinned ? 'border-indigo-100 bg-indigo-50/10' : 'border-slate-50'}`}
                   >
                     <div className="relative h-[220px] w-full overflow-hidden">
                       <img src={item.image} alt={item.title} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
 
                       {/* Tag หมวดหมู่ */}
-                      <div className="absolute top-4 left-4 bg-[#3F51B5] text-white text-[10px] px-3 py-1.5 rounded-xl font-bold shadow-md">
+                      <div className="absolute top-4 left-4 bg-secondary text-white text-[10px] px-3 py-1.5 rounded-xl font-bold shadow-md">
                         {item.tag}
                       </div>
 
@@ -181,22 +181,22 @@ export default function Home() {
 
                     <div className="px-7 pt-7 pb-6 flex flex-col flex-1 min-h-[190px]">
                       <div className="flex items-center text-slate-400 text-[12px] mb-4 font-bold uppercase tracking-wider">
-                        <Clock size={14} className="mr-2 text-[#3F51B5]/40" />
+                        <Clock size={14} className="mr-2 text-secondary/40" />
                         ประกาศเมื่อ : {item.date}
                       </div>
-                      <h3 className="text-[17px] font-bold text-[#1e293b] leading-[1.6] mb-4 line-clamp-2 group-hover:text-[#3F51B5] transition-colors">
+                      <h3 className="text-[17px] font-bold text-slate-800 leading-[1.6] mb-4 line-clamp-2 group-hover:text-secondary transition-colors">
                         {item.title}
                       </h3>
 
                       <div className="mt-auto pt-4 border-t border-slate-50 flex justify-between items-center">
-                        <span className="text-[#3F51B5] text-[13px] font-bold">อ่านรายละเอียด</span>
-                        <ArrowRightCircle size={18} className="text-gray-300 group-hover:text-[#3F51B5] group-hover:translate-x-1 transition-all" />
+                        <span className="text-secondary text-[13px] font-bold">อ่านรายละเอียด</span>
+                        <ArrowRightCircle size={18} className="text-slate-300 group-hover:text-secondary group-hover:translate-x-1 transition-all" />
                       </div>
                     </div>
                   </motion.div>
                 ))
               ) : (
-                <p className="text-gray-400 col-span-full text-center py-20">ยังไม่มีข่าวประชาสัมพันธ์ล่าสุดในขณะนี้</p>
+                <p className="text-slate-400 col-span-full text-center py-20">ยังไม่มีข่าวประชาสัมพันธ์ล่าสุดในขณะนี้</p>
               )}
             </div>
           </section>
@@ -204,7 +204,7 @@ export default function Home() {
       </div>
 
       {/* Section: หลักสูตรแนะนำ */}
-      <div className="bg-[#FAFAFA] py-28 border-t border-gray-100">
+      <div className="bg-indigo-50/30 py-24 border-t border-slate-100">
         <div className="max-w-[1440px] mx-auto px-4 md:px-10">
           <section>
             <motion.div
@@ -212,9 +212,9 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.7 }}
-              className="flex items-center mb-16 border-l-[8px] border-[#3F51B5] pl-5"
+              className="flex items-center mb-20 border-l-[8px] border-secondary pl-5"
             >
-              <h2 className="text-2xl md:text-4xl font-bold text-[#1e293b] tracking-tight uppercase">หลักสูตรแนะนำของเรา</h2>
+              <h2 className="text-2xl md:text-4xl font-bold text-slate-800 tracking-tight uppercase">หลักสูตรแนะนำของเรา</h2>
             </motion.div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
               {courses.slice(0, 4).map((course, index) => (
@@ -254,7 +254,7 @@ function CourseCard({ course, index = 0, onViewDetail }) {
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
       whileHover={{ y: -4 }}
-      className="bg-white p-8 rounded-[28px] shadow-[0_8px_30px_rgba(63,81,181,0.08)] border border-gray-100 flex flex-col lg:flex-row space-y-6 lg:space-y-0 lg:space-x-8 hover:shadow-xl transition-all duration-500 group"
+      className="bg-white p-8 rounded-[28px] shadow-[0_8px_30px_rgba(63,81,181,0.08)] border border-slate-100 flex flex-col lg:flex-row space-y-6 lg:space-y-0 lg:space-x-8 hover:shadow-xl transition-all duration-500 group"
     >
       <div className="w-full lg:w-56 h-56 rounded-3xl shrink-0 overflow-hidden bg-slate-50 shadow-inner">
         <img src={course.image} alt={course.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
@@ -264,12 +264,12 @@ function CourseCard({ course, index = 0, onViewDetail }) {
           <span className="text-xs text-slate-400 font-bold flex items-center mb-4 uppercase tracking-widest">
             <Calendar size={14} className="mr-2 text-indigo-300" /> อัปเดตเมื่อ: {course.date}
           </span>
-          <h4 className="text-[#1e293b] font-bold text-[20px] leading-[1.4] mb-4 group-hover:text-[#3F51B5] transition-colors">{course.title}</h4>
+          <h4 className="text-slate-800 font-bold text-[20px] leading-[1.4] mb-4 group-hover:text-secondary transition-colors">{course.title}</h4>
           <p className="text-[13px] text-slate-400 italic font-light leading-relaxed line-clamp-2 uppercase tracking-tight">{course.enTitle}</p>
         </div>
         <button
           onClick={onViewDetail}
-          className="bg-[#3F51B5] text-white text-[14px] px-10 py-3.5 rounded-full w-fit font-bold hover:bg-indigo-800 transition-all flex items-center shadow-lg hover:shadow-indigo-200 mt-8 active:scale-95"
+          className="bg-secondary text-white text-[14px] px-10 py-3.5 rounded-full w-fit font-bold hover:bg-indigo-800 transition-all flex items-center shadow-lg hover:shadow-indigo-200 mt-8 active:scale-95"
         >
           <ArrowRightCircle size={18} className="mr-2" /> รายละเอียดหลักสูตร
         </button>
