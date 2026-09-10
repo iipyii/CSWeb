@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { motion } from 'framer-motion';
 import HeroSlider from '../components/HeroSlider';
 import Footer from '../components/Footer';
 import {
@@ -95,24 +96,36 @@ export default function Home() {
           {/* Quick Actions Bar */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-[60px] mb-24 max-w-[1000px] mx-auto relative z-40">
             {actions.map((act, i) => (
-              <div
+              <motion.div
                 key={i}
-                onClick={() => handleActionClick(act)}
-                className="bg-[#3F51B5] text-white py-7 px-4 rounded-2xl shadow-xl flex flex-col items-center justify-center cursor-pointer hover:-translate-y-2 hover:bg-[#2e3b8a] transition-all duration-300 group"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4, delay: i * 0.1 }}
               >
-                <div className="mb-2 opacity-90 group-hover:scale-110 transition-transform">
-                  {act.icon}
+                <div
+                  onClick={() => handleActionClick(act)}
+                  className="bg-[#3F51B5] text-white py-7 px-4 rounded-2xl shadow-xl flex flex-col items-center justify-center cursor-pointer hover:-translate-y-2 hover:bg-[#2e3b8a] transition-all duration-300 group"
+                >
+                  <div className="mb-2 opacity-90 group-hover:scale-110 transition-transform">
+                    {act.icon}
+                  </div>
+                  <span className="text-[14px] font-medium tracking-wide text-center leading-tight">
+                    {act.label}
+                  </span>
                 </div>
-                <span className="text-[14px] font-medium tracking-wide text-center leading-tight">
-                  {act.label}
-                </span>
-              </div>
+              </motion.div>
             ))}
           </div>
 
           {/* Section: ข่าวสาร CIS */}
           <section>
-            <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 border-l-[8px] border-[#3F51B5] pl-5">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7 }}
+              className="flex flex-col md:flex-row md:items-end justify-between mb-12 border-l-[8px] border-[#3F51B5] pl-5"
+            >
               <div>
                 <h2 className="text-2xl md:text-4xl font-bold text-[#1e293b] tracking-tight uppercase">ข่าวสาร CIS</h2>
               </div>
@@ -122,13 +135,17 @@ export default function Home() {
               >
                 ดูข่าวทั้งหมด <ArrowRightCircle size={20} className="ml-2 group-hover:translate-x-1 transition-transform" />
               </button>
-            </div>
+            </motion.div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
               {newsList.length > 0 ? (
-                newsList.map((item) => (
-                  <div
+                newsList.map((item, index) => (
+                  <motion.div
                     key={item.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
                     onClick={() => navigate(`/news/${item.id}`)}
                     className={`w-full sm:max-w-[380px] mx-auto bg-white rounded-[32px] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col group cursor-pointer border
                       ${item.isPinned ? 'border-indigo-100 bg-indigo-50/10' : 'border-gray-50'}`}
@@ -172,7 +189,7 @@ export default function Home() {
                         <ArrowRightCircle size={18} className="text-gray-300 group-hover:text-[#3F51B5] group-hover:translate-x-1 transition-all" />
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 ))
               ) : (
                 <p className="text-gray-400 col-span-full text-center py-20">ยังไม่มีข่าวประชาสัมพันธ์ล่าสุดในขณะนี้</p>
@@ -186,14 +203,21 @@ export default function Home() {
       <div className="bg-[#FAFAFA] py-28 border-t border-gray-100">
         <div className="max-w-[1440px] mx-auto px-4 md:px-10">
           <section>
-            <div className="flex items-center mb-16 border-l-[8px] border-[#3F51B5] pl-5">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7 }}
+              className="flex items-center mb-16 border-l-[8px] border-[#3F51B5] pl-5"
+            >
               <h2 className="text-2xl md:text-4xl font-bold text-[#1e293b] tracking-tight uppercase">หลักสูตรแนะนำของเรา</h2>
-            </div>
+            </motion.div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-              {courses.slice(0, 4).map((course) => (
+              {courses.slice(0, 4).map((course, index) => (
                 <CourseCard
                   key={course.id}
                   course={course}
+                  index={index}
                   onViewDetail={() => navigate(`/course-sections/${course.level}`)}
                 />
               ))}
@@ -203,6 +227,7 @@ export default function Home() {
               <div className="w-full md:w-1/2">
                 <CourseCard
                   course={courses[4]}
+                  index={4}
                   onViewDetail={() => navigate(`/course-sections/${courses[4].level}`)}
                 />
               </div>
@@ -217,9 +242,15 @@ export default function Home() {
 }
 
 // คอมโพเนนต์การ์ดหลักสูตร
-function CourseCard({ course, onViewDetail }) {
+function CourseCard({ course, index = 0, onViewDetail }) {
   return (
-    <div className="bg-white p-8 rounded-[40px] shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-100 flex flex-col lg:flex-row space-y-6 lg:space-y-0 lg:space-x-8 hover:shadow-xl transition-all duration-500 group">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+      className="bg-white p-8 rounded-[40px] shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-100 flex flex-col lg:flex-row space-y-6 lg:space-y-0 lg:space-x-8 hover:shadow-xl transition-all duration-500 group"
+    >
       <div className="w-full lg:w-56 h-56 rounded-3xl shrink-0 overflow-hidden bg-slate-50 shadow-inner">
         <img src={course.image} alt={course.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
       </div>
@@ -238,6 +269,6 @@ function CourseCard({ course, onViewDetail }) {
           <ArrowRightCircle size={18} className="mr-2" /> รายละเอียดหลักสูตร
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 }
