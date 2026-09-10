@@ -104,11 +104,11 @@ export default function Home() {
               >
                 <div
                   onClick={() => handleActionClick(act)}
-                  className="bg-[#3F51B5] text-white py-7 px-4 rounded-2xl shadow-xl flex flex-col items-center justify-center cursor-pointer hover:-translate-y-2 hover:bg-[#2e3b8a] transition-all duration-300 group"
+                  className="bg-[#3F51B5] text-white py-7 px-4 rounded-2xl shadow-xl hover:shadow-indigo-300/40 flex flex-col items-center justify-center cursor-pointer hover:-translate-y-2 hover:bg-[#2e3b8a] transition-all duration-300 group"
                 >
-                  <div className="mb-2 opacity-90 group-hover:scale-110 transition-transform">
+                  <motion.div whileHover={{ rotate: 5, scale: 1.15 }} className="mb-2 opacity-90">
                     {act.icon}
-                  </div>
+                  </motion.div>
                   <span className="text-[14px] font-medium tracking-wide text-center leading-tight">
                     {act.label}
                   </span>
@@ -131,9 +131,12 @@ export default function Home() {
               </div>
               <button
                 onClick={() => navigate('/news')}
-                className="mt-4 md:mt-0 flex items-center text-[#3F51B5] font-bold hover:underline group"
+                className="mt-4 md:mt-0 flex items-center text-[#3F51B5] font-bold group"
               >
-                ดูข่าวทั้งหมด <ArrowRightCircle size={20} className="ml-2 group-hover:translate-x-1 transition-transform" />
+                <span className="bg-gradient-to-r from-current to-current bg-no-repeat bg-left-bottom bg-[length:0%_2px] group-hover:bg-[length:100%_2px] transition-[background-size] duration-300 pb-0.5">
+                  ดูข่าวทั้งหมด
+                </span>
+                <ArrowRightCircle size={20} className="ml-2 group-hover:translate-x-1 transition-transform" />
               </button>
             </motion.div>
 
@@ -146,8 +149,9 @@ export default function Home() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.5, delay: index * 0.1 }}
+                    whileHover={{ y: -4 }}
                     onClick={() => navigate(`/news/${item.id}`)}
-                    className={`w-full sm:max-w-[380px] mx-auto bg-white rounded-[32px] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col group cursor-pointer border
+                    className={`w-full sm:max-w-[380px] mx-auto bg-white rounded-[28px] overflow-hidden shadow-sm hover:shadow-lg transition-all duration-500 flex flex-col group cursor-pointer border
                       ${item.isPinned ? 'border-indigo-100 bg-indigo-50/10' : 'border-gray-50'}`}
                   >
                     <div className="relative h-[220px] w-full overflow-hidden">
@@ -249,7 +253,8 @@ function CourseCard({ course, index = 0, onViewDetail }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
-      className="bg-white p-8 rounded-[40px] shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-100 flex flex-col lg:flex-row space-y-6 lg:space-y-0 lg:space-x-8 hover:shadow-xl transition-all duration-500 group"
+      whileHover={{ y: -4 }}
+      className="bg-white p-8 rounded-[28px] shadow-[0_8px_30px_rgba(63,81,181,0.08)] border border-gray-100 flex flex-col lg:flex-row space-y-6 lg:space-y-0 lg:space-x-8 hover:shadow-xl transition-all duration-500 group"
     >
       <div className="w-full lg:w-56 h-56 rounded-3xl shrink-0 overflow-hidden bg-slate-50 shadow-inner">
         <img src={course.image} alt={course.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />

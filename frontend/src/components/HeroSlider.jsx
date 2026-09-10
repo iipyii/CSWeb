@@ -43,13 +43,13 @@ export default function HeroSlider() {
 
       <button
         onClick={prevSlide}
-        className="flex md:hidden md:group-hover:flex absolute left-8 top-1/2 -translate-y-1/2 z-20 p-3 bg-black/20 hover:bg-black/40 rounded-full text-white transition-all shadow-lg"
+        className="flex md:hidden md:group-hover:flex absolute left-8 top-1/2 -translate-y-1/2 hover:scale-110 z-20 p-3 bg-black/20 hover:bg-black/40 backdrop-blur-sm rounded-full text-white transition-all shadow-lg"
       >
         <ChevronLeft size={32} />
       </button>
       <button
         onClick={nextSlide}
-        className="flex md:hidden md:group-hover:flex absolute right-8 top-1/2 -translate-y-1/2 z-20 p-3 bg-black/20 hover:bg-black/40 rounded-full text-white transition-all shadow-lg"
+        className="flex md:hidden md:group-hover:flex absolute right-8 top-1/2 -translate-y-1/2 hover:scale-110 z-20 p-3 bg-black/20 hover:bg-black/40 backdrop-blur-sm rounded-full text-white transition-all shadow-lg"
       >
         <ChevronRight size={32} />
       </button>
