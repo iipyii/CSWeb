@@ -48,6 +48,16 @@ const sectionTitles = {
   990: "ภาคผนวก",
 }
 
+// สีเส้นซ้ายของแต่ละ section วนลูปตามลำดับ index แทนที่จะใช้สี indigo เดียวกันหมด
+const sectionAccentColors = [
+  "bg-red-400",
+  "bg-blue-400",
+  "bg-green-400",
+  "bg-purple-400",
+  "bg-yellow-400",
+  "bg-indigo-400",
+];
+
 
 export default function CourseDetail() {
   const { id } = useParams();
@@ -148,14 +158,14 @@ export default function CourseDetail() {
           )}
 
           <div className="grid grid-cols-1 gap-4">
-            {currentData?.versions?.[0]?.sections.map((section) => (
+            {currentData?.versions?.[0]?.sections.map((section, index) => (
               <div
                 key={section.id}
                 onClick={() => navigate(`/course-section/${section.id}`)}
                 className="cursor-pointer flex items-center justify-between p-5 bg-slate-50/50 rounded-2xl transition-all group hover:bg-white hover:shadow-lg border border-transparent hover:border-gray-100"
               >
                 <div className="flex items-center space-x-6">
-                  <div className="w-1.5 h-8 rounded-full bg-[#3F51B5]" />
+                  <div className={`w-1.5 h-8 rounded-full ${sectionAccentColors[index % sectionAccentColors.length]}`} />
                   <span className="text-lg font-medium text-slate-700 group-hover:text-[#183153] transition-colors">
                     {sectionTitles[section.order_index] || section.title}
                   </span>
