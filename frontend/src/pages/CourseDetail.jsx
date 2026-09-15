@@ -141,7 +141,7 @@ export default function CourseDetail() {
         {/* Card แสดงรายการหมวดหมู่ */}
         <div className="bg-white rounded-[40px] p-10 shadow-sm border border-gray-100">
           <h2 className="text-2xl font-bold text-[#183153] mb-2 leading-tight">
-            {currentData.title}
+            {currentData.name_th}
           </h2>
           {currentData.subtitle && (
             <p className="text-slate-500 mb-10 text-lg">{currentData.subtitle}</p>
