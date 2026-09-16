@@ -52,6 +52,22 @@ const sectionTitles = {
   990: "ภาคผนวก",
 }
 
+// breadcrumb ต่อ program จริง (key ด้วย currentData.slug ที่ API ส่งมาจริง
+// ต่างจาก currentData.level ที่ไม่เคยมีค่าเลย) — routeLevel ใช้ต่อ link
+// "หลักสูตร" กลับไปหน้า /course-sections/:level ที่ถูกต้อง, subject ใช้โชว์
+// breadcrumb กลาง โปรแกรม "-edit" ชี้กลับไป routeLevel/subject ของโปรแกรมหลัก
+// ที่การ์ดของมันอยู่ในหน้าเดียวกัน
+const programBreadcrumbInfo = {
+  regular: { routeLevel: "bachelor", subject: "สาขาวิชาวิทยาการคอมพิวเตอร์ (ภาคปกติ)" },
+  "regular-edit": { routeLevel: "bachelor", subject: "สาขาวิชาวิทยาการคอมพิวเตอร์ (ภาคปกติ)" },
+  csb: { routeLevel: "cs-english", subject: "สาขาวิชาวิทยาการคอมพิวเตอร์ (โครงการพิเศษ สองภาษา)" },
+  ComputerScience: { routeLevel: "cs-master", subject: "สาขาวิชาวิทยาการคอมพิวเตอร์ (ปริญญาโท)" },
+  "ComputerScience-edit": { routeLevel: "cs-master", subject: "สาขาวิชาวิทยาการคอมพิวเตอร์ (ปริญญาโท)" },
+  SoftwareEngineering: { routeLevel: "se-master", subject: "สาขาวิชาวิศวกรรมซอฟต์แวร์ (ปริญญาโท)" },
+  "SoftwareEngineering-edit": { routeLevel: "se-master", subject: "สาขาวิชาวิศวกรรมซอฟต์แวร์ (ปริญญาโท)" },
+  computersci: { routeLevel: "doctor", subject: "สาขาวิชาวิทยาการคอมพิวเตอร์ (ปริญญาเอก)" },
+};
+
 // สีเส้นซ้ายของแต่ละ section วนลูปตามลำดับ index แทนที่จะใช้สี indigo เดียวกันหมด
 const sectionAccentColors = [
   "bg-red-400",
@@ -116,23 +132,16 @@ export default function CourseDetail() {
             <ChevronRight size={14} className="opacity-40" />
 
             <Link
-              to={`/course-sections/${currentData.level || "bachelor"}`}
+              to={`/course-sections/${programBreadcrumbInfo[currentData.slug]?.routeLevel || "bachelor"}`}
               className="hover:text-blue-400 transition-colors"
             >
               หลักสูตร
             </Link>
             <ChevronRight size={14} className="opacity-40" />
 
-            {/* แสดงชื่อสาขาตาม level ที่ระบุไว้ในฐานข้อมูล */}
+            {/* แสดงชื่อสาขาตาม slug ของ program จริง (ดู programBreadcrumbInfo) */}
             <span className="">
-              {(() => {
-                const level = currentData.level;
-                if (level === "cs-master") return "สาขาวิชาวิทยาการคอมพิวเตอร์";
-                if (level === "se-master") return "สาขาวิชาวิศวกรรมซอฟต์แวร์";
-                if (level === "cs-english") return "สาขาวิชาวิทยาการคอมพิวเตอร์ (โครงการพิเศษ สองภาษา)";
-                if (level === "doctor") return "สาขาวิชาวิทยาการคอมพิวเตอร์";
-                return "สาขาวิชาวิทยาการคอมพิวเตอร์ (ภาคปกติ)";
-              })()}
+              {programBreadcrumbInfo[currentData.slug]?.subject || programBreadcrumbInfo.regular.subject}
             </span>
 
             <ChevronRight size={14} className="opacity-40" />
