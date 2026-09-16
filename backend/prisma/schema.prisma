@@ -171,9 +171,10 @@ model courses {
   section_no   Int
   title        String
   content      String  @db.Text
-  order_index  Int
+  order_index  Float
   pdf_path     String?
   xml_data     String? @db.Xml
+  is_active    Boolean @default(true)
 
   curriculum curriculums @relation(fields: [curriculumId], references: [id])
 }
