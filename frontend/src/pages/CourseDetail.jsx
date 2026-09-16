@@ -15,8 +15,10 @@ const idMap = {
 
   "cs-master-2567": { slug: "ComputerScience", year: 2567 },
   "cs-master-2562": { slug: "ComputerScience", year: 2562 },
+  "cs-master-edit-2562": { slug: "ComputerScience-edit", year: 2562 },
 
   "se-master-2559": { slug: "SoftwareEngineering", year: 2559 },
+  "se-master-edit-2559": { slug: "SoftwareEngineering-edit", year: 2559 },
 
   "cs-phd-2564": { slug: "computersci", year: 2564 },
   "cs-phd-edit-2559": { slug: "computersci", year: 2559 },
