@@ -9,6 +9,7 @@ const idMap = {
   "cs-normal-2564": { slug: "regular", year: 2564 },
   "cs-normal-2559": { slug: "regular", year: 2559 },
   "cs-old-2554": { slug: "regular", year: 2554 },
+  "cs-edit-2559": { slug: "regular-edit", year: 2559 },
 
   "cs-english-2564": { slug: "csb", year: 2564 },
 
