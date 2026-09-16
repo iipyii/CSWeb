@@ -15,6 +15,7 @@ export const getProgramBySlugYear = async (req, res) => {
           where: { year: parseInt(year) },
           include: {
             courses: {
+              where: { is_active: true },
               orderBy: { order_index: "asc" }
             }
           }
