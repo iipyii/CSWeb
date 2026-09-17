@@ -17,8 +17,18 @@
   border-bottom: 1px solid #eef2ff;
   display: flex;
   justify-content: center;
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 1000; /* ให้อยู่เหนือ Banner เสมอ */
+  /* ตัด overflow แนวนอนเฉพาะแกน x ที่ขอบ navbar เอง (แทนที่ overflow-x-hidden
+     ที่ root ของ MainLayout ซึ่งย้ายออกไปแล้วเพื่อให้ sticky ทำงานได้) กัน
+     กรณี dropdown ชั้นลึก (nestedSubMenu เด้งขวาต่อกัน 2-3 ชั้น) ยื่นเลยขอบขวา
+     จอที่ความกว้างแคบ (เช่น 1024px) จนเกิด horizontal scroll ทั้งหน้า —
+     ต้องระบุ overflow-y: visible กำกับไว้ด้วย ไม่งั้น browser จะเปลี่ยน
+     overflow-y เป็น auto อัตโนมัติและไปบัง dropdown แนวตั้งที่ต้องพ้นตัว
+     navbar (สูง 120px) ลงมาด้วย */
+  overflow-x: hidden;
+  overflow-y: visible;
 }
 
 /* ===== Container ===== */
