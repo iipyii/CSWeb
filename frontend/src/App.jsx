@@ -70,11 +70,14 @@ import ManageChatbot from './pages/admin/ManageChatbot';
 
 
 // 🟢 Layout สำหรับหน้าบ้าน (Public)
+// overflow-x-hidden ย้ายมาไว้ที่ <main> แทน root — Navbar ต้องมี ancestor
+// ที่ overflow เป็น visible ล้วนถึงจะทำ position: sticky ได้ตามสเปก
+// (ของเดิมที่ root ทำให้ overflow-y กลายเป็น auto โดยอัตโนมัติ ไม่ใช่ visible แล้ว)
 const MainLayout = () => (
-  <div className="min-h-screen flex flex-col overflow-x-hidden">
+  <div className="min-h-screen flex flex-col">
     <ScrollToTop />
     <Navbar />
-    <main className="flex-grow">
+    <main className="flex-grow overflow-x-hidden">
       <Outlet />
     </main>
     <AIChatbot />
