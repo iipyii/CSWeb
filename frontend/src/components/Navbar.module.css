@@ -20,15 +20,14 @@
   position: sticky;
   top: 0;
   z-index: 1000; /* ให้อยู่เหนือ Banner เสมอ */
-  /* ตัด overflow แนวนอนเฉพาะแกน x ที่ขอบ navbar เอง (แทนที่ overflow-x-hidden
-     ที่ root ของ MainLayout ซึ่งย้ายออกไปแล้วเพื่อให้ sticky ทำงานได้) กัน
-     กรณี dropdown ชั้นลึก (nestedSubMenu เด้งขวาต่อกัน 2-3 ชั้น) ยื่นเลยขอบขวา
-     จอที่ความกว้างแคบ (เช่น 1024px) จนเกิด horizontal scroll ทั้งหน้า —
-     ต้องระบุ overflow-y: visible กำกับไว้ด้วย ไม่งั้น browser จะเปลี่ยน
-     overflow-y เป็น auto อัตโนมัติและไปบัง dropdown แนวตั้งที่ต้องพ้นตัว
-     navbar (สูง 120px) ลงมาด้วย */
-  overflow-x: hidden;
-  overflow-y: visible;
+  /* ไม่ใส่ overflow-x หรือ clip-path ใดๆ ที่ .navbar เอง (และห้ามใส่ที่ html/
+     body ด้วย) — ตัวไหนที่ clip พอให้ scrollWidth หายจริง จะทำให้ ancestor
+     นั้นกลายเป็น scroll container ของตัวเอง ซึ่งไปตัด vertical dropdown ที่
+     ต้องยื่นพ้น navbar (ถ้า clip ที่ .navbar) หรือไปทำให้ position: sticky
+     ของ header เพี้ยน (ถ้า clip ที่ body ancestor ที่ไม่ใช่ document.
+     scrollingElement ตัวจริง) ต้นเหตุ overflow ที่ 1024px จริงๆ คือ
+     .nestedSubMenu ชั้นที่ 3 ยื่นพ้นขอบขวาจอ แก้ที่ต้นเหตุนั้นโดยตรงแทน
+     (ดู media query 769-1279px ด้านล่าง) */
 }
 
 /* ===== Container ===== */
@@ -309,6 +308,22 @@
 
   .menuList {
     gap: 20px;
+  }
+
+  /* ที่ความกว้างแคบ (เช่น 1024px) เมนูย่อยชั้นที่ 3 ที่เด้งออกขวาต่อจากชั้นที่ 2
+     (left: 100% สะสมจากทั้งสองชั้น) ยื่นพ้นขอบขวาจอจริง ทำให้เกิด horizontal
+     overflow แม้ตอนไม่ hover (เพราะ absolutely-positioned element ยังนับ
+     ขนาดในการคำนวณ scrollWidth ของหน้าอยู่ดีแม้จะซ่อนด้วย visibility: hidden)
+     แก้ที่ต้นเหตุด้วยการสลับทิศไปเปิดทางซ้ายแทนในช่วงความกว้างนี้ แทนที่จะไล่
+     ปิด overflow ที่ ancestor (เคยลองแล้วทั้ง .navbar และ html/body แต่ตัวไหน
+     ก็ตามที่ clip ได้จริงจะไปหักด้วย overflow-y แล้วทำให้ position: sticky
+     ของ header เพี้ยน เพราะ ancestor นั้นถูกแปลงเป็น scroll container ของ
+     ตัวเอง ซึ่งไม่ใช่ document.scrollingElement ตัวจริง) */
+  .nestedSubMenu {
+    left: auto;
+    right: 100%;
+    border-radius: 4px 0 4px 4px;
+    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
   }
 }
 
