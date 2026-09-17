@@ -117,7 +117,7 @@ const NewsDetail = () => {
       {/* --- Lightbox สำหรับดูรููปขนาดเต็ม (รองรับทุกรูป) --- */}
       {zoomedImage && (
         <div
-          className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 cursor-zoom-out"
+          className="fixed inset-0 z-[1100] bg-black/95 flex items-center justify-center p-4 cursor-zoom-out"
           onClick={() => setZoomedImage(null)}
         >
           <button className="absolute top-6 right-6 text-white bg-white/10 p-2 rounded-full hover:bg-white/20 transition-colors">
