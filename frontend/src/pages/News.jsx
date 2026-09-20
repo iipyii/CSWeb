@@ -30,7 +30,7 @@ export default function News() {
           .map(item => ({
             id: item.id,
             title: item.title,
-            description: item.summary || item.content.replace(/<[^>]+>/g, '').substring(0, 150) + '...', // ดึงเนื้อหาย่อ
+            description: item.summary || (item.content ? item.content.replace(/<[^>]+>/g, '').substring(0, 150) + '...' : ''), // ดึงเนื้อหาย่อ
             isLatest: true,
             isPinned: item.is_urgent,
             image: item.image ? `http://localhost:5000${item.image}` : "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800",

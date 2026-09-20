@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom"; // 👉 เพิ่ม useNavigate
 import { Search, ChevronDown, Menu, X } from "lucide-react";
+import axios from "axios";
 import styles from "./Navbar.module.css";
 
 // เมนูมือถือ: รองรับ item.dropdown / sub.submenu / deepSub.nestedSubmenu แบบ recursive
@@ -34,11 +35,46 @@ function MobileNavItem({ item, onNavigate }) {
 
 export default function Navbar() {
   const [lang, setLang] = useState("TH");
+  const [logoUrl, setLogoUrl] = useState("/cis-logo.svg");
 
   // 👉 1. สร้าง State สำหรับเก็บคำค้นหา และตัวนำทาง (navigate)
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchLogo = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/appearance/settings");
+        const logo = res.data?.configMap?.site_logo;
+        if (logo && logo.trim() !== "") {
+          setLogoUrl(logo.startsWith("http") ? logo : `http://localhost:5000${logo}`);
+        } else {
+          setLogoUrl("/cis-logo.svg");
+        }
+      } catch (err) {
+        console.error("Failed to load site logo:", err);
+      }
+    };
+
+    fetchLogo();
+
+    const handleLogoUpdate = (e) => {
+      if (e.detail?.site_logo !== undefined) {
+        const logo = e.detail.site_logo;
+        if (logo && logo.trim() !== "") {
+          setLogoUrl(logo.startsWith("http") ? logo : `http://localhost:5000${logo}`);
+        } else {
+          setLogoUrl("/cis-logo.svg");
+        }
+      } else {
+        fetchLogo();
+      }
+    };
+
+    window.addEventListener("site_config_updated", handleLogoUpdate);
+    return () => window.removeEventListener("site_config_updated", handleLogoUpdate);
+  }, []);
 
   // 👉 2. ฟังก์ชันจัดการเมื่อกด Enter
   const handleSearch = (e) => {
@@ -146,7 +182,15 @@ export default function Navbar() {
         {/* Logo Section */}
         <div className={styles.logoSection}>
           <Link to="/">
-            <img src="/cis-logo.svg" alt="CIS KMUTNB" className={styles.logo} />
+            <img 
+              src={logoUrl} 
+              alt="CIS KMUTNB" 
+              className={styles.logo} 
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = "/cis-logo.svg";
+              }}
+            />
           </Link>
         </div>
 

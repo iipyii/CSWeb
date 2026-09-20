@@ -27,7 +27,8 @@ model lecturers {
   research_publications research_publications[]
   embedding             Unsupported("vector")?
   advisors              advisors[]
-  projects              projects[]
+  projects              projects[]              @relation("main_advisor_projects")
+  co_projects           projects[]              @relation("co_advisor_projects")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -286,16 +287,20 @@ model projects {
   title_en     String?  @db.VarChar(255)
   abstract     String?  @db.Text
   year         Int?     // ปีการศึกษาที่ทำโปรเจกต์
+  semester     Int?     @default(1) // ภาคการศึกษา เช่น 1, 2
   image_path   String?  @db.Text
   document_url String?  @db.Text // ลิงก์ไฟล์เล่มปริญญานิพนธ์
   github_url   String?  @db.Text // ลิงก์ Source Code (ถ้ามี)
+  students_text String? @db.Text // รายชื่อนักศึกษาผู้จัดทำ (รองรับหลายคน)
   
   student_id   Int?
   advisor_id   Int?
+  co_advisor_id Int?
   
   created_at   DateTime @default(now()) @db.Timestamp(6)
 
   // ความสัมพันธ์
   student      students?  @relation(fields: [student_id], references: [id])
-  advisor      lecturers? @relation(fields: [advisor_id], references: [id])
+  advisor      lecturers? @relation("main_advisor_projects", fields: [advisor_id], references: [id])
+  co_advisor   lecturers? @relation("co_advisor_projects", fields: [co_advisor_id], references: [id])
 }

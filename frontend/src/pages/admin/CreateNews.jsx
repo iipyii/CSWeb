@@ -6,11 +6,13 @@ import {
   Save, Image as ImageIcon, FileText, Upload, ChevronLeft, CheckCircle2,
   User, Layout, Plus, Calendar, Bold, Italic, List, AlertCircle, X, File
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 export default function CreateNews() {
+  const navigate = useNavigate();
   const [isUrgent, setIsUrgent] = useState(false);
   const [title, setTitle] = useState("");
+  const [author, setAuthor] = useState("Admin");
   const [summary, setSummary] = useState("");
   const [category, setCategory] = useState("department");
   const [startDate, setStartDate] = useState("");
@@ -32,8 +34,17 @@ export default function CreateNews() {
 
   const handleSubmit = async () => {
     try {
+      if (!title.trim()) {
+        alert("กรุณาระบุหัวข้อข่าวสาร");
+        return;
+      }
 
       const content = editor?.getHTML();
+      if (!content || content === '<p></p>') {
+        alert("กรุณากรอกรายละเอียดข่าวสาร");
+        return;
+      }
+
       // 🌟 สร้างกล่องพัสดุ FormData
       const formData = new FormData();
       formData.append("title", title);
@@ -41,6 +52,11 @@ export default function CreateNews() {
       formData.append("category", category);
       formData.append("start_date", startDate);
       formData.append("end_date", endDate);
+      formData.append("is_urgent", isUrgent);
+      formData.append("author", author);
+      if (summary) {
+        formData.append("summary", summary);
+      }
       attachments.forEach((file) => {
         formData.append("attachments", file); // 🌟 ชื่อคำว่า "attachments" ต้องตรงกับที่ Backend รับด้วยนะครับ!
       });
@@ -53,15 +69,14 @@ export default function CreateNews() {
       });
 
       // 🌟 ส่งแบบ multipart/form-data
-      const res = await axios.post("http://localhost:5000/api/news", formData);
-
+      await axios.post("http://localhost:5000/api/news", formData);
 
       alert("สร้างข่าวสำเร็จ");
       navigate('/admin/news');
 
     } catch (error) {
       console.error(error);
-      alert("เกิดข้อผิดพลาด");
+      alert(error.response?.data?.error || "เกิดข้อผิดพลาดในการบันทึกข่าว");
     }
   };
 
@@ -156,13 +171,19 @@ export default function CreateNews() {
           </div>
 
           {/* รายละเอียดฉบับเต็ม */}
-          <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
+          <div 
+            className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden cursor-text"
+            onClick={() => editor?.chain().focus().run()}
+          >
+            <div 
+              className="p-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/50 cursor-default"
+              onClick={(e) => e.stopPropagation()}
+            >
               <label className="text-sm font-black text-slate-700 ml-2">รายละเอียดฉบับเต็ม</label>
               <div className="flex gap-2">
-                <button onClick={() => editor?.chain().focus().toggleBold().run()} className="p-2 hover:bg-white rounded-lg"><Bold size={16} /></button>
-                <button onClick={() => editor?.chain().focus().toggleItalic().run()} className="p-2 hover:bg-white rounded-lg"><Italic size={16} /></button>
-                <button onClick={() => editor?.chain().focus().toggleBulletList().run()} className="p-2 hover:bg-white rounded-lg"><List size={16} /></button>
+                <button type="button" onClick={() => editor?.chain().focus().toggleBold().run()} className="p-2 hover:bg-white rounded-lg"><Bold size={16} /></button>
+                <button type="button" onClick={() => editor?.chain().focus().toggleItalic().run()} className="p-2 hover:bg-white rounded-lg"><Italic size={16} /></button>
+                <button type="button" onClick={() => editor?.chain().focus().toggleBulletList().run()} className="p-2 hover:bg-white rounded-lg"><List size={16} /></button>
               </div>
             </div>
             <EditorContent editor={editor} />
@@ -331,8 +352,8 @@ export default function CreateNews() {
               </label>
               <input
                 type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                value={author}
+                onChange={(e) => setAuthor(e.target.value)}
                 placeholder="ระบุชื่อผู้เขียน..."
                 className="w-full bg-slate-50 border-none rounded-2xl py-3 px-4 text-xs font-bold outline-none" />
             </div>

@@ -1,62 +1,55 @@
 import express from "express";
 import multer from "multer";
 import path from "path";
-import { prisma } from "../lib/prisma.js";
+import fs from "fs";
 
 import {
   getDownloads,
-  getDownloadsByAudience
+  getDownloadStats,
+  getDownloadById,
+  getDownloadsByAudience,
+  createDownload,
+  updateDownload,
+  deleteDownload
 } from "../controllers/downloads.controller.js";
 
 const router = express.Router();
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/downloads");
+    const dir = path.join(process.cwd(), "uploads/downloads");
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    cb(null, dir);
   },
   filename: (req, file, cb) => {
-    const unique = Date.now() + path.extname(file.originalname);
+    const unique = Date.now() + "-" + Math.round(Math.random() * 1e9) + path.extname(file.originalname);
     cb(null, unique);
   }
 });
 
 const upload = multer({ storage });
 
-
 // GET all downloads
 router.get("/", getDownloads);
 
+// GET download stats
+router.get("/stats", getDownloadStats);
 
-// GET downloads by audience
+// GET download by ID
+router.get("/detail/:id", getDownloadById);
+
+// GET downloads by audience (staff | student)
 router.get("/:audience", getDownloadsByAudience);
 
-
 // POST upload file
-router.post("/upload", upload.single("file"), async (req, res) => {
+router.post("/upload", upload.single("file"), createDownload);
 
-  try {
+// PUT update file
+router.put("/:id", upload.single("file"), updateDownload);
 
-    const { title, category, audience, file_type } = req.body;
-
-    const file = await prisma.downloads.create({
-      data: {
-        title,
-        category,
-        audience,
-        file_type,
-        file_path: req.file.filename
-      }
-    });
-
-    res.json(file);
-
-  } catch (err) {
-
-    console.error(err);
-    res.status(500).json({ error: "Upload failed" });
-
-  }
-
-});
+// DELETE file
+router.delete("/:id", deleteDownload);
 
 export default router;

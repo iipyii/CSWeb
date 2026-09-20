@@ -1,22 +1,16 @@
 import { prisma } from "../lib/prisma.js";
+import fs from "fs";
+import path from "path";
 
 // ✅ GET active news
 export const getActiveNews = async (req, res) => {
   try {
-    const today = new Date();
     const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;
+    const limit = Number(req.query.limit) || 50;
 
     const news = await prisma.news.findMany({
       where: {
         status: "active",
-        start_date: {
-          lte: today,
-        },
-        OR: [
-          { end_date: null },
-          { end_date: { gte: today } },
-        ],
       },
       orderBy: {
         created_at: "desc",
@@ -35,7 +29,7 @@ export const getActiveNews = async (req, res) => {
 // ✅ POST news (admin only)
 export const createNews = async (req, res) => {
   try {
-    const { title, content, category, start_date, end_date } = req.body;
+    const { title, content, category, start_date, end_date, is_urgent } = req.body;
 
     // 1. ดึงไฟล์รูปหน้าปก (ถ้ามี)
     const imagePath = req.files?.['image'] ? `/uploads/${req.files['image'][0].filename}` : null;
@@ -67,6 +61,7 @@ export const createNews = async (req, res) => {
         attachments: attachments,            // 🌟 บันทึก Array เอกสารลง DB
         start_date: start_date ? new Date(start_date) : undefined,
         end_date: end_date ? new Date(end_date) : undefined,
+        is_urgent: is_urgent === 'true' || is_urgent === true,
 
         users: {
           // connect: { id: req.user.id }
@@ -189,19 +184,56 @@ export const updateNews = async (req, res) => {
   }
 };
 
-// ✅ Soft delete (archive)
+// ✅ Permanent delete
 export const deleteNews = async (req, res) => {
   try {
     const { id } = req.params;
 
-    await prisma.news.update({
+    const news = await prisma.news.findUnique({
       where: { id: Number(id) },
-      data: {
-        status: "archived",
-      },
     });
 
-    res.json({ message: "News archived (soft deleted)" });
+    if (!news) {
+      return res.status(404).json({ message: "News not found" });
+    }
+
+    // ลบไฟล์รูปหน้าปก (ถ้ามี)
+    if (news.image && news.image.startsWith("/uploads/")) {
+      const filePath = path.join(process.cwd(), news.image);
+      if (fs.existsSync(filePath)) {
+        try { fs.unlinkSync(filePath); } catch (e) { /* ignore */ }
+      }
+    }
+
+    // ลบไฟล์รูปภาพเพิ่มเติม (ถ้ามี)
+    if (news.additional_images && Array.isArray(news.additional_images)) {
+      news.additional_images.forEach(img => {
+        if (img && img.startsWith("/uploads/")) {
+          const filePath = path.join(process.cwd(), img);
+          if (fs.existsSync(filePath)) {
+            try { fs.unlinkSync(filePath); } catch (e) { /* ignore */ }
+          }
+        }
+      });
+    }
+
+    // ลบไฟล์เอกสารแนบ (ถ้ามี)
+    if (news.attachments && Array.isArray(news.attachments)) {
+      news.attachments.forEach(att => {
+        if (att && att.startsWith("/uploads/")) {
+          const filePath = path.join(process.cwd(), att);
+          if (fs.existsSync(filePath)) {
+            try { fs.unlinkSync(filePath); } catch (e) { /* ignore */ }
+          }
+        }
+      });
+    }
+
+    await prisma.news.delete({
+      where: { id: Number(id) },
+    });
+
+    res.json({ message: "ลบข่าวสารเรียบร้อยแล้ว" });
   } catch (error) {
     console.error(error);
 

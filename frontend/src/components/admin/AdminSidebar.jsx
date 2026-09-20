@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import axios from 'axios';
 import { Palette, ShieldCheck  } from 'lucide-react';
 import { 
   LayoutDashboard, Newspaper, Archive, GraduationCap, 
@@ -10,6 +11,34 @@ import {
 export default function AdminSidebar({ onNavigate }) {
   const location = useLocation();
   const userRole = 'admin';
+  const [logoUrl, setLogoUrl] = useState(null);
+
+  useEffect(() => {
+    const fetchLogo = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/appearance/settings");
+        const logo = res.data?.configMap?.site_logo;
+        if (logo && logo.trim() !== "") {
+          setLogoUrl(logo.startsWith("http") ? logo : `http://localhost:5000${logo}`);
+        } else {
+          setLogoUrl(null);
+        }
+      } catch (err) {
+        // ignore
+      }
+    };
+    fetchLogo();
+    const handleUpdate = (e) => {
+      if (e.detail?.site_logo !== undefined) {
+        const logo = e.detail.site_logo;
+        setLogoUrl(logo && logo.trim() !== "" ? (logo.startsWith("http") ? logo : `http://localhost:5000${logo}`) : null);
+      } else {
+        fetchLogo();
+      }
+    };
+    window.addEventListener("site_config_updated", handleUpdate);
+    return () => window.removeEventListener("site_config_updated", handleUpdate);
+  }, []);
 
   const menuItems = [
     { label: 'แดชบอร์ด', icon: <LayoutDashboard size={22} />, path: '/admin', roles: ['admin', 'lecturer'] },
@@ -31,9 +60,13 @@ export default function AdminSidebar({ onNavigate }) {
       {/* 🏛️ Admin Header Section */}
       <div className="p-8 pb-4">
         <div className="flex items-center gap-3 px-2 mb-8">
-          <div className="w-10 h-10 bg-[#3F51B5] rounded-2xl flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-100">
-            CIS
-          </div>
+          {logoUrl ? (
+            <img src={logoUrl} alt="Logo" className="w-10 h-10 rounded-2xl object-contain shadow-sm border border-slate-100 bg-white p-1" />
+          ) : (
+            <div className="w-10 h-10 bg-[#3F51B5] rounded-2xl flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-100">
+              CIS
+            </div>
+          )}
           <div>
             <h2 className="text-sm font-bold text-slate-800 leading-tight">Admin Panel</h2>
             <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Management System</p>

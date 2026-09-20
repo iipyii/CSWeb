@@ -6,12 +6,20 @@ import { ChevronLeft, Search, Trash2, RotateCcw, FileText } from 'lucide-react';
 export default function NewsArchive() {
   const navigate = useNavigate();
   const [archivedData, setArchivedData] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
   // 🟢 1. ดึงข้อมูลข่าวเฉพาะที่ถูกจัดเก็บแล้ว
   const fetchArchivedNews = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/news");
-      const archived = res.data.filter(item => item.status === 'archived');
+      const res = await axios.get("http://localhost:5000/api/news/all");
+      const archived = res.data
+        .filter(item => item.status === 'archived')
+        .map(item => ({
+          ...item,
+          date: item.created_at
+            ? new Date(item.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })
+            : '-'
+        }));
       setArchivedData(archived);
     } catch (error) {
       console.error("Error fetching archived news:", error);
@@ -27,8 +35,10 @@ export default function NewsArchive() {
     if (window.confirm("ต้องการกู้คืนข่าวนี้กลับไปหน้าหลักใช่หรือไม่?")) {
       try {
         await axios.put(`http://localhost:5000/api/news/${id}`, { status: 'active' });
+        alert("กู้คืนข่าวสารกลับไปหน้าหลักเรียบร้อยแล้ว");
         fetchArchivedNews(); // โหลดข้อมูลใหม่
       } catch (error) {
+        console.error("Restore news error:", error);
         alert("เกิดข้อผิดพลาดในการกู้คืน");
       }
     }
@@ -36,15 +46,21 @@ export default function NewsArchive() {
 
   // 🟢 3. ฟังก์ชันลบถาวร
   const handleDelete = async (id) => {
-    if (window.confirm("คำเตือน: คุณต้องการลบข่าวนี้ทิ้งถาวรใช่หรือไม่?")) {
+    if (window.confirm("คำเตือน: คุณต้องการลบข่าวนี้ทิ้งถาวรใช่หรือไม่? (ไม่สามารถกู้คืนได้)")) {
       try {
         await axios.delete(`http://localhost:5000/api/news/${id}`);
+        alert("ลบข่าวสารเรียบร้อยแล้ว");
         fetchArchivedNews();
       } catch (error) {
+        console.error("Delete news error:", error);
         alert("เกิดข้อผิดพลาดในการลบ");
       }
     }
   };
+
+  const filteredData = archivedData.filter(item => 
+    item.title?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="space-y-8 pb-20">
@@ -53,7 +69,7 @@ export default function NewsArchive() {
       <div className="flex items-center gap-5">
         <button
           onClick={() => navigate('/admin/news')}
-          className="p-3 bg-white border border-slate-100 rounded-2xl text-slate-400 hover:text-[#3F51B5] transition-all"
+          className="p-3 bg-white border border-slate-100 rounded-2xl text-slate-400 hover:text-[#3F51B5] transition-all shadow-sm"
         >
           <ChevronLeft size={22} />
         </button>
@@ -67,6 +83,8 @@ export default function NewsArchive() {
           <input
             type="text"
             placeholder="ค้นหาข่าว..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-slate-50 border-none rounded-xl py-3 pl-14 pr-5 text-sm outline-none font-medium"
           />
         </div>
@@ -84,39 +102,47 @@ export default function NewsArchive() {
               </tr>
             </thead>
             <tbody>
-              {archivedData.map((item) => (
-                <tr key={item.id} className="border-t border-slate-50 hover:bg-slate-50/30 transition-colors">
-                  <td className="px-8 py-5">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-slate-100 rounded-lg text-slate-400">
-                        <FileText size={18} />
+              {filteredData.length > 0 ? (
+                filteredData.map((item) => (
+                  <tr key={item.id} className="border-t border-slate-50 hover:bg-slate-50/30 transition-colors">
+                    <td className="px-8 py-5">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-slate-100 rounded-lg text-slate-400">
+                          <FileText size={18} />
+                        </div>
+                        <span className="text-sm font-bold text-slate-600 line-clamp-1">{item.title}</span>
                       </div>
-                      <span className="text-sm font-bold text-slate-600 line-clamp-1">{item.title}</span>
-                    </div>
-                  </td>
-                  <td className="px-8 py-5 text-sm font-medium text-slate-400 text-center">
-                    {item.date}
-                  </td>
-                  <td className="px-8 py-5">
-                    <div className="flex items-center justify-center gap-2">
-                      {/* ปุ่มกู้คืนข่าวกลับไปหน้าหลัก */}
-                      <button
-                        onClick={() => handleRestore(item.id)}
-                        className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-[11px] font-black hover:bg-emerald-500 hover:text-white transition-all"
-                      >
-                        <RotateCcw size={14} /> กู้คืน
-                      </button>
-                      {/* ปุ่มลบถาวร */}
-                      <button
-                        onClick={() => handleDelete(item.id)}
-                        className="flex items-center gap-2 px-4 py-2 bg-rose-50 text-rose-500 rounded-xl text-[11px] font-black hover:bg-rose-500 hover:text-white transition-all"
-                      >
-                        <Trash2 size={14} /> ลบ
-                      </button>
-                    </div>
+                    </td>
+                    <td className="px-8 py-5 text-sm font-medium text-slate-400 text-center">
+                      {item.date}
+                    </td>
+                    <td className="px-8 py-5">
+                      <div className="flex items-center justify-center gap-2">
+                        {/* ปุ่มกู้คืนข่าวกลับไปหน้าหลัก */}
+                        <button
+                          onClick={() => handleRestore(item.id)}
+                          className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-[11px] font-black hover:bg-emerald-500 hover:text-white transition-all cursor-pointer"
+                        >
+                          <RotateCcw size={14} /> กู้คืน
+                        </button>
+                        {/* ปุ่มลบถาวร */}
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          className="flex items-center gap-2 px-4 py-2 bg-rose-50 text-rose-500 rounded-xl text-[11px] font-black hover:bg-rose-500 hover:text-white transition-all cursor-pointer"
+                        >
+                          <Trash2 size={14} /> ลบ
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="3" className="px-8 py-16 text-center text-slate-400 text-sm">
+                    {searchTerm ? "ไม่พบข่าวสารที่ค้นหา" : "ไม่มีข่าวสารในคลังข่าวเก่า"}
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>

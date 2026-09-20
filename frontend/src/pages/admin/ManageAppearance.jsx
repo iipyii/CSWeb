@@ -1,22 +1,133 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Upload, Save, Image as ImageIcon, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { Upload, Save, Image as ImageIcon, Trash2, Plus, RefreshCw, Loader2 } from 'lucide-react';
 
 export default function ManageAppearance() {
-  const [logo, setLogo] = useState(null);
-  const [banners, setBanners] = useState([
-    { id: 1, url: 'https://via.placeholder.com/1200x400', name: 'Banner 1' }
-  ]);
+  const [logoPreview, setLogoPreview] = useState(null);
+  const [banners, setBanners] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [bannersRes, settingsRes] = await Promise.all([
+        axios.get("http://localhost:5000/api/appearance/banners"),
+        axios.get("http://localhost:5000/api/appearance/settings")
+      ]);
+      setBanners(bannersRes.data || []);
+      const logoUrl = settingsRes.data?.configMap?.site_logo;
+      if (logoUrl) {
+        setLogoPreview(logoUrl.startsWith('http') ? logoUrl : `http://localhost:5000${logoUrl}`);
+      }
+    } catch (error) {
+      console.error("Failed to load appearance data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploadingLogo(true);
+      const formData = new FormData();
+      formData.append("logo", file);
+
+      const res = await axios.post("http://localhost:5000/api/appearance/logo", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+
+      const newPath = res.data.logoPath;
+      setLogoPreview(`http://localhost:5000${newPath}`);
+      window.dispatchEvent(new CustomEvent('site_config_updated', { detail: { site_logo: newPath } }));
+      alert("อัปเดตโลโก้เรียบร้อยแล้ว");
+    } catch (error) {
+      console.error("Upload logo error:", error);
+      alert("เกิดข้อผิดพลาดในการอัปโหลดโลโก้");
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  const handleResetLogo = async () => {
+    if (!window.confirm("ต้องการรีเซ็ตโลโก้กลับเป็นค่าเริ่มต้นของระบบใช่หรือไม่?")) return;
+    try {
+      setUploadingLogo(true);
+      await axios.post("http://localhost:5000/api/appearance/settings", {
+        config_key: "site_logo",
+        config_value: ""
+      });
+      setLogoPreview(null);
+      window.dispatchEvent(new CustomEvent('site_config_updated', { detail: { site_logo: "" } }));
+      alert("รีเซ็ตโลโก้เป็นค่าเริ่มต้นเรียบร้อยแล้ว");
+    } catch (error) {
+      console.error("Reset logo error:", error);
+      alert("เกิดข้อผิดพลาดในการรีเซ็ตโลโก้");
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  const handleBannerUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploadingBanner(true);
+      const formData = new FormData();
+      formData.append("image", file);
+      formData.append("title", `แบนเนอร์ ${banners.length + 1}`);
+      formData.append("order_no", banners.length + 1);
+
+      await axios.post("http://localhost:5000/api/appearance/banners", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+
+      alert("เพิ่มแบนเนอร์เรียบร้อยแล้ว");
+      fetchData();
+      window.dispatchEvent(new CustomEvent('site_config_updated', { detail: { banners: true } }));
+    } catch (error) {
+      console.error("Upload banner error:", error);
+      alert("เกิดข้อผิดพลาดในการอัปโหลดแบนเนอร์");
+    } finally {
+      setUploadingBanner(false);
+    }
+  };
+
+  const handleDeleteBanner = async (id) => {
+    if (window.confirm("ต้องการลบแบนเนอร์นี้ใช่หรือไม่?")) {
+      try {
+        await axios.delete(`http://localhost:5000/api/appearance/banners/${id}`);
+        alert("ลบแบนเนอร์เรียบร้อย");
+        fetchData();
+        window.dispatchEvent(new CustomEvent('site_config_updated', { detail: { banners: true } }));
+      } catch (error) {
+        console.error("Delete banner error:", error);
+        alert("เกิดข้อผิดพลาดในการลบ");
+      }
+    }
+  };
 
   return (
-    <div className="space-y-10 text-left">
+    <div className="space-y-10 text-left pb-10">
       <header className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">จัดการภาพลักษณ์เว็บไซต์</h1>
           <p className="text-slate-500">แก้ไข Logo และรูป Banner ที่แสดงบนหน้าเว็บไซต์หลัก</p>
         </div>
-        <button className="flex items-center gap-2 bg-[#3F51B5] text-white px-6 py-2.5 rounded-xl font-bold shadow-lg hover:bg-indigo-700 transition-all">
-          <Save size={18} /> บันทึกการเปลี่ยนแปลง
+        <button 
+          onClick={fetchData} 
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 text-sm font-semibold transition-colors"
+        >
+          <RefreshCw size={16} /> รีเฟรช
         </button>
       </header>
 
@@ -27,20 +138,47 @@ export default function ManageAppearance() {
           <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2 self-start">
             <ImageIcon className="text-[#3F51B5]" /> CIS Logo
           </h3>
-          <div className="w-40 h-40 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 flex items-center justify-center relative group overflow-hidden mb-6">
-            {logo ? (
-              <img src={URL.createObjectURL(logo)} className="w-full h-full object-contain p-4" />
+          <div className="w-44 h-44 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 flex items-center justify-center relative group overflow-hidden mb-6">
+            {logoPreview ? (
+              <img src={logoPreview} alt="Logo" className="w-full h-full object-contain p-4" />
             ) : (
               <div className="text-center">
-                <ImageIcon className="mx-auto text-slate-300 mb-2" size={32} />
+                <ImageIcon className="mx-auto text-slate-300 mb-2" size={36} />
                 <span className="text-[10px] text-slate-400">ขนาดแนะนำ 512x512px</span>
               </div>
             )}
+            {uploadingLogo && (
+              <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+                <Loader2 className="animate-spin text-[#3F51B5]" size={32} />
+              </div>
+            )}
           </div>
-          <input type="file" id="logo-upload" hidden onChange={(e) => setLogo(e.target.files[0])} />
-          <label htmlFor="logo-upload" className="w-full text-center py-3 bg-slate-100 text-slate-600 rounded-xl font-bold cursor-pointer hover:bg-slate-200 transition-colors text-sm">
-            เลือกรูปภาพโลโก้ใหม่
-          </label>
+          <input 
+            type="file" 
+            id="logo-upload" 
+            accept="image/*"
+            hidden 
+            onChange={handleLogoUpload} 
+            disabled={uploadingLogo}
+          />
+          <div className="w-full flex flex-col gap-2">
+            <label 
+              htmlFor="logo-upload" 
+              className="w-full text-center py-3 bg-[#3F51B5] text-white rounded-xl font-bold cursor-pointer hover:bg-indigo-700 transition-colors text-sm shadow-sm"
+            >
+              {uploadingLogo ? "กำลังอัปโหลด..." : "เลือกรูปภาพโลโก้ใหม่"}
+            </label>
+            {logoPreview && (
+              <button
+                type="button"
+                onClick={handleResetLogo}
+                disabled={uploadingLogo}
+                className="w-full text-center py-2 bg-slate-100 text-slate-600 rounded-xl font-semibold hover:bg-rose-50 hover:text-rose-600 transition-colors text-xs"
+              >
+                รีเซ็ตเป็นโลโก้เริ่มต้น
+              </button>
+            )}
+          </div>
         </section>
 
         {/* 🖼️ ส่วนจัดการแบนเนอร์หน้าแรก (Home Banners) */}
@@ -49,29 +187,58 @@ export default function ManageAppearance() {
             <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
               <ImageIcon className="text-[#3F51B5]" /> แบนเนอร์หน้าแรก (Hero Sliders)
             </h3>
-            <button className="text-sm font-bold text-[#3F51B5] hover:underline">+ เพิ่มรูปแบนเนอร์</button>
+            <div>
+              <input 
+                type="file" 
+                id="banner-upload" 
+                accept="image/*"
+                hidden 
+                onChange={handleBannerUpload} 
+                disabled={uploadingBanner}
+              />
+              <label 
+                htmlFor="banner-upload" 
+                className="text-sm font-bold text-[#3F51B5] hover:underline cursor-pointer flex items-center gap-1.5"
+              >
+                {uploadingBanner ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+                เพิ่มรูปแบนเนอร์
+              </label>
+            </div>
           </div>
 
           <div className="space-y-4">
-            {banners.map((item) => (
-              <div key={item.id} className="flex flex-col md:flex-row gap-6 p-4 border border-slate-50 rounded-2xl bg-slate-50/50 items-center">
-                <div className="w-full md:w-60 h-24 bg-white rounded-xl overflow-hidden shadow-inner border border-slate-100">
-                  <img src={item.url} className="w-full h-full object-cover" />
-                </div>
-                <div className="flex-1 text-sm">
-                  <p className="font-bold text-slate-700">ลำดับที่ {item.id}</p>
-                  <p className="text-slate-400 text-xs mt-1">แนะนำขนาด: 1920x800px (ไม่เกิน 2MB)</p>
-                </div>
-                <div className="flex gap-2">
-                  <button className="p-2.5 bg-white text-slate-400 rounded-xl border border-slate-100 hover:text-indigo-600 transition-colors shadow-sm">
-                    <Upload size={18} />
-                  </button>
-                  <button className="p-2.5 bg-white text-slate-400 rounded-xl border border-slate-100 hover:text-rose-500 transition-colors shadow-sm">
-                    <Trash2 size={18} />
-                  </button>
-                </div>
+            {banners.length > 0 ? (
+              banners.map((item, index) => {
+                const imgUrl = item.image_path?.startsWith("http") 
+                  ? item.image_path 
+                  : `http://localhost:5000${item.image_path}`;
+
+                return (
+                  <div key={item.id} className="flex flex-col md:flex-row gap-6 p-4 border border-slate-100 rounded-2xl bg-slate-50/50 items-center">
+                    <div className="w-full md:w-60 h-24 bg-white rounded-xl overflow-hidden shadow-inner border border-slate-200 shrink-0">
+                      <img src={imgUrl} alt={item.title} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex-1 text-sm text-left">
+                      <p className="font-bold text-slate-700">{item.title || `ลำดับที่ ${index + 1}`}</p>
+                      <p className="text-slate-400 text-xs mt-1">แนะนำขนาด: 1920x800px</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => handleDeleteBanner(item.id)}
+                        className="p-2.5 bg-white text-slate-400 rounded-xl border border-slate-200 hover:text-rose-500 transition-colors shadow-sm"
+                        title="ลบแบนเนอร์"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-center py-12 text-slate-400 text-sm">
+                {loading ? "กำลังโหลดแบนเนอร์..." : "ยังไม่มีรูปแบนเนอร์ สามารถกดเพิ่มได้จากปุ่มด้านบน"}
               </div>
-            ))}
+            )}
           </div>
         </section>
 

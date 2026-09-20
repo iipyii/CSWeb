@@ -359,3 +359,62 @@ export const updateFaqVectors = async (req, res) => {
     res.status(500).json({ error: "Vector update failed", details: error.message });
   }
 };
+
+export const getChatSettings = async (req, res) => {
+  try {
+    const configs = await prisma.site_config.findMany({
+      where: {
+        config_key: {
+          in: ["chatbot_welcome", "chatbot_fallback", "chatbot_active"]
+        }
+      }
+    });
+
+    const map = {};
+    configs.forEach(c => { map[c.config_key] = c.config_value; });
+
+    res.json({
+      welcomeMessage: map.chatbot_welcome || "สวัสดีครับ! ผมคือ AI ผู้ช่วยประจำภาควิชา CIS มีอะไรให้ผมช่วยไหมครับ?",
+      fallbackMessage: map.chatbot_fallback || "ขออภัยครับ ผมไม่พบข้อมูลในส่วนนี้ คุณสามารถติดต่อสอบถามเพิ่มเติมได้ที่สำนักงานภาควิชาครับ",
+      isActive: map.chatbot_active !== "false"
+    });
+  } catch (error) {
+    console.error("Get chat settings error:", error);
+    res.status(500).json({ error: "Failed to get chat settings" });
+  }
+};
+
+export const updateChatSettings = async (req, res) => {
+  try {
+    const { welcomeMessage, fallbackMessage, isActive } = req.body;
+
+    const updates = [];
+    if (welcomeMessage !== undefined) {
+      updates.push(prisma.site_config.upsert({
+        where: { config_key: "chatbot_welcome" },
+        update: { config_value: welcomeMessage },
+        create: { config_key: "chatbot_welcome", config_value: welcomeMessage }
+      }));
+    }
+    if (fallbackMessage !== undefined) {
+      updates.push(prisma.site_config.upsert({
+        where: { config_key: "chatbot_fallback" },
+        update: { config_value: fallbackMessage },
+        create: { config_key: "chatbot_fallback", config_value: fallbackMessage }
+      }));
+    }
+    if (isActive !== undefined) {
+      updates.push(prisma.site_config.upsert({
+        where: { config_key: "chatbot_active" },
+        update: { config_value: String(isActive) },
+        create: { config_key: "chatbot_active", config_value: String(isActive) }
+      }));
+    }
+
+    await Promise.all(updates);
+    res.json({ message: "บันทึกการตั้งค่า Chatbot สำเร็จ" });
+  } catch (error) {
+    console.error("Update chat settings error:", error);
+    res.status(500).json({ error: "Failed to update chat settings" });
+  }
+};

@@ -1,117 +1,152 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Calendar, FolderGit2, FileText } from 'lucide-react';
-import { useNavigate } from 'react-router-dom'; // 👈 นำเข้าสำหรับเปลี่ยนหน้า
+import { Search, Calendar, FolderGit2, FileText, GraduationCap, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import Footer from '../components/Footer';
 
 export default function StudentProjects() {
-  const navigate = useNavigate(); // 👈 ประกาศตัวแปรสำหรับเปลี่ยนหน้า
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedYear, setSelectedYear] = useState("2568");
+  const [selectedYear, setSelectedYear] = useState("");
+  const [selectedSemester, setSelectedSemester] = useState("");
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // ข้อมูลโครงงาน
-  const projects = [
-    { 
-      id: 1, 
-      titleTh: "โครงการพัฒนาเว็บไซต์ภาควิชาคอมพิวเตอร์และสารสนเทศ", 
-      titleEn: "Department of Computer and Information Science Website Development Project",
-      year: "2568" 
-    },
-    { 
-      id: 2, 
-      titleTh: "ระบบจัดการคลังข่าวสารและฐานข้อมูลบุคลากร", 
-      titleEn: "News Repository and Personnel Database Management System",
-      year: "2568" 
-    },
-    { 
-      id: 3, 
-      titleTh: "แอปพลิเคชันแนะนำหลักสูตรและการลงทะเบียน", 
-      titleEn: "Course Recommendation and Registration Assistant Application",
-      year: "2567" 
-    },
-    { 
-      id: 4, 
-      titleTh: "โครงงานพัฒนาเว็บแอปพลิเคชันเพื่อการจัดการเรียนการสอน", 
-      titleEn: "Web Application Development for Learning Management System",
-      year: "2567" 
-    },
-    { 
-      id: 5, 
-      titleTh: "ระบบติดตามความก้าวหน้าโครงงานพิเศษ", 
-      titleEn: "Senior Project Progress Tracking System",
-      year: "2566" 
-    },
-  ];
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        setLoading(true);
+        const res = await axios.get("http://localhost:5000/api/projects");
+        setProjects(res.data || []);
+      } catch (error) {
+        console.error("Failed to load projects:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProjects();
+  }, []);
 
-  // รายการปีการศึกษา (ไม่มีคำว่า "ทั้งหมด")
-  const years = ["2568", "2567", "2566"];
+  // ดึงปีการศึกษาที่มีอยู่จริงในข้อมูล
+  const availableYears = Array.from(
+    new Set(projects.map(p => p.year).filter(Boolean))
+  ).sort((a, b) => b - a).map(String);
+
+  const displayYears = availableYears.length > 0 ? availableYears : ["2569", "2568", "2567", "2566"];
 
   const filteredProjects = projects.filter(project => {
+    const titleTh = project.title_th || "";
+    const titleEn = project.title_en || "";
+    const studentsText = project.students_text || "";
+    const stuName = project.student ? `${project.student.firstname} ${project.student.lastname || ''}` : "";
+    const advName = project.advisor?.fullname_th || "";
+    const advCode = project.advisor?.lecturer_code || "";
+    const coAdvName = project.co_advisor?.fullname_th || "";
+
+    const searchLower = searchTerm.toLowerCase();
     const matchesSearch = 
-      project.titleTh.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.titleEn.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesYear = project.year === selectedYear;
-    return matchesSearch && matchesYear;
+      titleTh.toLowerCase().includes(searchLower) ||
+      titleEn.toLowerCase().includes(searchLower) ||
+      studentsText.toLowerCase().includes(searchLower) ||
+      stuName.toLowerCase().includes(searchLower) ||
+      advName.toLowerCase().includes(searchLower) ||
+      advCode.toLowerCase().includes(searchLower) ||
+      coAdvName.toLowerCase().includes(searchLower);
+
+    const matchesYear = selectedYear === "" || (project.year && project.year.toString() === selectedYear);
+    const matchesSemester = selectedSemester === "" || (project.semester && project.semester.toString() === selectedSemester);
+
+    return matchesSearch && matchesYear && matchesSemester;
   });
 
   return (
     <div className="bg-[#FDFDFD] min-h-screen flex flex-col text-left">
       
       {/* 🏛️ Header Section */}
-      <section className="bg-[#3F51B5] text-white py-8 px-6 relative overflow-hidden text-left">
+      <section className="bg-[#3F51B5] text-white py-12 px-6 relative overflow-hidden text-left shadow-md">
         <div className="max-w-5xl mx-auto relative z-10">
           <motion.div
             initial={{ opacity: 0, y: -15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.6 }}
           >
-            <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">โครงงานของนักศึกษา</h1>
-            <div className="w-12 h-1 bg-white/30 mb-5"></div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full text-xs font-semibold mb-3 backdrop-blur-sm">
+              <FolderGit2 size={14} /> ผลงานนักศึกษาภาควิชา
+            </div>
+            <h1 className="text-3xl md:text-4xl font-bold mb-3 tracking-tight">โครงงานของนักศึกษา</h1>
+            <p className="text-indigo-100 text-sm max-w-xl leading-relaxed">
+              รวบรวมหัวข้อโครงงานพิเศษและปริญญานิพนธ์ของนักศึกษาภาควิชาคอมพิวเตอร์และสารสนเทศ
+            </p>
           </motion.div>
         </div>
         <div className="absolute right-[0%] bottom-[5%] opacity-5 select-none pointer-events-none">
-          <h2 className="text-[5rem] font-bold">CIS</h2>
+          <h2 className="text-[6rem] font-bold">CIS</h2>
         </div>
       </section>
 
       {/* 🔍 Search & Filter Tools */}
-      <main className="max-w-6xl mx-auto w-full px-6 md:px-10 py-12 flex-grow">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-12 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm">
+      <main className="max-w-6xl mx-auto w-full px-6 md:px-10 py-10 flex-grow">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-3 mb-8 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
           <div className="relative flex-1 w-full">
-            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <input 
               type="text" 
-              placeholder="ค้นหาโครงงาน"
-              className="w-full bg-transparent border-none rounded-xl py-4 pl-14 pr-6 text-sm font-medium outline-none focus:ring-0 text-slate-700 placeholder:text-slate-400"
+              placeholder="ค้นหาโครงงาน, ชื่อนักศึกษา หรืออาจารย์ที่ปรึกษา..."
+              className="w-full bg-transparent border-none rounded-xl py-3 pl-12 pr-4 text-sm font-medium outline-none focus:ring-0 text-slate-700 placeholder:text-slate-400"
+              value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
 
-          <div className="flex items-center gap-2 px-4 md:border-l border-slate-100 w-full md:w-auto">
-            <Calendar className="text-slate-400" size={18} />
-            <select 
-              className="bg-transparent border-none py-4 pr-10 text-sm font-bold text-slate-600 outline-none focus:ring-0 cursor-pointer min-w-[140px]"
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
-            >
-              {years.map(year => (
-                <option key={year} value={year}>{`ปีการศึกษา ${year}`}</option>
-              ))}
-            </select>
+          <div className="flex items-center gap-3 w-full md:w-auto md:border-l border-slate-100 pl-0 md:pl-4">
+            {/* ตัวกรองปีการศึกษา */}
+            <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-2 rounded-xl text-sm font-medium text-slate-600">
+              <Calendar size={16} className="text-slate-400" />
+              <select 
+                className="bg-transparent border-none text-xs md:text-sm font-bold text-slate-700 outline-none cursor-pointer"
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+              >
+                <option value="">ทุกปีการศึกษา</option>
+                {displayYears.map(year => (
+                  <option key={year} value={year}>{`ปี ${year}`}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* ตัวกรองภาคเรียน */}
+            <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-2 rounded-xl text-sm font-medium text-slate-600">
+              <GraduationCap size={16} className="text-slate-400" />
+              <select 
+                className="bg-transparent border-none text-xs md:text-sm font-bold text-slate-700 outline-none cursor-pointer"
+                value={selectedSemester}
+                onChange={(e) => setSelectedSemester(e.target.value)}
+              >
+                <option value="">ทุกภาคเรียน</option>
+                <option value="1">ภาคเรียนที่ 1</option>
+                <option value="2">ภาคเรียนที่ 2</option>
+              </select>
+            </div>
           </div>
         </div>
 
-        {/* 📋 Official List Area */}
+        {/* 📋 Project List */}
         <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-          <div className="grid grid-cols-12 px-8 py-5 bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-widest text-slate-500">
-            <div className="col-span-10">รายชื่อโครงงาน (Project Title)</div>
-            <div className="col-span-2 text-right">ปีการศึกษา</div>
+          <div className="grid grid-cols-12 px-6 md:px-8 py-4 bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-widest text-slate-500">
+            <div className="col-span-8 md:col-span-9">รายชื่อโครงงาน (Project Title)</div>
+            <div className="col-span-4 md:col-span-3 text-right">ภาค/ปีการศึกษา</div>
           </div>
 
           <div className="divide-y divide-slate-100">
             <AnimatePresence mode="popLayout">
-              {filteredProjects.length > 0 ? (
-                filteredProjects.map((project, index) => (
+              {loading ? (
+                <div className="py-20 text-center flex flex-col items-center justify-center gap-2 text-slate-400 text-sm">
+                  <Loader2 className="animate-spin text-[#3F51B5]" size={28} />
+                  <span>กำลังโหลดข้อมูลโครงงาน...</span>
+                </div>
+              ) : filteredProjects.length > 0 ? (
+                filteredProjects.map((project) => (
                   <motion.div 
                     key={project.id}
                     layout
@@ -119,22 +154,49 @@ export default function StudentProjects() {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.2 }}
-                    // 👈 เพิ่มการคลิกเพื่อเปลี่ยนหน้าไปยังรายละเอียด
                     onClick={() => navigate(`/student-projects/${project.id}`)}
-                    className="group hover:bg-slate-50/50 transition-colors cursor-pointer"
+                    className="group hover:bg-slate-50/70 transition-colors cursor-pointer"
                   >
-                    <div className="grid grid-cols-12 px-8 py-7 items-center gap-4">
-                      <div className="col-span-10">
-                        <h3 className="text-[16px] font-bold text-slate-800 group-hover:text-[#3F51B5] transition-colors leading-tight mb-1">
-                          {project.titleTh}
+                    <div className="grid grid-cols-12 px-6 md:px-8 py-6 items-center gap-4">
+                      <div className="col-span-8 md:col-span-9">
+                        <h3 className="text-[15px] md:text-[16px] font-bold text-slate-800 group-hover:text-[#3F51B5] transition-colors leading-snug mb-1.5">
+                          {project.title_th}
                         </h3>
-                        <p className="text-[13px] font-medium text-slate-400 italic leading-snug">
-                          {project.titleEn}
-                        </p>
+                        {project.title_en && (
+                          <p className="text-[12px] md:text-[13px] font-medium text-slate-400 italic leading-snug mb-2">
+                            {project.title_en}
+                          </p>
+                        )}
+
+                        {/* ข้อมูลผู้จัดทำและที่ปรึกษา */}
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 pt-1">
+                          {/* นักศึกษา */}
+                          {project.students_text ? (
+                            <div className="flex items-center gap-1.5 font-medium text-slate-600">
+                              <span className="text-slate-400">ผู้จัดทำ:</span>
+                              <span>{project.students_text.split("\n").join(", ")}</span>
+                            </div>
+                          ) : project.student ? (
+                            <div className="flex items-center gap-1.5 font-medium text-slate-600">
+                              <span className="text-slate-400">ผู้จัดทำ:</span>
+                              <span>{project.student.firstname} {project.student.lastname}</span>
+                            </div>
+                          ) : null}
+
+                          {/* ที่ปรึกษา */}
+                          {project.advisor && (
+                            <div className="flex items-center gap-1.5 text-indigo-700 font-semibold">
+                              <span className="text-slate-400 font-normal">ที่ปรึกษา:</span>
+                              <span>{project.advisor.fullname_th}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div className="col-span-2 text-right">
-                        <span className="text-sm font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-lg group-hover:bg-[#3F51B5] group-hover:text-white transition-all">
-                          {project.year}
+
+                      {/* ป้ายเทอม/ปี */}
+                      <div className="col-span-4 md:col-span-3 text-right">
+                        <span className="inline-flex items-center text-xs font-bold text-slate-600 bg-slate-100 group-hover:bg-[#3F51B5] group-hover:text-white px-3 py-1.5 rounded-lg transition-all">
+                          {project.semester ? `${project.semester}/` : ''}{project.year || '-'}
                         </span>
                       </div>
                     </div>
@@ -145,7 +207,7 @@ export default function StudentProjects() {
                   <div className="inline-flex p-5 bg-slate-50 rounded-full mb-4 text-slate-300">
                     <FileText size={32} />
                   </div>
-                  <h3 className="text-slate-400 font-bold text-sm">ไม่พบข้อมูลโครงงานในปีการศึกษานี้</h3>
+                  <h3 className="text-slate-400 font-bold text-sm">ไม่พบข้อมูลโครงงานตามเงื่อนไขที่เลือก</h3>
                 </div>
               )}
             </AnimatePresence>
@@ -156,4 +218,4 @@ export default function StudentProjects() {
       <Footer />
     </div>
   );
-}
+}

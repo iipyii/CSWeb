@@ -1,21 +1,61 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Upload, Save, Calendar as CalendarIcon, FileText, X, FileUp } from 'lucide-react';
+import axios from 'axios';
+import { ChevronLeft, Upload, Save, Calendar as CalendarIcon, FileText, X, FileUp, Loader2 } from 'lucide-react';
 
 export default function CreateFile() {
   const navigate = useNavigate();
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [title, setTitle] = useState("");
+  const [audience, setAudience] = useState("student");
+  const [category, setCategory] = useState("ทั่วไป");
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [note, setNote] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0] || e.dataTransfer?.files?.[0];
     if (file) setSelectedFile(file);
   };
 
+  const handleSubmit = async (e) => {
+    e?.preventDefault();
+    if (!title.trim()) {
+      alert("กรุณาระบุชื่อเอกสาร");
+      return;
+    }
+    if (!selectedFile) {
+      alert("กรุณาเลือกไฟล์ที่ต้องการอัปโหลด");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("audience", audience);
+      formData.append("category", category || "ทั่วไป");
+      formData.append("file", selectedFile);
+
+      await axios.post("http://localhost:5000/api/downloads/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+
+      alert("บันทึกและอัปโหลดเอกสารสำเร็จ");
+      navigate('/admin/files');
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert("เกิดข้อผิดพลาดในการอัปโหลดเอกสาร");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="max-w-5xl mx-auto space-y-7 text-left pb-10">
       
-      {/* 🔙 Header Section - ปรับฟอนต์หัวข้อเป็น text-2xl */}
+      {/* 🔙 Header Section */}
       <div className="flex items-center justify-between border-b border-slate-100 pb-6">
         <div className="flex items-center gap-4">
           <button 
@@ -30,23 +70,30 @@ export default function CreateFile() {
           </div>
         </div>
         
-        {/* 💾 Action Buttons (Top) - ปรับฟอนต์ปุ่มเป็น text-sm */}
+        {/* 💾 Action Buttons */}
         <div className="flex items-center gap-3">
           <button 
+            type="button"
             onClick={() => navigate(-1)}
             className="px-5 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-100 transition-all"
           >
             ยกเลิก
           </button>
-          <button className="flex items-center gap-2 bg-[#3F51B5] text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all shadow-md active:scale-95">
-            <Save size={18} /> บันทึกและอัปโหลด
+          <button 
+            type="button"
+            onClick={handleSubmit}
+            disabled={submitting}
+            className="flex items-center gap-2 bg-[#3F51B5] text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all shadow-md active:scale-95 disabled:opacity-50"
+          >
+            {submitting ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />} 
+            {submitting ? "กำลังบันทึก..." : "บันทึกและอัปโหลด"}
           </button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
         
-        {/* 📝 Form Section: ข้อมูลเอกสาร */}
+        {/* 📝 Form Section */}
         <div className="md:col-span-7 space-y-7">
           <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm space-y-6">
             
@@ -55,37 +102,56 @@ export default function CreateFile() {
               <h2 className="text-base font-bold">ข้อมูลทั่วไปของเอกสาร</h2>
             </div>
 
-            {/* 1. ชื่อเอกสาร - ปรับ Label เป็น text-sm (ประมาณ 14px) */}
+            {/* 1. ชื่อเอกสาร */}
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-600 ml-1">ชื่อเอกสาร / หัวข้อข่าวสาร</label>
+              <label className="text-sm font-bold text-slate-600 ml-1">ชื่อเอกสาร / หัวข้อ</label>
               <input 
                 type="text" 
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
                 placeholder="ระบุชื่อเอกสารที่ต้องการให้แสดงบนหน้าเว็บ..."
                 className="w-full px-5 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-[15px] focus:ring-4 focus:ring-[#3F51B5]/5 focus:border-[#3F51B5] outline-none transition-all placeholder:text-slate-300"
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* 2. หมวดหมู่ */}
+              {/* 2. กลุ่มผู้ใช้งาน */}
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-600 ml-1">หมวดหมู่เอกสาร</label>
-                <select className="w-full px-5 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-[15px] focus:ring-4 focus:ring-[#3F51B5]/5 focus:border-[#3F51B5] outline-none transition-all appearance-none cursor-pointer">
+                <label className="text-sm font-bold text-slate-600 ml-1">กลุ่มผู้ใช้งาน</label>
+                <select 
+                  value={audience}
+                  onChange={(e) => setAudience(e.target.value)}
+                  className="w-full px-5 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-[15px] focus:ring-4 focus:ring-[#3F51B5]/5 focus:border-[#3F51B5] outline-none transition-all cursor-pointer"
+                >
                   <option value="student">นักศึกษา</option>
                   <option value="staff">บุคลากร</option>
                 </select>
               </div>
 
-              {/* 3. วันที่อัปโหลด */}
+              {/* 3. หมวดหมู่ย่อย */}
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-600 ml-1">วันที่ระบุในเอกสาร</label>
-                <div className="relative">
-                  <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                  <input 
-                    type="date" 
-                    defaultValue={new Date().toISOString().split('T')[0]}
-                    className="w-full pl-12 pr-5 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-[15px] focus:ring-4 focus:ring-[#3F51B5]/5 outline-none transition-all"
-                  />
-                </div>
+                <label className="text-sm font-bold text-slate-600 ml-1">หมวดหมู่เอกสาร</label>
+                <input 
+                  type="text" 
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  placeholder="เช่น ฝึกงาน, โครงงาน, ทั่วไป"
+                  className="w-full px-5 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-[15px] focus:ring-4 focus:ring-[#3F51B5]/5 focus:border-[#3F51B5] outline-none transition-all"
+                />
+              </div>
+            </div>
+
+            {/* 4. วันที่ */}
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-600 ml-1">วันที่ระบุในเอกสาร</label>
+              <div className="relative">
+                <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <input 
+                  type="date" 
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="w-full pl-12 pr-5 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-[15px] focus:ring-4 focus:ring-[#3F51B5]/5 outline-none transition-all"
+                />
               </div>
             </div>
 
@@ -94,6 +160,8 @@ export default function CreateFile() {
               <label className="text-sm font-bold text-slate-600 ml-1">หมายเหตุเพิ่มเติม</label>
               <textarea 
                 rows="4"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
                 className="w-full px-5 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-[15px] focus:ring-4 focus:ring-[#3F51B5]/5 outline-none transition-all placeholder:text-slate-300"
                 placeholder="ระบุคำอธิบายสั้นๆ (ถ้ามี)..."
               ></textarea>
@@ -101,7 +169,7 @@ export default function CreateFile() {
           </div>
         </div>
 
-        {/* 📁 Upload Section: ส่วนอัปโหลดไฟล์ */}
+        {/* 📁 Upload Section */}
         <div className="md:col-span-5">
           <div 
             className={`bg-white p-8 rounded-3xl border-2 border-dashed transition-all flex flex-col items-center justify-center text-center space-y-5 h-full min-h-[400px] relative ${
@@ -123,6 +191,7 @@ export default function CreateFile() {
                   </p>
                 </div>
                 <button 
+                  type="button"
                   onClick={() => setSelectedFile(null)}
                   className="w-full py-3 bg-red-50 text-red-500 rounded-xl text-xs font-bold hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
                 >

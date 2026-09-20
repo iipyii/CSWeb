@@ -19,6 +19,7 @@ import searchRoutes from "./routes/search.routes.js";
 import appearanceRoutes from './routes/appearance.routes.js';
 import projectsRoutes from './routes/projects.routes.js';
 import curriculumRoutes from './routes/curriculum.routes.js';
+import adminRoutes from './routes/admin.routes.js';
 
 
 const app = express();
@@ -64,6 +65,7 @@ app.use("/downloads", express.static("uploads/downloads"));
 app.use('/api/appearance', appearanceRoutes);
 app.use('/api/projects', projectsRoutes);
 app.use('/api/curriculum', curriculumRoutes);
+app.use('/api/admin', adminRoutes);
 app.use("/uploads", express.static(path.join(process.cwd(), "public/uploads")));
 
 

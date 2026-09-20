@@ -1,23 +1,49 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Shield, UserCheck, Lock, Save, Search, UserCog } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { Shield, Lock, Save, Search, UserCog, RefreshCw, Loader2 } from 'lucide-react';
 
 export default function ManageRoles() {
   const [searchTerm, setSearchTerm] = useState("");
-  
-  // จำลองข้อมูลผู้ใช้งานระบบหลังบ้าน
-  const [users, setUsers] = useState([
-    { id: 1, name: "แอดมิน ภาควิชา", email: "admin@kmutnb.ac.th", role: "admin", status: "active" },
-    { id: 2, name: "รศ.ดร. สมชาย ใจดี", email: "somchai.j@cis.kmutnb.ac.th", role: "lecturer", status: "active" },
-    { id: 3, name: "ผศ.หญิง มณี รัตนา", email: "manee.r@cis.kmutnb.ac.th", role: "lecturer", status: "active" },
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [savingId, setSavingId] = useState(null);
+  const [users, setUsers] = useState([]);
 
-  const handleRoleChange = (id, newRole) => {
-    setUsers(users.map(u => u.id === id ? { ...u, role: newRole } : u));
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get("http://localhost:5000/api/users");
+      setUsers(res.data || []);
+    } catch (error) {
+      console.error("Failed to load users:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const handleRoleChange = async (id, newRole) => {
+    try {
+      setSavingId(id);
+      await axios.put(`http://localhost:5000/api/users/${id}/role`, { role: newRole });
+      setUsers(users.map(u => u.id === id ? { ...u, role: newRole } : u));
+    } catch (error) {
+      console.error("Failed to update role:", error);
+      alert("เกิดข้อผิดพลาดในการเปลี่ยนสิทธิ์");
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const filteredUsers = users.filter(u => 
+    (u.full_name || "").toLowerCase().includes(searchTerm.toLowerCase()) || 
+    (u.email || "").toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <div className="space-y-8 text-left">
+    <div className="space-y-8 text-left pb-10">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
@@ -25,8 +51,11 @@ export default function ManageRoles() {
           </h1>
           <p className="text-slate-500 text-sm">กำหนดขอบเขตการเข้าถึงระบบหลังบ้านสำหรับบุคลากร</p>
         </div>
-        <button className="flex items-center gap-2 bg-[#3F51B5] text-white px-6 py-2.5 rounded-xl font-bold shadow-lg hover:bg-indigo-700 transition-all">
-          <Save size={18} /> บันทึกการตั้งค่าทั้งหมด
+        <button 
+          onClick={fetchUsers}
+          className="flex items-center gap-2 bg-white border border-slate-200 text-slate-600 px-4 py-2.5 rounded-xl font-bold shadow-sm hover:bg-slate-50 transition-all text-sm"
+        >
+          <RefreshCw size={16} className={loading ? "animate-spin" : ""} /> รีเฟรชข้อมูล
         </button>
       </header>
 
@@ -79,40 +108,52 @@ export default function ManageRoles() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {users.filter(u => u.name.includes(searchTerm) || u.email.includes(searchTerm)).map((user) => (
-                <tr key={user.id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-8 py-5">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-[#3F51B5] font-bold">
-                        {user.name.charAt(0)}
+              {filteredUsers.length > 0 ? (
+                filteredUsers.map((user) => (
+                  <tr key={user.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-8 py-5">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-[#3F51B5] font-bold">
+                          {(user.full_name || "U").charAt(0)}
+                        </div>
+                        <span className="font-bold text-slate-700 text-sm">{user.full_name || "-"}</span>
                       </div>
-                      <span className="font-bold text-slate-700 text-sm">{user.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-8 py-5 text-sm text-slate-500 font-medium">{user.email}</td>
-                  <td className="px-8 py-5">
-                    <select 
-                      value={user.role}
-                      onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                      className={`text-xs font-bold px-4 py-2 rounded-xl outline-none border-none shadow-sm cursor-pointer
-                        ${user.role === 'admin' ? 'bg-[#3F51B5] text-white' : 'bg-white text-slate-600 border border-slate-100'}`}
-                    >
-                      <option value="admin">Administrator</option>
-                      <option value="lecturer">Lecturer</option>
-                    </select>
-                  </td>
-                  <td className="px-8 py-5">
-                    <span className="flex items-center gap-1.5 text-green-500 text-xs font-bold uppercase tracking-wider">
-                      <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div> ออนไลน์
-                    </span>
-                  </td>
-                  <td className="px-8 py-5">
-                    <div className="flex justify-center gap-2">
-                      <button className="p-2.5 text-slate-400 hover:text-[#3F51B5] transition-colors" title="Lock Account"><Lock size={18}/></button>
-                    </div>
+                    </td>
+                    <td className="px-8 py-5 text-sm text-slate-500 font-medium">{user.email}</td>
+                    <td className="px-8 py-5">
+                      <div className="flex items-center gap-2">
+                        <select 
+                          value={user.role}
+                          disabled={savingId === user.id}
+                          onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                          className={`text-xs font-bold px-4 py-2 rounded-xl outline-none border-none shadow-sm cursor-pointer disabled:opacity-50
+                            ${user.role === 'admin' ? 'bg-[#3F51B5] text-white' : 'bg-white text-slate-600 border border-slate-100'}`}
+                        >
+                          <option value="admin">Administrator</option>
+                          <option value="lecturer">Lecturer</option>
+                        </select>
+                        {savingId === user.id && <Loader2 size={16} className="animate-spin text-[#3F51B5]" />}
+                      </div>
+                    </td>
+                    <td className="px-8 py-5">
+                      <span className="flex items-center gap-1.5 text-green-500 text-xs font-bold uppercase tracking-wider">
+                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div> ออนไลน์
+                      </span>
+                    </td>
+                    <td className="px-8 py-5">
+                      <div className="flex justify-center gap-2">
+                        <button className="p-2.5 text-slate-400 hover:text-[#3F51B5] transition-colors" title="Lock Account"><Lock size={18}/></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="5" className="text-center py-10 text-slate-400 text-sm">
+                    {loading ? "กำลังโหลดข้อมูล..." : "ไม่พบบุคลากรในระบบ"}
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>

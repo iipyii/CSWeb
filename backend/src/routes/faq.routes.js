@@ -6,14 +6,13 @@ import {
   updateFAQ,
   deleteFAQ
 } from "../controllers/faq.controller.js";
-import { checkRole } from "../middlewares/role.middleware.js";
 
 const router = express.Router();
 
 router.get("/", getActiveFAQ);
-router.get("/all", checkRole(["admin"]), getAllFAQ);
-router.post("/", checkRole(["admin"]), createFAQ);
-router.put("/:id", checkRole(["admin"]), updateFAQ);
-router.delete("/:id", checkRole(["admin"]), deleteFAQ);
+router.get("/all", getAllFAQ);
+router.post("/", createFAQ);
+router.put("/:id", updateFAQ);
+router.delete("/:id", deleteFAQ);
 
 export default router;

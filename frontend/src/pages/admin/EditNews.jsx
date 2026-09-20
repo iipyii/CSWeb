@@ -21,6 +21,7 @@ export default function EditNews() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [isUrgent, setIsUrgent] = useState(false);
+  const [author, setAuthor] = useState("Admin ภาควิชา");
 
   const [existingCover, setExistingCover] = useState(null);
   const [existingExtraImages, setExistingExtraImages] = useState([]);
@@ -246,13 +247,19 @@ export default function EditNews() {
           </div>
 
           {/* รายละเอียดฉบับเต็ม */}
-          <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
+          <div 
+            className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden cursor-text"
+            onClick={() => editor?.chain().focus().run()}
+          >
+            <div 
+              className="p-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/50 cursor-default"
+              onClick={(e) => e.stopPropagation()}
+            >
               <label className="text-sm font-black text-slate-700 ml-2 uppercase tracking-wider">รายละเอียดฉบับเต็ม</label>
               <div className="flex gap-2">
-                <button onClick={() => editor?.chain().focus().toggleBold().run()} className={`p-2 rounded-lg ${editor?.isActive('bold') ? 'bg-indigo-50 text-[#3F51B5]' : 'hover:bg-white'}`}><Bold size={16} /></button>
-                <button onClick={() => editor?.chain().focus().toggleItalic().run()} className={`p-2 rounded-lg ${editor?.isActive('italic') ? 'bg-indigo-50 text-[#3F51B5]' : 'hover:bg-white'}`}><Italic size={16} /></button>
-                <button onClick={() => editor?.chain().focus().toggleBulletList().run()} className={`p-2 rounded-lg ${editor?.isActive('bulletList') ? 'bg-indigo-50 text-[#3F51B5]' : 'hover:bg-white'}`}><List size={16} /></button>
+                <button type="button" onClick={() => editor?.chain().focus().toggleBold().run()} className={`p-2 rounded-lg ${editor?.isActive('bold') ? 'bg-indigo-50 text-[#3F51B5]' : 'hover:bg-white'}`}><Bold size={16} /></button>
+                <button type="button" onClick={() => editor?.chain().focus().toggleItalic().run()} className={`p-2 rounded-lg ${editor?.isActive('italic') ? 'bg-indigo-50 text-[#3F51B5]' : 'hover:bg-white'}`}><Italic size={16} /></button>
+                <button type="button" onClick={() => editor?.chain().focus().toggleBulletList().run()} className={`p-2 rounded-lg ${editor?.isActive('bulletList') ? 'bg-indigo-50 text-[#3F51B5]' : 'hover:bg-white'}`}><List size={16} /></button>
               </div>
             </div>
             <EditorContent editor={editor} />
@@ -424,7 +431,13 @@ export default function EditNews() {
               <label className="text-sm font-black text-slate-700 flex items-center gap-2 uppercase tracking-tighter">
                 <User size={16} className="text-[#3F51B5]" /> ชื่อผู้เขียน / แหล่งที่มา
               </label>
-              <input type="text" defaultValue="Admin ภาควิชา" className="w-full bg-slate-50 border-none rounded-2xl py-3 px-4 text-xs font-bold text-slate-600 outline-none shadow-inner" />
+              <input 
+                type="text" 
+                value={author} 
+                onChange={(e) => setAuthor(e.target.value)}
+                placeholder="ระบุชื่อผู้เขียน..."
+                className="w-full bg-slate-50 border-none rounded-2xl py-3 px-4 text-xs font-bold text-slate-600 outline-none shadow-inner" 
+              />
             </div>
 
             <div className="pt-4 border-t border-slate-50 space-y-4">

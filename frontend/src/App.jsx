@@ -179,6 +179,7 @@ export default function App() {
       <Route path="/admin" element={<AdminLayout />}>
         {/* แก้ไขบรรทัดที่เคย Error: ใช้ <Route index ... /> เพียงบรรทัดเดียว */}
         <Route index element={<AdminDashboard />} />
+        <Route path="dashboard" element={<AdminDashboard />} />
 
         <Route path="appearance" element={<ManageAppearance />} />
 
