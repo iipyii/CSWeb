@@ -258,6 +258,46 @@ export const chatWithAI = async (req, res) => {
       contextText += advisorContext + "\n";
     }
 
+    // 🎯 4.3 ค้นหาข้อมูลในคู่มือนักศึกษา (student_handbooks)
+    try {
+      const handbooks = await prisma.student_handbooks.findMany({
+        take: 10
+      });
+      // กรองอันที่มีคำเกี่ยวข้องกับข้อความที่ผู้ใช้พิมพ์
+      const relevantHandbooks = handbooks.filter(h => {
+        const text = `${h.category} ${h.topic} ${h.content}`.toLowerCase();
+        const words = message.toLowerCase().split(/\s+/).filter(w => w.length >= 2);
+        return words.some(w => text.includes(w));
+      });
+
+      const handbooksToAdd = relevantHandbooks.length > 0 ? relevantHandbooks.slice(0, 4) : handbooks.slice(0, 2);
+      handbooksToAdd.forEach(h => {
+        contextText += `[คู่มือนักศึกษา/ระเบียบการ] หมวดหมู่: ${h.category} หัวข้อ: ${h.topic} รายละเอียด: ${h.content}\n`;
+      });
+    } catch (err) {
+      console.warn("Could not query student_handbooks:", err.message);
+    }
+
+    // 🎯 4.4 ค้นหารายวิชาในตาราง subjects ใหม่
+    try {
+      const matchedSubjects = await prisma.subjects.findMany({
+        where: {
+          OR: [
+            { subject_code: { contains: message.trim() } },
+            { title_th: { contains: message.trim() } },
+            { title_en: { contains: message.trim(), mode: "insensitive" } }
+          ]
+        },
+        take: 5
+      });
+
+      matchedSubjects.forEach(s => {
+        contextText += `[รายวิชาหลักสูตร ${s.curriculum_year}] รหัส: ${s.subject_code} ชื่อ: ${s.title_th} (${s.title_en}) หน่วยกิต: ${s.credit} วิชาบังคับก่อน: ${s.prereq1 || 'ไม่มี'} หมวดหมู่: ${s.category} กลุ่มวิชาชีพ (Track): ${s.track || 'ทั่วไป'} คำอธิบาย: ${s.description_th}\n`;
+      });
+    } catch (err) {
+      console.warn("Could not query subjects:", err.message);
+    }
+
     faqResult.forEach((faq) => {
       contextText += `[FAQ] คำถาม: ${faq.question} | คำตอบ: ${faq.answer}\n`;
     });

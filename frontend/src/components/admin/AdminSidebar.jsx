@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { Palette, ShieldCheck  } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { Palette, ShieldCheck } from 'lucide-react';
 import { 
   LayoutDashboard, Newspaper, Archive, GraduationCap, 
   Files, Users, BookOpen, FolderGit2, LogOut, UserCircle,
@@ -10,7 +11,8 @@ import {
 
 export default function AdminSidebar({ onNavigate }) {
   const location = useLocation();
-  const userRole = 'admin';
+  const { role, user, logout } = useAuth();
+  const userRole = role || 'lecturer';
   const [logoUrl, setLogoUrl] = useState(null);
 
   useEffect(() => {
@@ -43,9 +45,9 @@ export default function AdminSidebar({ onNavigate }) {
   const menuItems = [
     { label: 'แดชบอร์ด', icon: <LayoutDashboard size={22} />, path: '/admin', roles: ['admin', 'lecturer'] },
     { label: 'ภาพลักษณ์', icon: <Palette size={22} />, path: '/admin/appearance', roles: ['admin'] },
-    { label: 'ข่าวสาร', icon: <Newspaper size={22} />, path: '/admin/news', roles: ['admin', 'teacher'] },
+    { label: 'ข่าวสาร', icon: <Newspaper size={22} />, path: '/admin/news', roles: ['admin', 'lecturer'] },
     { label: 'คลังข่าว', icon: <Archive size={22} />, path: '/admin/news/archive', roles: ['admin'] }, 
-    { label: 'ข้อมูลส่วนตัวอาจารย์', icon: <UserCircle size={22} />, path: '/admin/profile', roles: ['lecturer'] },
+    { label: 'ข้อมูลส่วนตัวอาจารย์', icon: <UserCircle size={22} />, path: '/admin/profile', roles: ['lecturer', 'admin'] },
     { label: 'หลักสูตร', icon: <GraduationCap size={22} />, path: '/admin/curriculum', roles: ['admin'] },
     { label: 'โครงงานนักศึกษา', icon: <FolderGit2 size={22} />, path: '/admin/projects', roles: ['admin'] },
     { label: 'นักศึกษาในที่ปรึกษา', icon: <UserCheck size={22} />, path: '/admin/consultants', roles: ['admin', 'lecturer'] },
@@ -122,7 +124,10 @@ export default function AdminSidebar({ onNavigate }) {
 
       {/* 🚪 Logout Section */}
       <div className="p-8 border-t border-slate-50 bg-slate-50/30">
-        <button className="flex items-center gap-4 px-6 py-4 w-full text-rose-500 hover:bg-rose-100/50 rounded-[1.5rem] transition-all duration-300 font-black text-sm group">
+        <button 
+          onClick={logout}
+          className="flex items-center gap-4 px-6 py-4 w-full text-rose-500 hover:bg-rose-100/50 rounded-[1.5rem] transition-all duration-300 font-black text-sm group"
+        >
           <div className="p-2 bg-rose-100/50 rounded-xl group-hover:bg-rose-500 group-hover:text-white transition-all">
             <LogOut size={18} />
           </div>

@@ -1,45 +1,47 @@
 import jwt from "jsonwebtoken";
+import { prisma } from "../lib/prisma.js";
 
-// export const verifyToken = (req, res, next) => {
+export const verifyToken = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = (authHeader && authHeader.startsWith("Bearer "))
+      ? authHeader.split(" ")[1]
+      : req.cookies?.token;
 
-//   const authHeader = req.headers.authorization;
+    if (!token) {
+      return res.status(401).json({
+        message: "กรุณาเข้าสู่ระบบก่อนทำรายการ (Unauthorized)"
+      });
+    }
 
-//   if (!authHeader) {
-//     return res.status(401).json({ message: "No token" });
-//   }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "supersecret");
 
-//   const token = authHeader.split(" ")[1];
+    // ดึงข้อมูลผู้ใช้สดจาก DB เพื่อให้สิทธิ์ (role) ล่าสุดมีผลทันที
+    const user = await prisma.users.findUnique({
+      where: { id: decoded.id }
+    });
 
-//   try {
+    if (!user) {
+      return res.status(401).json({
+        message: "ไม่พบบัญชีผู้ใช้งานในระบบ หรือบัญชีถูกลบแล้ว"
+      });
+    }
 
-//     const decoded = jwt.decode(token);
+    req.user = {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      full_name: user.full_name,
+      role: user.role,
+      lecturer_id: decoded.lecturer_id || null,
+      lecturer_code: decoded.lecturer_code || null
+    };
 
-//     req.user = decoded;
-
-//     next();
-
-//   } catch (err) {
-
-//     return res.status(401).json({ message: "Invalid token" });
-
-//   }
-// };
-
-export const verifyToken = (req, res, next) => {
-
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader) {
+    next();
+  } catch (err) {
+    console.error("Auth middleware error:", err.message);
     return res.status(401).json({
-      message: "Unauthorized"
+      message: "เซสชันหมดอายุหรือไม่ถูกต้อง กรุณาเข้าสู่ระบบใหม่อีกครั้ง"
     });
   }
-
-  // ในช่วงทดสอบ ให้ mock user ไปก่อน
-  req.user = {
-    id: 1,
-    role: "admin"
-  };
-
-  next();
 };

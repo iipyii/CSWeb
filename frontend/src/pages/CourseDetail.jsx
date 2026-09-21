@@ -1,7 +1,7 @@
 // src/pages/CourseDetail.jsx
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { Eye, ChevronLeft, ChevronRight } from "lucide-react";
+import { Eye, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import Footer from "../components/Footer";
 
 const idMap = {
@@ -53,33 +53,77 @@ export default function CourseDetail() {
   const navigate = useNavigate();
 
   const [program, setProgram] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
   useEffect(() => {
+    const data = idMap[id];
 
-    const data = idMap[id]
+    if (!data) {
+      setLoading(false);
+      setError(true);
+      return;
+    }
 
-    if (!data) return
+    setLoading(true);
+    setError(false);
 
     fetch(`http://localhost:5000/api/programs/${data.slug}/${data.year}`)
-      .then(res => res.json())
-      .then(data => setProgram(data))
-
-  }, [id])
+      .then((res) => {
+        if (!res.ok) throw new Error("Course not found");
+        return res.json();
+      })
+      .then((data) => {
+        if (!data || data.error) {
+          setError(true);
+          setProgram(null);
+        } else {
+          setProgram(data);
+          setError(false);
+        }
+      })
+      .catch((err) => {
+        console.error("Fetch course detail error:", err);
+        setError(true);
+        setProgram(null);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [id]);
 
   const currentData = program;
 
-
-  if (!currentData) {
+  if (loading) {
     return (
-      <div className="bg-[#f8fafc] min-h-screen flex flex-col items-center justify-center p-10">
-        <h2 className="text-2xl font-bold text-slate-800 mb-4">
-          ไม่พบข้อมูลหลักสูตร (ID: {id})
-        </h2>
-        <button
-          onClick={() => navigate(-1)}
-          className="bg-[#183153] text-white px-6 py-2 rounded-xl font-bold shadow-md hover:bg-slate-700 transition-colors"
-        >
-          กลับไปหน้าก่อนหน้า
-        </button>
+      <div className="bg-[#f8fafc] min-h-screen flex flex-col">
+        <div className="flex-grow flex flex-col items-center justify-center py-32 text-slate-500 gap-3">
+          <Loader2 className="animate-spin text-[#183153]" size={36} />
+          <span className="text-base font-medium">กำลังโหลดข้อมูลหลักสูตร...</span>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error || !currentData) {
+    return (
+      <div className="bg-[#f8fafc] min-h-screen flex flex-col">
+        <div className="flex-grow flex flex-col items-center justify-center p-10 text-center">
+          <h2 className="text-2xl font-bold text-slate-800 mb-2">
+            ไม่พบข้อมูลหลักสูตร (ID: {id})
+          </h2>
+          <p className="text-slate-500 text-sm mb-6">
+            ไม่พบข้อมูลหลักสูตรที่ท่านเลือก หรือรหัสหลักสูตรไม่ถูกต้อง
+          </p>
+          <button
+            onClick={() => navigate(-1)}
+            className="bg-[#183153] text-white px-6 py-2.5 rounded-xl font-bold shadow-md hover:bg-slate-700 transition-colors inline-flex items-center gap-2 text-sm"
+          >
+            <ChevronLeft size={18} /> กลับไปหน้าก่อนหน้า
+          </button>
+        </div>
+        <Footer />
       </div>
     );
   }

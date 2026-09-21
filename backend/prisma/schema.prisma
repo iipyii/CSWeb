@@ -304,3 +304,40 @@ model projects {
   advisor      lecturers? @relation("main_advisor_projects", fields: [advisor_id], references: [id])
   co_advisor   lecturers? @relation("co_advisor_projects", fields: [co_advisor_id], references: [id])
 }
+
+model subjects {
+  id              Int       @id @default(autoincrement())
+  subject_code    String    @db.VarChar(20)
+  title_th        String    @db.VarChar(255)
+  title_en        String    @db.VarChar(255)
+  prereq1         String?   @db.VarChar(50)
+  prereq2         String?   @db.VarChar(50)
+  credit          String    @db.VarChar(30)
+  description_th  String    @db.Text
+  description_en  String?   @db.Text
+  category        String?   @db.VarChar(100) // เช่น "หมวดวิชาเฉพาะด้านบังคับ", "หมวดวิชาเลือก", "หมวดวิชาศึกษาทั่วไป"
+  curriculum_code String    @db.VarChar(50)  // เช่น "CS69", "CS64", "CS59", "CS-Inter64", "MS-CS67", "MS-CS62", "MS-SE59", "PhD-CS64", "PhD-CS59"
+  curriculum_year Int       @default(2564)   // 2569, 2564, 2559, etc.
+  degree_level    String    @default("bachelor") @db.VarChar(30) // bachelor, master, doctor
+  track           String?   @db.VarChar(100) // เช่น "Software Engineering & Cloud", "Data Science & Artificial Intelligence", "Network & Cybersecurity", "IoT & Intelligent Systems", "ทั่วไป"
+  created_at      DateTime  @default(now()) @db.Timestamp(6)
+  updated_at      DateTime? @updatedAt
+
+  @@index([subject_code])
+  @@index([curriculum_code])
+  @@index([track])
+}
+
+model student_handbooks {
+  id               Int       @id @default(autoincrement())
+  category         String    @db.VarChar(100) // เช่น "ระเบียบการศึกษา", "การลงทะเบียน", "การฝึกงานและสหกิจศึกษา", "เกณฑ์สำเร็จการศึกษา", "ทุนการศึกษา", "ชีวิตในรั้วมหาวิทยาลัย"
+  topic            String    @db.VarChar(255)
+  content          String    @db.Text
+  applicable_years String?   @db.VarChar(50)  // เช่น "ทุกชั้นปี", "ปี 1", "ปี 4"
+  degree_level     String?   @default("all") @db.VarChar(30) // all, bachelor, master, doctor
+  file_url         String?   @db.Text
+  created_at       DateTime  @default(now()) @db.Timestamp(6)
+  updated_at       DateTime? @updatedAt
+
+  @@index([category])
+}
