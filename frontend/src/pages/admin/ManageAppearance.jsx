@@ -36,6 +36,16 @@ export default function ManageAppearance() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg'];
+    const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+    const isImage = file.type.startsWith('image/') || allowedExtensions.includes(ext);
+
+    if (!isImage || !allowedExtensions.includes(ext)) {
+      alert("ไฟล์โลโก้ไม่ถูกต้อง! กรุณาเลือกไฟล์รูปภาพ (.jpg, .jpeg, .png, .webp, .gif) เท่านั้น (ระบบปฏิเสธไฟล์ " + (ext || 'ผิดประเภท') + ")");
+      e.target.value = "";
+      return;
+    }
+
     try {
       setUploadingLogo(true);
       const formData = new FormData();
@@ -51,8 +61,9 @@ export default function ManageAppearance() {
       alert("อัปเดตโลโก้เรียบร้อยแล้ว");
     } catch (error) {
       console.error("Upload logo error:", error);
-      alert("เกิดข้อผิดพลาดในการอัปโหลดโลโก้");
+      alert(error.response?.data?.error || "เกิดข้อผิดพลาดในการอัปโหลดโลโก้");
     } finally {
+      if (e.target) e.target.value = "";
       setUploadingLogo(false);
     }
   };
@@ -70,7 +81,7 @@ export default function ManageAppearance() {
       alert("รีเซ็ตโลโก้เป็นค่าเริ่มต้นเรียบร้อยแล้ว");
     } catch (error) {
       console.error("Reset logo error:", error);
-      alert("เกิดข้อผิดพลาดในการรีเซ็ตโลโก้");
+      alert(error.response?.data?.error || "เกิดข้อผิดพลาดในการรีเซ็ตโลโก้");
     } finally {
       setUploadingLogo(false);
     }
@@ -79,6 +90,16 @@ export default function ManageAppearance() {
   const handleBannerUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg'];
+    const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+    const isImage = file.type.startsWith('image/') || allowedExtensions.includes(ext);
+
+    if (!isImage || !allowedExtensions.includes(ext)) {
+      alert("ไฟล์รูปภาพแบนเนอร์ไม่ถูกต้อง! กรุณาเลือกไฟล์รูปภาพ (.jpg, .jpeg, .png, .webp, .gif) เท่านั้น (ระบบปฏิเสธไฟล์ " + (ext || 'ผิดประเภท') + ")");
+      e.target.value = "";
+      return;
+    }
 
     try {
       setUploadingBanner(true);
@@ -96,8 +117,9 @@ export default function ManageAppearance() {
       window.dispatchEvent(new CustomEvent('site_config_updated', { detail: { banners: true } }));
     } catch (error) {
       console.error("Upload banner error:", error);
-      alert("เกิดข้อผิดพลาดในการอัปโหลดแบนเนอร์");
+      alert(error.response?.data?.error || "เกิดข้อผิดพลาดในการอัปโหลดแบนเนอร์");
     } finally {
+      if (e.target) e.target.value = "";
       setUploadingBanner(false);
     }
   };
@@ -111,7 +133,7 @@ export default function ManageAppearance() {
         window.dispatchEvent(new CustomEvent('site_config_updated', { detail: { banners: true } }));
       } catch (error) {
         console.error("Delete banner error:", error);
-        alert("เกิดข้อผิดพลาดในการลบ");
+        alert(error.response?.data?.error || "เกิดข้อผิดพลาดในการลบ");
       }
     }
   };
@@ -156,7 +178,7 @@ export default function ManageAppearance() {
           <input 
             type="file" 
             id="logo-upload" 
-            accept="image/*"
+            accept=".jpg,.jpeg,.png,.webp,.gif,.svg,image/*"
             hidden 
             onChange={handleLogoUpload} 
             disabled={uploadingLogo}
@@ -191,7 +213,7 @@ export default function ManageAppearance() {
               <input 
                 type="file" 
                 id="banner-upload" 
-                accept="image/*"
+                accept=".jpg,.jpeg,.png,.webp,.gif,.svg,image/*"
                 hidden 
                 onChange={handleBannerUpload} 
                 disabled={uploadingBanner}
@@ -216,7 +238,15 @@ export default function ManageAppearance() {
                 return (
                   <div key={item.id} className="flex flex-col md:flex-row gap-6 p-4 border border-slate-100 rounded-2xl bg-slate-50/50 items-center">
                     <div className="w-full md:w-60 h-24 bg-white rounded-xl overflow-hidden shadow-inner border border-slate-200 shrink-0">
-                      <img src={imgUrl} alt={item.title} className="w-full h-full object-cover" />
+                      <img 
+                        src={imgUrl} 
+                        alt={item.title} 
+                        className="w-full h-full object-cover" 
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' viewBox='0 0 240 96'%3E%3Crect width='100%25' height='100%25' fill='%23f1f5f9'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='12' fill='%2394a3b8'%3E%E0%B9%84%E0%B8%A1%E0%B9%88%E0%B8%AA%E0%B8%B2%E0%B8%A1%E0%B8%B2%E0%B8%A3%E0%B8%96%E0%B9%81%E0%B8%AA%E0%B8%94%E0%B8%87%E0%B8%A3%E0%B8%B9%E0%B8%9B%E0%B8%A0%E0%B8%B2%E0%B8%9E%E0%B9%84%E0%B8%94%E0%B9%89%3C/text%3E%3C/svg%3E";
+                        }}
+                      />
                     </div>
                     <div className="flex-1 text-sm text-left">
                       <p className="font-bold text-slate-700">{item.title || `ลำดับที่ ${index + 1}`}</p>

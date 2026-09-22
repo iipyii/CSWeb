@@ -44,19 +44,21 @@ export default function EditNews() {
     },
   });
 
-  // 1. จัดการเปลี่ยนรูปหน้าปก
-  const handleCoverImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setCoverImage(file);
-      setImagePreview(URL.createObjectURL(file)); // สร้าง URL จำลองให้โชว์รูปได้ทันที
-    }
-  };
 
   // 2. จัดการเพิ่มรูปภาพเพิ่มเติม
   const handleExtraImagesChange = (e) => {
     const files = Array.from(e.target.files);
     if (files.length > 0) {
+      const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg'];
+      const invalidFiles = files.filter(file => {
+        const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+        return !file.type.startsWith('image/') && !allowedExtensions.includes(ext);
+      });
+      if (invalidFiles.length > 0) {
+        alert("ไฟล์รูปภาพเพิ่มเติมไม่ถูกต้อง! กรุณาเลือกเฉพาะไฟล์รูปภาพ (.jpg, .jpeg, .png, .webp, .gif) เท่านั้น");
+        e.target.value = "";
+        return;
+      }
       if (existingExtraImages.length + extraImages.length + files.length > 5) {
         alert("อัปโหลดรูปเพิ่มเติมรวมทั้งหมดได้สูงสุด 5 รูปครับ");
         return;
@@ -99,6 +101,53 @@ export default function EditNews() {
   // 5. ฟังก์ชันลบเอกสารแนบ (ไฟล์ใหม่) ที่เพิ่งเลือก
   const removeAttachment = (index) => {
     setAttachments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // ตรวจสอบและเปลี่ยนรูปหน้าปก
+  const handleCoverImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg'];
+      const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+      const isImage = file.type.startsWith('image/') || allowedExtensions.includes(ext);
+
+      if (!isImage || !allowedExtensions.includes(ext)) {
+        alert("ไฟล์รูปหน้าปกไม่ถูกต้อง! กรุณาเลือกไฟล์รูปภาพ (.jpg, .jpeg, .png, .webp, .gif) เท่านั้น (ระบบปฏิเสธไฟล์ " + (ext || 'ผิดประเภท') + ")");
+        e.target.value = "";
+        return;
+      }
+      setCoverImage(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  // ดึงข้อมูลชื่อไฟล์และลิงก์ของเอกสารแนบ (รองรับทั้งแบบเดิมและชื่อไฟล์จริง)
+  const getAttachmentInfo = (att, idx = 0) => {
+    if (!att) return { url: "", name: "" };
+    if (typeof att === 'object' && att !== null) {
+      const p = att.path || att.url || "";
+      return {
+        url: p.startsWith('http') ? p : `http://localhost:5000${p}`,
+        name: att.name || p.split('/').pop() || `เอกสารแนบที่ ${idx + 1}`
+      };
+    }
+    if (typeof att === 'string') {
+      if (att.trim().startsWith('{')) {
+        try {
+          const parsed = JSON.parse(att);
+          const p = parsed.path || parsed.url || "";
+          return {
+            url: p.startsWith('http') ? p : `http://localhost:5000${p}`,
+            name: parsed.name || p.split('/').pop() || `เอกสารแนบที่ ${idx + 1}`
+          };
+        } catch (e) {}
+      }
+      return {
+        url: att.startsWith('http') ? att : `http://localhost:5000${att}`,
+        name: att.split('/').pop() || `เอกสารแนบที่ ${idx + 1}`
+      };
+    }
+    return { url: "", name: "" };
   };
 
   // 3. ดึงข้อมูลข่าวเก่ามาโชว์ตอนเปิดหน้านี้
@@ -160,6 +209,7 @@ export default function EditNews() {
       const formData = new FormData();
       formData.append("title", title);
       formData.append("content", content);
+      formData.append("summary", summary);
       formData.append("category", category);
       formData.append("start_date", startDate);
       formData.append("end_date", endDate);
@@ -336,8 +386,7 @@ export default function EditNews() {
             <div className="mb-6 space-y-2">
               {/* 🌟 1. ลูปโชว์เอกสาร "ของเดิม" */}
               {existingAttachments.map((filePath, idx) => {
-                const fileName = filePath.split('/').pop();
-                const fileUrl = `http://localhost:5000${filePath}`;
+                const { url: fileUrl, name: fileName } = getAttachmentInfo(filePath, idx);
 
                 return (
                   <div key={`existing-doc-${idx}`} className="flex items-center justify-between p-4 bg-slate-50 hover:bg-indigo-50/50 border border-slate-100 hover:border-indigo-100 rounded-2xl transition-all group">
@@ -405,7 +454,12 @@ export default function EditNews() {
               </div>
 
               {/* 🌟 เพิ่ม input ไฟล์ที่ซ่อนไว้ และเรียกใช้ฟังก์ชัน handleCoverImageChange */}
-              <input type="file" accept="image/*" className="hidden" onChange={handleCoverImageChange} />
+              <input 
+                type="file" 
+                accept=".jpg,.jpeg,.png,.webp,.gif,.svg,image/*" 
+                className="hidden" 
+                onChange={handleCoverImageChange} 
+              />
             </label>
           </div>
 

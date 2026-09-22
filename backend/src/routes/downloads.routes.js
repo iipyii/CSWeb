@@ -8,6 +8,7 @@ import {
   getDownloadStats,
   getDownloadById,
   getDownloadsByAudience,
+  downloadFile,
   createDownload,
   updateDownload,
   deleteDownload
@@ -39,6 +40,9 @@ router.get("/stats", getDownloadStats);
 
 // GET download by ID
 router.get("/detail/:id", getDownloadById);
+
+// GET file download stream with original filename
+router.get("/download/:id", downloadFile);
 
 // GET downloads by audience (staff | student)
 router.get("/:audience", getDownloadsByAudience);

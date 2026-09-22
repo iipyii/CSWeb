@@ -230,15 +230,38 @@ const NewsDetail = () => {
                   เอกสารดาวน์โหลด
                 </h3>
                 <div className="space-y-3">
-                  {news.attachments.map((filePath, index) => {
-                    // ดึงชื่อไฟล์ออกมาโชว์ (ตัดเอาแค่ส่วนหลังสุด)
-                    const fileName = filePath.split('/').pop() || `เอกสารแนบที่ ${index + 1}`;
-                    const fileUrl = `http://localhost:5000${filePath}`;
+                  {news.attachments.map((attItem, index) => {
+                    let fileName = `เอกสารแนบที่ ${index + 1}`;
+                    let fileUrl = "";
+                    let downloadUrl = "";
+
+                    if (typeof attItem === 'object' && attItem !== null) {
+                      const p = attItem.path || attItem.url || "";
+                      fileName = attItem.name || p.split('/').pop() || fileName;
+                      fileUrl = p.startsWith('http') ? p : `http://localhost:5000${p}`;
+                      downloadUrl = `http://localhost:5000/api/news/attachment/download?path=${encodeURIComponent(p)}&name=${encodeURIComponent(fileName)}`;
+                    } else if (typeof attItem === 'string') {
+                      if (attItem.trim().startsWith('{')) {
+                        try {
+                          const obj = JSON.parse(attItem);
+                          const p = obj.path || obj.url || "";
+                          fileName = obj.name || p.split('/').pop() || fileName;
+                          fileUrl = p.startsWith('http') ? p : `http://localhost:5000${p}`;
+                          downloadUrl = `http://localhost:5000/api/news/attachment/download?path=${encodeURIComponent(p)}&name=${encodeURIComponent(fileName)}`;
+                        } catch (e) {}
+                      }
+                      if (!fileUrl) {
+                        fileName = attItem.split('/').pop() || fileName;
+                        fileUrl = attItem.startsWith('http') ? attItem : `http://localhost:5000${attItem}`;
+                        downloadUrl = `http://localhost:5000/api/news/attachment/download?path=${encodeURIComponent(attItem)}&name=${encodeURIComponent(fileName)}`;
+                      }
+                    }
 
                     return (
                       <a
                         key={index}
-                        href={fileUrl}
+                        href={downloadUrl || fileUrl}
+                        download={fileName}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-4 p-4 md:px-6 bg-slate-50 hover:bg-indigo-50 rounded-2xl border border-slate-100 hover:border-indigo-100 transition-colors group"

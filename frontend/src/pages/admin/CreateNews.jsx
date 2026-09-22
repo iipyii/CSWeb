@@ -84,6 +84,16 @@ export default function CreateNews() {
     // ดึงไฟล์ทั้งหมดที่ User เลือก
     const files = Array.from(e.target.files);
     if (files.length > 0) {
+      const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg'];
+      const invalidFiles = files.filter(file => {
+        const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+        return !file.type.startsWith('image/') && !allowedExtensions.includes(ext);
+      });
+      if (invalidFiles.length > 0) {
+        alert("ไฟล์รูปภาพเพิ่มเติมไม่ถูกต้อง! กรุณาเลือกเฉพาะไฟล์รูปภาพ (.jpg, .jpeg, .png, .webp, .gif) เท่านั้น");
+        e.target.value = "";
+        return;
+      }
       // เช็กว่าถ้ารวมกับของเดิมแล้วเกิน 5 รูปไหม
       if (extraImages.length + files.length > 5) {
         alert("อัปโหลดรูปเพิ่มเติมได้สูงสุด 5 รูปครับ");
@@ -296,11 +306,20 @@ export default function CreateNews() {
             <input
               type="file"
               id="cover-upload"
-              accept="image/*"
+              accept=".jpg,.jpeg,.png,.webp,.gif,image/jpeg,image/png,image/webp,image/gif"
               className="hidden"
               onChange={(e) => {
-                const file = e.target.files[0];
+                const file = e.target.files?.[0];
                 if (file) {
+                  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg'];
+                  const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+                  const isImage = file.type.startsWith('image/') || allowedExtensions.includes(ext);
+
+                  if (!isImage || !allowedExtensions.includes(ext)) {
+                    alert("ไฟล์รูปหน้าปกไม่ถูกต้อง! กรุณาเลือกไฟล์รูปภาพ (.jpg, .jpeg, .png, .webp, .gif) เท่านั้น (ระบบปฏิเสธไฟล์ " + (ext || 'ผิดประเภท') + ")");
+                    e.target.value = "";
+                    return;
+                  }
                   setCoverImage(file);
                   setImagePreview(URL.createObjectURL(file)); // สร้างพรีวิว
                 }

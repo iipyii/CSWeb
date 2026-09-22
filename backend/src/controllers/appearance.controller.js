@@ -21,11 +21,20 @@ export const createBanner = async (req, res) => {
     let finalImagePath = image_path;
 
     if (req.file) {
+      const allowedExts = [".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg"];
+      const ext = path.extname(req.file.originalname).toLowerCase();
+      if (!allowedExts.includes(ext) || !req.file.mimetype.startsWith("image/")) {
+        const filePath = path.join(process.cwd(), "uploads/appearance", req.file.filename);
+        if (fs.existsSync(filePath)) {
+          try { fs.unlinkSync(filePath); } catch (e) {}
+        }
+        return res.status(400).json({ error: "ไฟล์รูปภาพไม่ถูกต้อง รองรับเฉพาะไฟล์รูปภาพ (.jpg, .jpeg, .png, .webp, .gif) เท่านั้น" });
+      }
       finalImagePath = `/uploads/appearance/${req.file.filename}`;
     }
 
     if (!finalImagePath) {
-      return res.status(400).json({ error: "Banner image is required" });
+      return res.status(400).json({ error: "กรุณาอัปโหลดรูปภาพแบนเนอร์" });
     }
 
     const count = await prisma.banners.count();
@@ -113,7 +122,17 @@ export const updateSiteConfig = async (req, res) => {
 export const uploadLogo = async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ error: "Logo file is required" });
+      return res.status(400).json({ error: "กรุณาเลือกไฟล์โลโก้" });
+    }
+
+    const allowedExts = [".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg"];
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    if (!allowedExts.includes(ext) || !req.file.mimetype.startsWith("image/")) {
+      const filePath = path.join(process.cwd(), "uploads/appearance", req.file.filename);
+      if (fs.existsSync(filePath)) {
+        try { fs.unlinkSync(filePath); } catch (e) {}
+      }
+      return res.status(400).json({ error: "ไฟล์โลโก้ไม่ถูกต้อง รองรับเฉพาะไฟล์รูปภาพ (.jpg, .jpeg, .png, .webp, .gif) เท่านั้น" });
     }
 
     const logoPath = `/uploads/appearance/${req.file.filename}`;

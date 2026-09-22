@@ -33,7 +33,8 @@ export default function EditFile() {
             category: data.category || "ทั่วไป",
             date: data.created_at ? data.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
             note: "",
-            currentFilePath: data.file_path || ""
+            currentFilePath: data.file_path || "",
+            fileName: data.file_name || (data.file_path ? data.file_path.split('/').pop() : "")
           });
         }
       } catch (error) {
@@ -255,8 +256,8 @@ export default function EditFile() {
                 </div>
                 <div className="space-y-2">
                   <p className="text-base font-bold text-slate-700">เปลี่ยนไฟล์เอกสาร (ถ้าต้องการ)</p>
-                  {formData.currentFilePath && (
-                    <p className="text-xs text-indigo-600 font-medium">ไฟล์ปัจจุบัน: {formData.currentFilePath}</p>
+                  {(formData.fileName || formData.currentFilePath) && (
+                    <p className="text-xs text-indigo-600 font-medium break-all">ไฟล์ปัจจุบัน: {formData.fileName || formData.currentFilePath}</p>
                   )}
                   <p className="text-[13px] text-slate-400">ลากไฟล์ใหม่มาวางเพื่ออัปเดตไฟล์เดิม</p>
                 </div>

@@ -159,9 +159,16 @@ export default function ManageFiles() {
                         </div>
                         <div>
                           <p className="text-[15px] font-bold text-slate-700 leading-snug">{file.title}</p>
-                          <p className="text-[12px] text-slate-400 mt-0.5">
-                            {file.created_at ? new Date(file.created_at).toLocaleDateString('th-TH') : ''}
-                          </p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            {file.file_name && (
+                              <span className="text-[12px] text-indigo-600 font-medium">
+                                {file.file_name}
+                              </span>
+                            )}
+                            <p className="text-[12px] text-slate-400">
+                              {file.created_at ? new Date(file.created_at).toLocaleDateString('th-TH') : ''}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </td>
@@ -183,11 +190,11 @@ export default function ManageFiles() {
                     <td className="px-8 py-5 text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         <a 
-                          href={`http://localhost:5000/downloads/${file.file_path}`} 
+                          href={`http://localhost:5000/api/downloads/download/${file.id}`} 
                           target="_blank" 
                           rel="noreferrer"
                           className="p-2.5 text-slate-400 hover:text-[#3F51B5] hover:bg-white hover:shadow-sm rounded-xl transition-all" 
-                          title="ดูไฟล์"
+                          title="ดาวน์โหลด / ดูไฟล์"
                         >
                           <ExternalLink size={18} />
                         </a>

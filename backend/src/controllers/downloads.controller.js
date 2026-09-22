@@ -2,6 +2,16 @@ import { prisma } from "../lib/prisma.js";
 import fs from "fs";
 import path from "path";
 
+// ถอดรหัสชื่อไฟล์ภาษาไทยจาก latin1 เป็น UTF-8
+const decodeOriginalName = (orig) => {
+  if (!orig) return "";
+  try {
+    return Buffer.from(orig, 'latin1').toString('utf8');
+  } catch {
+    return orig;
+  }
+};
+
 // GET all downloads
 export const getDownloads = async (req, res) => {
   try {
@@ -82,6 +92,34 @@ export const getDownloadsByAudience = async (req, res) => {
   }
 };
 
+// GET file download stream with original filename
+export const downloadFile = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const file = await prisma.downloads.findUnique({
+      where: { id: parseInt(id) }
+    });
+
+    if (!file || !file.file_path) {
+      return res.status(404).json({ error: "File not found" });
+    }
+
+    // ป้องกัน Path Traversal และ normalize path
+    const relPath = file.file_path.replace(/^\/?downloads\/?/, '').replace(/^\/+/, '');
+    const absolutePath = path.join(process.cwd(), "uploads/downloads", relPath);
+
+    if (!fs.existsSync(absolutePath)) {
+      return res.status(404).json({ error: "File not found on disk" });
+    }
+
+    const filenameToSend = file.file_name || `${file.title}${path.extname(absolutePath)}`;
+    res.download(absolutePath, filenameToSend);
+  } catch (error) {
+    console.error("Download error:", error);
+    res.status(500).json({ error: "Failed to download file" });
+  }
+};
+
 // POST create download
 export const createDownload = async (req, res) => {
   try {
@@ -90,14 +128,16 @@ export const createDownload = async (req, res) => {
       return res.status(400).json({ error: "File is required" });
     }
 
-    const ext = path.extname(req.file.originalname).replace(".", "").toUpperCase();
+    const originalName = decodeOriginalName(req.file.originalname);
+    const ext = path.extname(originalName).replace(".", "").toUpperCase();
     const file = await prisma.downloads.create({
       data: {
         title,
-        category: category || "general",
+        category: category || "ทั่วไป",
         audience: audience || "student",
         file_type: file_type || ext || "PDF",
-        file_path: req.file.filename
+        file_path: req.file.filename,
+        file_name: originalName || req.file.filename
       }
     });
 
@@ -129,16 +169,21 @@ export const updateDownload = async (req, res) => {
     };
 
     if (req.file) {
+      const originalName = decodeOriginalName(req.file.originalname);
       data.file_path = req.file.filename;
-      data.file_type = path.extname(req.file.originalname).replace(".", "").toUpperCase();
+      data.file_name = originalName || req.file.filename;
+      data.file_type = path.extname(originalName).replace(".", "").toUpperCase();
 
       // Delete old file if present
-      const oldFilePath = path.join(process.cwd(), "uploads/downloads", existing.file_path);
-      if (fs.existsSync(oldFilePath)) {
-        try {
-          fs.unlinkSync(oldFilePath);
-        } catch (e) {
-          console.error("Failed to delete old file:", e);
+      if (existing.file_path) {
+        const oldClean = existing.file_path.replace(/^\/?downloads\/?/, '').replace(/^\/+/, '');
+        const oldFilePath = path.join(process.cwd(), "uploads/downloads", oldClean);
+        if (fs.existsSync(oldFilePath)) {
+          try {
+            fs.unlinkSync(oldFilePath);
+          } catch (e) {
+            console.error("Failed to delete old file:", e);
+          }
         }
       }
     }
@@ -166,12 +211,15 @@ export const deleteDownload = async (req, res) => {
       return res.status(404).json({ error: "File not found" });
     }
 
-    const filePath = path.join(process.cwd(), "uploads/downloads", existing.file_path);
-    if (fs.existsSync(filePath)) {
-      try {
-        fs.unlinkSync(filePath);
-      } catch (e) {
-        console.error("Failed to delete file from disk:", e);
+    if (existing.file_path) {
+      const relPath = existing.file_path.replace(/^\/?downloads\/?/, '').replace(/^\/+/, '');
+      const filePath = path.join(process.cwd(), "uploads/downloads", relPath);
+      if (fs.existsSync(filePath)) {
+        try {
+          fs.unlinkSync(filePath);
+        } catch (e) {
+          console.error("Failed to delete file from disk:", e);
+        }
       }
     }
 

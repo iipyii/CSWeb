@@ -6,6 +6,7 @@ import {
   getConsultByYear,
   getAllConsultants,
   addStudentConsultant,
+  updateStudentConsultant,
   deleteStudentConsultant,
   getStudentsByAdvisorCode,
   getAdvisorsSummary,
@@ -24,6 +25,7 @@ router.get("/advisors-summary", getAdvisorsSummary);
 router.get("/template", downloadConsultantsTemplate);
 router.post("/import-excel", upload.single("file"), importConsultantsExcel);
 router.post("/students", addStudentConsultant);
+router.put("/students/:id", updateStudentConsultant);
 router.delete("/students/:id", deleteStudentConsultant);
 
 router.get("/search", searchStudent);

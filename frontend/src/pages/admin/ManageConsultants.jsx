@@ -15,7 +15,8 @@ import {
   Loader2, 
   Calendar, 
   Download, 
-  AlertCircle 
+  AlertCircle,
+  Pencil
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -24,33 +25,39 @@ export default function ManageConsultants() {
   const isUserAdmin = isAdmin || user?.role === 'admin';
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedYear, setSelectedYear] = useState("all");
-  const [availableYears, setAvailableYears] = useState([2568, 2567, 2566, 2565, 2564, 2563, 2562, 2561, 2560, 2559, 2558]);
+  const [availableYears, setAvailableYears] = useState([2570, 2569, 2568, 2567, 2566, 2565, 2564, 2563, 2562, 2561, 2560, 2559, 2558]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [lecturers, setLecturers] = useState([]);
-
-  // Default cohorts
-  const defaultCohorts = ["68", "67", "66", "65", "64", "63", "62", "61", "60", "59", "58"];
-  const cohortList = Array.from(new Set([
-    ...availableYears.map(y => String(y).slice(-2)),
-    ...defaultCohorts
-  ])).filter(c => c && c.length === 2 && !isNaN(parseInt(c)))
-    .sort((a, b) => parseInt(b) - parseInt(a));
+  const [students, setStudents] = useState([]);
 
   // Import states
   const [importFile, setImportFile] = useState(null);
-  const [defaultImportYear, setDefaultImportYear] = useState("68");
+  const [defaultImportYear, setDefaultImportYear] = useState("69");
   const [importing, setImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState(0);
+  const [importStatusText, setImportStatusText] = useState("");
   const [importResult, setImportResult] = useState(null);
 
-  const [students, setStudents] = useState([]);
   const [formData, setFormData] = useState({
     student_id: "",
     name: "",
-    year: "68",
+    year: "69",
+    advisor_id: ""
+  });
+
+  // Edit student states
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    id: "",
+    student_id: "",
+    name: "",
+    room: "-",
+    year: "69",
     advisor_id: ""
   });
 
@@ -68,6 +75,29 @@ export default function ManageConsultants() {
     }
     return "-";
   };
+
+  // คำนวณช่วงปีการศึกษาอัตโนมัติจากปี พ.ศ. ปัจจุบัน + เผื่อล่วงหน้า 1 ปี และรวมทุกปีที่มีในฐานข้อมูล
+  const currentThaiYear = new Date().getFullYear() + 543;
+  const maxYear = Math.max(
+    currentThaiYear + 1,
+    ...(availableYears.length > 0 ? availableYears : [currentThaiYear + 1]),
+    ...(students.length > 0 ? students.map(s => {
+      const c = getCohort(s);
+      return (!isNaN(parseInt(c)) && c.length === 2) ? parseInt(c) + 2500 : 0;
+    }) : [0])
+  );
+
+  const dynamicCohorts = [];
+  for (let y = maxYear; y >= 2558; y--) {
+    dynamicCohorts.push(String(y).slice(-2));
+  }
+
+  const cohortList = Array.from(new Set([
+    ...dynamicCohorts,
+    ...availableYears.map(y => String(y).slice(-2)),
+    ...students.map(s => getCohort(s)).filter(c => c && c.length === 2 && !isNaN(parseInt(c)))
+  ])).filter(c => c && c.length === 2 && !isNaN(parseInt(c)))
+    .sort((a, b) => parseInt(b) - parseInt(a));
 
   const fetchStudents = async () => {
     try {
@@ -141,6 +171,40 @@ export default function ManageConsultants() {
     }
   };
 
+  const handleOpenEditModal = (student) => {
+    const cohort = getCohort(student);
+    setEditFormData({
+      id: student.id,
+      student_id: student.student_id || "",
+      name: student.name || "",
+      room: student.room || "-",
+      year: cohort !== "-" ? cohort : "69",
+      advisor_id: student.advisor_id ? String(student.advisor_id) : ""
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdateStudent = async (e) => {
+    e.preventDefault();
+    if (!editFormData.student_id.trim() || !editFormData.name.trim()) {
+      alert("กรุณาระบุรหัสนักศึกษาและชื่อ-นามสกุล");
+      return;
+    }
+
+    try {
+      setEditSubmitting(true);
+      await axios.put(`http://localhost:5000/api/consult/students/${editFormData.id}`, editFormData);
+      alert("แก้ไขข้อมูลนักศึกษาสำเร็จ");
+      setIsEditModalOpen(false);
+      fetchStudents();
+    } catch (error) {
+      console.error("Update error:", error);
+      alert("เกิดข้อผิดพลาดในการแก้ไขข้อมูล: " + (error.response?.data?.error || error.message));
+    } finally {
+      setEditSubmitting(false);
+    }
+  };
+
   const handleImportExcel = async (e) => {
     e.preventDefault();
     if (!importFile) {
@@ -152,22 +216,51 @@ export default function ManageConsultants() {
     data.append("file", importFile);
     data.append("default_year", defaultImportYear);
 
-    try {
-      setImporting(true);
-      setImportResult(null);
-      const res = await axios.post("http://localhost:5000/api/consult/import-excel", data, {
-        headers: { "Content-Type": "multipart/form-data" }
+    setImporting(true);
+    setImportResult(null);
+    setImportProgress(15);
+    setImportStatusText("กำลังอัปโหลดไฟล์...");
+
+    let progressInterval = setInterval(() => {
+      setImportProgress((prev) => {
+        if (prev < 40) return prev + 12;
+        if (prev < 70) return prev + 6;
+        if (prev < 88) return prev + 3;
+        if (prev < 96) return prev + 1;
+        return prev;
       });
+    }, 280);
+
+    try {
+      const res = await axios.post("http://localhost:5000/api/consult/import-excel", data, {
+        headers: { "Content-Type": "multipart/form-data" },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const percent = Math.min(50, Math.round((progressEvent.loaded * 50) / progressEvent.total));
+            setImportProgress((prev) => Math.max(prev, percent));
+            if (percent >= 50) {
+              setImportStatusText("กำลังอ่านไฟล์ Excel และประมวลผลรายชื่อ...");
+            }
+          }
+        }
+      });
+
+      clearInterval(progressInterval);
+      setImportProgress(100);
+      setImportStatusText("นำเข้าข้อมูลเรียบร้อยแล้ว!");
       setImportResult(res.data);
       fetchStudents();
     } catch (error) {
+      clearInterval(progressInterval);
       console.error("Import error:", error);
       setImportResult({
         success: false,
         error: error.response?.data?.error || "เกิดข้อผิดพลาดในการนำเข้าไฟล์ Excel"
       });
     } finally {
-      setImporting(false);
+      setTimeout(() => {
+        setImporting(false);
+      }, 500);
     }
   };
 
@@ -353,13 +446,22 @@ export default function ManageConsultants() {
                         {student.advisor}
                       </td>
                       <td className="px-8 py-5 text-center">
-                        <button 
-                          onClick={() => handleDelete(student.id)}
-                          className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer" 
-                          title="ลบ"
-                        >
-                          <Trash2 size={18}/>
-                        </button>
+                        <div className="flex items-center justify-center gap-1">
+                          <button 
+                            onClick={() => handleOpenEditModal(student)}
+                            className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors cursor-pointer" 
+                            title="แก้ไขข้อมูล"
+                          >
+                            <Pencil size={18}/>
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(student.id)}
+                            className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer" 
+                            title="ลบ"
+                          >
+                            <Trash2 size={18}/>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -561,6 +663,35 @@ export default function ManageConsultants() {
                   </div>
                 )}
 
+                {/* 📊 Progress Bar ขณะกำลังนำเข้าข้อมูล */}
+                {importing && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -5 }} 
+                    animate={{ opacity: 1, y: 0 }} 
+                    className="p-4 bg-emerald-50/60 border border-emerald-200/80 rounded-2xl space-y-2.5 text-left"
+                  >
+                    <div className="flex justify-between items-center text-xs font-bold text-emerald-800">
+                      <span className="flex items-center gap-2">
+                        <Loader2 size={15} className="animate-spin text-emerald-600" />
+                        {importStatusText || "กำลังนำเข้าข้อมูล..."}
+                      </span>
+                      <span className="text-emerald-700 font-mono text-sm font-extrabold">{importProgress}%</span>
+                    </div>
+
+                    {/* Progress Track */}
+                    <div className="w-full bg-emerald-100/70 rounded-full h-2.5 overflow-hidden p-0.5 border border-emerald-200/60 shadow-inner">
+                      <div 
+                        className="bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 h-full rounded-full transition-all duration-300 shadow-sm"
+                        style={{ width: `${importProgress}%` }}
+                      />
+                    </div>
+
+                    <p className="text-[11px] text-slate-500">
+                      ระบบกำลังอ่านข้อมูลจากไฟล์ Excel ตรวจสอบรายชื่อ และบันทึกข้อมูลอาจารย์ที่ปรึกษาลงฐานข้อมูล...
+                    </p>
+                  </motion.div>
+                )}
+
                 {/* Actions */}
                 <div className="flex gap-3 pt-3 border-t">
                   <button 
@@ -707,6 +838,152 @@ export default function ManageConsultants() {
                     type="button" 
                     onClick={() => setIsAddModalOpen(false)} 
                     className="px-6 py-3.5 bg-slate-100 text-slate-500 rounded-xl font-bold hover:bg-slate-200 transition-all text-sm cursor-pointer"
+                  >
+                    ยกเลิก
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ✏️ Edit Student Modal (แก้ไขข้อมูลนักศึกษา) */}
+      <AnimatePresence>
+        {isEditModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              onClick={() => !editSubmitting && setIsEditModalOpen(false)} 
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" 
+            />
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }} 
+              animate={{ scale: 1, opacity: 1 }} 
+              exit={{ scale: 0.95, opacity: 0 }} 
+              className="bg-white rounded-[2.5rem] w-full max-w-lg shadow-2xl relative z-10 overflow-hidden"
+            >
+              <div className="p-6 border-b flex justify-between items-center bg-slate-50/50">
+                <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                  <Pencil className="text-amber-500" size={22} /> แก้ไขข้อมูลนักศึกษา
+                </h2>
+                <button 
+                  onClick={() => setIsEditModalOpen(false)} 
+                  disabled={editSubmitting}
+                  className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <form onSubmit={handleUpdateStudent} className="p-8 space-y-4">
+                <div>
+                  <label className="text-xs font-bold text-slate-600 block mb-1">
+                    รหัสนักศึกษา (13 หลัก) *
+                  </label>
+                  <input 
+                    type="text" 
+                    value={editFormData.student_id}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^0-9]/g, '');
+                      let autoYear = editFormData.year;
+                      if (val.length >= 2) {
+                        autoYear = val.slice(0, 2);
+                      }
+                      setEditFormData({ ...editFormData, student_id: val, year: autoYear });
+                    }}
+                    placeholder="เช่น 6904062610010"
+                    maxLength={13}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 font-medium"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-600 block mb-1">
+                    ชื่อ-นามสกุล *
+                  </label>
+                  <input 
+                    type="text" 
+                    value={editFormData.name}
+                    onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                    placeholder="เช่น นายคมนภัส สุริยวรรณ"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 font-medium"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-slate-600 block mb-1">
+                      รหัสรุ่น *
+                    </label>
+                    <select 
+                      value={editFormData.year}
+                      onChange={(e) => setEditFormData({ ...editFormData, year: e.target.value })}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 font-semibold text-slate-700"
+                    >
+                      {cohortList.map(c => (
+                        <option key={c} value={c}>รหัส {c}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-600 block mb-1">
+                      ห้อง / ตอนเรียน
+                    </label>
+                    <input 
+                      type="text" 
+                      value={editFormData.room}
+                      onChange={(e) => setEditFormData({ ...editFormData, room: e.target.value })}
+                      placeholder="เช่น RA, RB หรือ -"
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 font-medium"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-600 block mb-1">
+                    อาจารย์ที่ปรึกษา
+                  </label>
+                  <select 
+                    value={editFormData.advisor_id}
+                    onChange={(e) => setEditFormData({ ...editFormData, advisor_id: e.target.value })}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 font-medium text-slate-700"
+                  >
+                    <option value="">-- ยังไม่ระบุอาจารย์ที่ปรึกษา --</option>
+                    {lecturers.map(l => (
+                      <option key={l.id} value={l.id}>
+                        {l.fullname_th} {l.lecturer_code ? `(${l.lecturer_code})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex gap-3 pt-4 border-t mt-6">
+                  <button 
+                    type="submit" 
+                    disabled={editSubmitting}
+                    className="flex-1 py-3.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center gap-2 text-sm disabled:opacity-50 cursor-pointer"
+                  >
+                    {editSubmitting ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        กำลังบันทึก...
+                      </>
+                    ) : (
+                      <>
+                        <Save size={16} /> บันทึกการแก้ไข
+                      </>
+                    )}
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => setIsEditModalOpen(false)} 
+                    disabled={editSubmitting}
+                    className="px-6 py-3.5 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition-all text-sm cursor-pointer disabled:opacity-50"
                   >
                     ยกเลิก
                   </button>

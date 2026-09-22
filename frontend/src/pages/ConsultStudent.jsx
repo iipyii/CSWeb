@@ -49,21 +49,28 @@ export default function ConsultStudent() {
   const [advisorSearch, setAdvisorSearch] = useState("");
   const [advisorLoading, setAdvisorLoading] = useState(false);
 
+  const currentThaiYear = new Date().getFullYear() + 543;
+  const futureYear = currentThaiYear + 1;
+  const autoYears = [];
+  for (let y = futureYear; y >= 2558; y--) {
+    autoYears.push(String(y).slice(-2));
+  }
+
   const studentCategories = [
     {
       level: "bachelor",
       levelTh: "ระดับปริญญาตรี",
-      years: ["68", "67", "66", "65", "64", "63", "62", "61", "60", "59", "58"],
+      years: autoYears,
     },
     {
       level: "master",
       levelTh: "ระดับปริญญาโท",
-      years: ["68", "67", "66", "65", "64", "63", "62", "61", "60", "59"],
+      years: autoYears,
     },
     {
       level: "doctor",
       levelTh: "ระดับปริญญาเอก",
-      years: ["68", "66", "62", "60", "59"],
+      years: autoYears,
     },
   ];
 

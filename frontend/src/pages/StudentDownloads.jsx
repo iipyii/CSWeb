@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, FileText } from 'lucide-react';
 import Footer from '../components/Footer';
 import axios from "axios";
 
@@ -182,17 +182,28 @@ const downloadData = [
                               {items.map((item, iIdx) => (
                                 <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
                                   <td className="px-6 py-5 text-center text-slate-400 text-sm">{iIdx + 1}</td>
-                                  <td className="px-6 py-5 text-slate-700 text-[15px] group-hover:text-[#3F51B5] transition-colors">{item.title}</td>
+                                  <td className="px-6 py-5 text-slate-700 text-[15px] group-hover:text-[#3F51B5] transition-colors">
+                                    <div>
+                                      <p className="font-medium">{item.title}</p>
+                                      {item.file_name && (
+                                        <p className="text-xs text-slate-400 font-normal mt-0.5 flex items-center gap-1.5">
+                                          <FileText size={13} className="text-slate-400 shrink-0" />
+                                          <span className="truncate max-w-md">{item.file_name}</span>
+                                        </p>
+                                      )}
+                                    </div>
+                                  </td>
                                   <td className="px-6 py-5 text-center">
                                     <div className="flex justify-center gap-1.5">
                                       <a
-                                        href={`http://localhost:5000${item.file_path}`}
+                                        href={`http://localhost:5000/api/downloads/download/${item.id}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className={`px-4 py-1.5 rounded-lg text-[11px] font-bold border
-                                          ${item.file_type === 'pdf'
+                                        download={item.file_name || `${item.title}.${item.file_type || 'pdf'}`}
+                                        className={`px-4 py-1.5 rounded-lg text-[11px] font-bold border transition-all active:scale-95
+                                          ${item.file_type?.toLowerCase() === 'pdf'
                                             ? 'text-rose-600 border-rose-100 bg-rose-50 hover:bg-rose-600 hover:text-white'
-                                            : item.file_type === 'docx'
+                                            : item.file_type?.toLowerCase() === 'docx' || item.file_type?.toLowerCase() === 'doc'
                                               ? 'text-blue-600 border-blue-100 bg-blue-50 hover:bg-blue-600 hover:text-white'
                                               : 'text-emerald-600 border-emerald-100 bg-emerald-50 hover:bg-emerald-600 hover:text-white'
                                           }`}

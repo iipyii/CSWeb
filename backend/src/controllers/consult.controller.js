@@ -8,7 +8,11 @@ export const getAllConsultants = async (req, res) => {
     const where = {};
 
     if (year && year !== "all" && !isNaN(parseInt(year))) {
-      const parsedYear = parseInt(year);
+      let parsedYear = parseInt(year);
+      if (parsedYear > 0 && parsedYear < 100) {
+        parsedYear += 2500;
+      }
+      const shortYear = String(parsedYear).slice(-2);
       where.OR = [
         {
           advisor_students: {
@@ -24,7 +28,7 @@ export const getAllConsultants = async (req, res) => {
         },
         {
           student_id: {
-            startsWith: String(parsedYear).slice(-2)
+            startsWith: shortYear
           }
         }
       ];
@@ -68,8 +72,7 @@ export const getAllConsultants = async (req, res) => {
           }
         }
       },
-      orderBy: { student_id: "asc" },
-      take: 1000
+      orderBy: { student_id: "asc" }
     });
 
     const formatted = students.map((s) => {
@@ -86,26 +89,43 @@ export const getAllConsultants = async (req, res) => {
       return {
         id: s.id,
         student_id: s.student_id,
+        title: s.title || '',
+        firstname: s.firstname || '',
+        lastname: s.lastname || '',
         name: `${s.title || ''}${s.firstname} ${s.lastname}`.trim(),
         room: s.room || "-",
         academic_year: academicYear,
         year: academicYear,
         level: degreeLevel,
         advisor: advLecturer?.fullname_th || "ยังไม่ได้ระบุ",
-        advisor_code: advLecturer?.lecturer_code || ""
+        advisor_code: advLecturer?.lecturer_code || "",
+        advisor_id: advLecturer?.id || ""
       };
     });
 
-    // ดึงรายการปีการศึกษาทั้งหมดที่มีในระบบ
-    const distinctYears = await prisma.advisors.findMany({
-      distinct: ["year"],
-      select: { year: true },
-      orderBy: { year: "desc" }
-    });
+    // ดึงรายการปีการศึกษาทั้งหมดที่มีในระบบ (ทั้งจาก advisors และ students)
+    const [advisorYears, studentYears] = await Promise.all([
+      prisma.advisors.findMany({
+        distinct: ["year"],
+        select: { year: true }
+      }),
+      prisma.students.findMany({
+        distinct: ["year"],
+        select: { year: true }
+      })
+    ]);
+
+    const yearSet = new Set([
+      ...advisorYears.map(y => y.year).filter(Boolean),
+      ...studentYears.map(y => y.year).filter(Boolean),
+      2569, 2568, 2567, 2566, 2565, 2564
+    ]);
+
+    const sortedYears = Array.from(yearSet).sort((a, b) => b - a);
 
     res.json({
       data: formatted,
-      years: distinctYears.map(y => y.year).filter(Boolean)
+      years: sortedYears
     });
   } catch (error) {
     console.error("Fetch all consultants error:", error);
@@ -204,6 +224,109 @@ export const addStudentConsultant = async (req, res) => {
   } catch (error) {
     console.error("Add student consultant error:", error);
     res.status(500).json({ error: "Failed to add student" });
+  }
+};
+
+export const updateStudentConsultant = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const stuId = parseInt(id);
+    const { student_id, name, title, firstname, lastname, room, year, level, advisor_id } = req.body;
+
+    const existing = await prisma.students.findUnique({
+      where: { id: stuId }
+    });
+
+    if (!existing) {
+      return res.status(404).json({ error: "ไม่พบข้อมูลนักศึกษา" });
+    }
+
+    let rawId = student_id ? String(student_id).trim() : existing.student_id;
+    let academicYear = parseInt(year);
+    if (isNaN(academicYear)) {
+      academicYear = existing.year || (rawId.length >= 2 ? parseInt(rawId.slice(0, 2)) + 2500 : 2568);
+    } else if (academicYear > 0 && academicYear < 100) {
+      academicYear += 2500;
+    }
+
+    let newTitle = title || existing.title || "นาย/นางสาว";
+    let newFirstname = firstname !== undefined ? firstname : existing.firstname;
+    let newLastname = lastname !== undefined ? lastname : existing.lastname;
+
+    if (name && name.trim()) {
+      let full = name.trim();
+      if (full.startsWith("นาย ")) {
+        newTitle = "นาย";
+        full = full.slice(4).trim();
+      } else if (full.startsWith("นาย")) {
+        newTitle = "นาย";
+        full = full.slice(3).trim();
+      } else if (full.startsWith("นางสาว ")) {
+        newTitle = "นางสาว";
+        full = full.slice(7).trim();
+      } else if (full.startsWith("นางสาว")) {
+        newTitle = "นางสาว";
+        full = full.slice(6).trim();
+      }
+      const parts = full.split(/\s+/);
+      newFirstname = parts[0] || "";
+      newLastname = parts.slice(1).join(" ") || "";
+    }
+
+    const updatedStudent = await prisma.students.update({
+      where: { id: stuId },
+      data: {
+        student_id: rawId,
+        title: newTitle,
+        firstname: newFirstname,
+        lastname: newLastname,
+        room: room !== undefined ? room : existing.room,
+        year: academicYear
+      }
+    });
+
+    // อัปเดตอาจารย์ที่ปรึกษา
+    if (advisor_id !== undefined) {
+      await prisma.advisor_students.deleteMany({
+        where: { studentId: stuId }
+      });
+
+      if (advisor_id && advisor_id !== "") {
+        const advLecturerId = parseInt(advisor_id);
+        if (!isNaN(advLecturerId)) {
+          const advLevel = level || "bachelor";
+          let advisor = await prisma.advisors.findFirst({
+            where: {
+              lecturerId: advLecturerId,
+              year: academicYear,
+              level: advLevel
+            }
+          });
+
+          if (!advisor) {
+            advisor = await prisma.advisors.create({
+              data: {
+                lecturerId: advLecturerId,
+                year: academicYear,
+                level: advLevel
+              }
+            });
+          }
+
+          await prisma.advisor_students.create({
+            data: {
+              studentId: stuId,
+              advisorId: advisor.id
+            }
+          });
+        }
+      }
+    }
+
+    res.json({ success: true, message: "อัปเดตข้อมูลนักศึกษาสำเร็จ", student: updatedStudent });
+  } catch (error) {
+    console.error("Update student consultant error:", error);
+    res.status(500).json({ error: "เกิดข้อผิดพลาดในการแก้ไขข้อมูล: " + error.message });
   }
 };
 
@@ -574,7 +697,10 @@ export const importConsultantsExcel = async (req, res) => {
       return res.status(400).json({ error: "กรุณาอัปโหลดไฟล์ Excel (.xlsx หรือ .xls)" });
     }
 
-    const defaultYear = req.body.default_year ? parseInt(req.body.default_year) : null;
+    let defaultYear = req.body.default_year ? parseInt(req.body.default_year) : null;
+    if (defaultYear && defaultYear > 0 && defaultYear < 100) {
+      defaultYear += 2500;
+    }
     const defaultLevel = req.body.default_level || "bachelor";
 
     const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
@@ -623,6 +749,7 @@ export const importConsultantsExcel = async (req, res) => {
     let createdCount = 0;
     let updatedCount = 0;
     const errors = [];
+    const parsedStudents = [];
 
     // วนลูปทุก Sheet ใน Workbook
     for (const sheetName of workbook.SheetNames) {
@@ -656,49 +783,108 @@ export const importConsultantsExcel = async (req, res) => {
         advisor: -1
       };
 
-      for (let r = 0; r < Math.min(rawRows.length, 10); r++) {
-        const row = rawRows[r].map(cell => String(cell).trim().toLowerCase());
-        const idIdx = row.findIndex(c => c.includes("รหัส") || c.includes("student id") || c.includes("studentid"));
-        const nameIdx = row.findIndex(c => c.includes("ชื่อ") || c.includes("name"));
-        if (idIdx !== -1 && nameIdx !== -1) {
-          headerRowIdx = r;
-          break;
+      let bestScore = 0;
+      let bestRowIdx = -1;
+      let bestColMap = null;
+
+      // ค้นหาแถวที่เป็น Header จริง โดยให้คะแนนตามคอลัมน์ที่ตรงกับรูปแบบ
+      for (let r = 0; r < Math.min(rawRows.length, 15); r++) {
+        const row = rawRows[r];
+        if (!Array.isArray(row) || row.length === 0) continue;
+
+        const currentMap = {
+          student_id: -1,
+          title: -1,
+          firstname: -1,
+          lastname: -1,
+          fullname: -1,
+          room: -1,
+          year: -1,
+          level: -1,
+          advisor: -1
+        };
+
+        let score = 0;
+
+        row.forEach((cell, idx) => {
+          const col = String(cell || "").trim();
+          const lower = col.toLowerCase();
+          if (!col) return;
+
+          // ตรวจสอบคอลัมน์รหัสนักศึกษา (ต้องไม่ใช่คำอธิบายทั่วไปหรือรหัสอาจารย์)
+          if (
+            lower.includes("รหัสนักศึกษา") || 
+            lower.includes("รหัสประจำตัว") || 
+            lower.includes("student id") || 
+            lower.includes("studentid") ||
+            (lower.includes("รหัส") && !lower.includes("อาจารย์") && !lower.includes("ที่ปรึกษา") && col.length <= 15)
+          ) {
+            currentMap.student_id = idx;
+            score += 5;
+          } else if (lower === "คำนำหน้า" || lower === "คำนำหน้านาม" || lower === "title") {
+            currentMap.title = idx;
+            score += 2;
+          } else if (lower === "ชื่อ" || lower === "firstname" || lower === "first name" || lower === "ชื่อจริง") {
+            currentMap.firstname = idx;
+            score += 3;
+          } else if (lower === "นามสกุล" || lower === "lastname" || lower === "last name") {
+            currentMap.lastname = idx;
+            score += 3;
+          } else if (lower.includes("ชื่อ-นามสกุล") || lower.includes("ชื่อ - นามสกุล") || lower.includes("ชื่อ นามสกุล") || lower.includes("fullname")) {
+            currentMap.fullname = idx;
+            score += 4;
+          } else if (lower.includes("ห้อง") || lower.includes("ตอนเรียน") || lower.includes("room") || lower.includes("sec") || lower.includes("กลุ่ม")) {
+            currentMap.room = idx;
+            score += 2;
+          } else if (lower.includes("ปีการศึกษา") || lower.includes("รุ่น") || lower.includes("academic year") || lower === "ปี") {
+            currentMap.year = idx;
+            score += 2;
+          } else if (lower.includes("ระดับ") || lower.includes("level") || lower.includes("degree")) {
+            currentMap.level = idx;
+            score += 2;
+          } else if (lower.includes("อาจารย์") || lower.includes("ที่ปรึกษา") || lower.includes("advisor")) {
+            currentMap.advisor = idx;
+            score += 3;
+          }
+        });
+
+        // แถวที่นับเป็น Header ต้องมีคอลัมน์ student_id และได้คะแนนรวม >= 5
+        if (currentMap.student_id !== -1 && score > bestScore) {
+          bestScore = score;
+          bestRowIdx = r;
+          bestColMap = currentMap;
         }
       }
 
-      if (headerRowIdx === -1) {
-        headerRowIdx = 0;
+      if (bestRowIdx !== -1 && bestColMap) {
+        headerRowIdx = bestRowIdx;
+        colIdxMap = bestColMap;
+      } else {
+        // Fallback กรณีไม่มีหัวตารางชัดเจน แต่แถวแรกเป็นรหัสนักศึกษาเลย
+        const firstRow = rawRows[0] || [];
+        const possibleId = String(firstRow[0] || "").trim().replace(/[^0-9]/g, "");
+        if (possibleId.length >= 9) {
+          headerRowIdx = -1;
+          colIdxMap.student_id = 0;
+          colIdxMap.title = 1;
+          colIdxMap.firstname = 2;
+          colIdxMap.lastname = 3;
+          colIdxMap.room = 4;
+          colIdxMap.year = 5;
+          colIdxMap.level = 6;
+          colIdxMap.advisor = 7;
+        }
       }
 
-      const headerRow = rawRows[headerRowIdx].map(c => String(c).trim());
-
-      headerRow.forEach((col, idx) => {
-        const lower = col.toLowerCase();
-        if (lower.includes("รหัสประจำตัว") || lower.includes("รหัสนักศึกษา") || lower.includes("student id") || lower.includes("studentid")) {
-          colIdxMap.student_id = idx;
-        } else if (lower === "คำนำหน้า" || lower === "คำนำหน้านาม" || lower === "title") {
-          colIdxMap.title = idx;
-        } else if (lower === "ชื่อ" || lower === "firstname" || lower === "first name") {
-          colIdxMap.firstname = idx;
-        } else if (lower === "นามสกุล" || lower === "lastname" || lower === "last name") {
-          colIdxMap.lastname = idx;
-        } else if (lower.includes("ชื่อ-นามสกุล") || lower.includes("ชื่อ - นามสกุล") || lower.includes("ชื่อ นามสกุล") || lower.includes("fullname")) {
-          colIdxMap.fullname = idx;
-        } else if (lower.includes("ห้อง") || lower.includes("ตอนเรียน") || lower.includes("room") || lower.includes("sec") || lower.includes("กลุ่ม")) {
-          colIdxMap.room = idx;
-        } else if (lower.includes("ปีการศึกษา") || lower.includes("รุ่น") || lower.includes("academic year") || lower === "ปี") {
-          colIdxMap.year = idx;
-        } else if (lower.includes("ระดับ") || lower.includes("level") || lower.includes("degree")) {
-          colIdxMap.level = idx;
-        } else if (lower.includes("อาจารย์") || lower.includes("ที่ปรึกษา") || lower.includes("advisor")) {
-          colIdxMap.advisor = idx;
-        }
-      });
-
-      if (colIdxMap.student_id === -1) continue;
+      if (colIdxMap.student_id === -1) {
+        console.warn(`[importConsultantsExcel] Sheet "${sheetName}" has no identifiable student_id column. Skipping.`);
+        continue;
+      }
 
       for (let r = headerRowIdx + 1; r < rawRows.length; r++) {
         const row = rawRows[r];
+        if (!Array.isArray(row) || row.length === 0) continue;
+
         const rawId = String(row[colIdxMap.student_id] || "").trim().replace(/[^0-9]/g, "");
         if (!rawId || rawId.length < 9) continue;
 
@@ -754,89 +940,184 @@ export const importConsultantsExcel = async (req, res) => {
           else if (yNum > 50 && yNum < 100) academicYear = yNum + 2500;
         }
 
-        if (!academicYear) academicYear = sheetYear || defaultYear || (parseInt(rawId.slice(0, 2)) + 2500);
+        // ค้นหาปีการศึกษาในช่องอื่นๆ ในแถวหากยังไม่ได้ปี
+        if (!academicYear) {
+          for (let c = 0; c < row.length; c++) {
+            const cellVal = String(row[c] || "").trim();
+            if (/^25\d{2}$/.test(cellVal)) {
+              academicYear = parseInt(cellVal);
+              break;
+            }
+          }
+        }
 
-        let level = colIdxMap.level !== -1 ? String(row[colIdxMap.level] || "").trim().toLowerCase() : defaultLevel;
+        // Fallback จาก sheetYear, defaultYear, หรือ 2 หลักแรกของรหัสนักศึกษา (เช่น 69 -> 2569)
+        if (!academicYear) {
+          academicYear = sheetYear || defaultYear || (parseInt(rawId.slice(0, 2)) + 2500);
+        }
+
+        let level = colIdxMap.level !== -1 ? String(row[colIdxMap.level] || "").trim().toLowerCase() : "";
         if (level.includes("ตรี") || level.includes("bachelor")) level = "bachelor";
         else if (level.includes("โท") || level.includes("master")) level = "master";
         else if (level.includes("เอก") || level.includes("doctor")) level = "doctor";
-        else level = "bachelor";
-
-        const advisorText = colIdxMap.advisor !== -1 ? String(row[colIdxMap.advisor] || "").trim() : "";
-        const lecturerId = advisorText ? findLecturerId(advisorText) : null;
-
-        totalProcessed++;
-
-        try {
-          const existing = await prisma.students.findUnique({
-            where: { student_id: rawId }
-          });
-
-          let student;
-          if (existing) {
-            student = await prisma.students.update({
-              where: { student_id: rawId },
-              data: {
-                title: title || existing.title,
-                firstname: firstname || existing.firstname,
-                lastname: lastname || existing.lastname,
-                room: room !== "-" ? room : existing.room,
-                year: academicYear || existing.year
-              }
-            });
-            updatedCount++;
-          } else {
-            student = await prisma.students.create({
-              data: {
-                student_id: rawId,
-                title: title || "นาย/นางสาว",
-                firstname: firstname,
-                lastname: lastname || "",
-                room: room || "-",
-                year: academicYear
-              }
-            });
-            createdCount++;
+        else {
+          for (let c = 0; c < row.length; c++) {
+            const cellVal = String(row[c] || "").trim().toLowerCase();
+            if (cellVal.includes("ตรี") || cellVal.includes("bachelor")) { level = "bachelor"; break; }
+            if (cellVal.includes("โท") || cellVal.includes("master")) { level = "master"; break; }
+            if (cellVal.includes("เอก") || cellVal.includes("doctor")) { level = "doctor"; break; }
           }
+          if (!level) level = defaultLevel || "bachelor";
+        }
 
-          if (lecturerId && academicYear) {
-            let advisor = await prisma.advisors.findFirst({
-              where: {
-                lecturerId: lecturerId,
-                year: academicYear,
-                level: level
+        let advisorText = colIdxMap.advisor !== -1 ? String(row[colIdxMap.advisor] || "").trim() : "";
+        let lecturerId = advisorText ? findLecturerId(advisorText) : null;
+        if (!lecturerId) {
+          for (let c = 0; c < row.length; c++) {
+            if (c === colIdxMap.student_id || c === colIdxMap.firstname || c === colIdxMap.lastname) continue;
+            const cellText = String(row[c] || "").trim();
+            if (cellText) {
+              const matched = findLecturerId(cellText);
+              if (matched) {
+                lecturerId = matched;
+                break;
               }
-            });
-
-            if (!advisor) {
-              advisor = await prisma.advisors.create({
-                data: {
-                  lecturerId: lecturerId,
-                  year: academicYear,
-                  level: level
-                }
-              });
             }
-
-            await prisma.advisor_students.upsert({
-              where: {
-                studentId_advisorId: {
-                  studentId: student.id,
-                  advisorId: advisor.id
-                }
-              },
-              create: {
-                studentId: student.id,
-                advisorId: advisor.id
-              },
-              update: {}
-            });
           }
-        } catch (err) {
-          console.error(`Error importing row ${r} (${rawId}):`, err.message);
-          errors.push(`แถวที่ ${r + 1} (${rawId}): ${err.message}`);
+        }
+
+        parsedStudents.push({
+          rawId,
+          title,
+          firstname,
+          lastname,
+          room,
+          academicYear,
+          level,
+          lecturerId,
+          rowIndex: r + 1
+        });
+      }
+    }
+
+    if (parsedStudents.length === 0) {
+      return res.json({
+        success: true,
+        message: "ไม่พบข้อมูลนักศึกษาในไฟล์ Excel",
+        total: 0,
+        created: 0,
+        updated: 0,
+        errors: []
+      });
+    }
+
+    // 2. ดึงข้อมูลนักศึกษาที่มีอยู่แล้วทั้งหมดในไฟล์นี้ด้วย Query เดียว (ลด Network Roundtrips)
+    const allIds = parsedStudents.map(s => s.rawId);
+    const existingList = await prisma.students.findMany({
+      where: { student_id: { in: allIds } }
+    });
+    const existingMap = new Map(existingList.map(s => [s.student_id, s]));
+
+    // 3. ดึงและแคชอาจารย์ที่ปรึกษาตามปีการศึกษาและระดับที่เกี่ยวข้อง
+    const yearsSet = new Set(parsedStudents.map(s => s.academicYear).filter(Boolean));
+    const existingAdvisors = await prisma.advisors.findMany({
+      where: { year: { in: Array.from(yearsSet) } }
+    });
+    const advisorMap = new Map();
+    existingAdvisors.forEach(a => {
+      advisorMap.set(`${a.lecturerId}_${a.year}_${a.level}`, a);
+    });
+
+    // 4. สร้างกลุ่ม Advisor ที่ยังไม่มีในระบบล่วงหน้า (ทำครั้งเดียวต่อกลุ่ม)
+    for (const item of parsedStudents) {
+      if (item.lecturerId && item.academicYear) {
+        const key = `${item.lecturerId}_${item.academicYear}_${item.level}`;
+        if (!advisorMap.has(key)) {
+          try {
+            const adv = await prisma.advisors.create({
+              data: {
+                lecturerId: item.lecturerId,
+                year: item.academicYear,
+                level: item.level
+              }
+            });
+            advisorMap.set(key, adv);
+          } catch (e) {
+            // ถ้าสร้างชนกันในเวลาเดียวกัน ให้ลองดึงซ้ำ
+            const adv = await prisma.advisors.findFirst({
+              where: {
+                lecturerId: item.lecturerId,
+                year: item.academicYear,
+                level: item.level
+              }
+            });
+            if (adv) advisorMap.set(key, adv);
+          }
         }
       }
+    }
+
+    // 5. บันทึกและอัปเดตข้อมูลนักศึกษาเป็นชุด (Concurrent Chunks ละ 20 รายการ)
+    const CHUNK_SIZE = 20;
+    for (let i = 0; i < parsedStudents.length; i += CHUNK_SIZE) {
+      const chunk = parsedStudents.slice(i, i + CHUNK_SIZE);
+      await Promise.all(
+        chunk.map(async (item) => {
+          totalProcessed++;
+          try {
+            const existing = existingMap.get(item.rawId);
+            let student;
+            if (existing) {
+              student = await prisma.students.update({
+                where: { student_id: item.rawId },
+                data: {
+                  title: item.title || existing.title,
+                  firstname: item.firstname || existing.firstname,
+                  lastname: item.lastname || existing.lastname,
+                  room: item.room !== "-" ? item.room : existing.room,
+                  year: item.academicYear || existing.year
+                }
+              });
+              updatedCount++;
+            } else {
+              student = await prisma.students.create({
+                data: {
+                  student_id: item.rawId,
+                  title: item.title || "นาย/นางสาว",
+                  firstname: item.firstname,
+                  lastname: item.lastname || "",
+                  room: item.room || "-",
+                  year: item.academicYear
+                }
+              });
+              createdCount++;
+            }
+
+            if (item.lecturerId && item.academicYear) {
+              const key = `${item.lecturerId}_${item.academicYear}_${item.level}`;
+              const adv = advisorMap.get(key);
+              if (adv) {
+                await prisma.advisor_students.upsert({
+                  where: {
+                    studentId_advisorId: {
+                      studentId: student.id,
+                      advisorId: adv.id
+                    }
+                  },
+                  create: {
+                    studentId: student.id,
+                    advisorId: adv.id
+                  },
+                  update: {}
+                });
+              }
+            }
+          } catch (err) {
+            console.error(`Error importing row ${item.rowIndex} (${item.rawId}):`, err.message);
+            errors.push(`แถวที่ ${item.rowIndex} (${item.rawId}): ${err.message}`);
+          }
+        })
+      );
     }
 
     res.json({

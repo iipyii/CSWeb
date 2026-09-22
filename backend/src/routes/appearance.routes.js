@@ -28,14 +28,43 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage });
+const fileFilter = (req, file, cb) => {
+  const allowedExtensions = [".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg"];
+  const ext = path.extname(file.originalname).toLowerCase();
+  const isMimeImage = file.mimetype.startsWith("image/");
+
+  if (allowedExtensions.includes(ext) && isMimeImage) {
+    return cb(null, true);
+  }
+  return cb(new Error("รูปภาพต้องเป็นไฟล์รูปภาพ (.jpg, .jpeg, .png, .webp, .gif) เท่านั้น ไม่อนุญาตให้อัปโหลดไฟล์ประเภท " + (ext || "นี้")), false);
+};
+
+const upload = multer({ 
+  storage,
+  fileFilter,
+  limits: {
+    fileSize: 15 * 1024 * 1024 // 15MB
+  }
+});
+
+const handleSingleUpload = (fieldName) => {
+  const single = upload.single(fieldName);
+  return (req, res, next) => {
+    single(req, res, (err) => {
+      if (err) {
+        return res.status(400).json({ error: err.message || "เกิดข้อผิดพลาดในการอัปโหลดไฟล์รูปภาพ" });
+      }
+      next();
+    });
+  };
+};
 
 router.get("/banners", getBanners);
-router.post("/banners", upload.single("image"), createBanner);
+router.post("/banners", handleSingleUpload("image"), createBanner);
 router.delete("/banners/:id", deleteBanner);
 
 router.get("/settings", getSiteConfig);
 router.post("/settings", updateSiteConfig);
-router.post("/logo", upload.single("logo"), uploadLogo);
+router.post("/logo", handleSingleUpload("logo"), uploadLogo);
 
 export default router;
