@@ -16,6 +16,7 @@ export default function ManageProjects() {
   const [editingProject, setEditingProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [modalError, setModalError] = useState("");
 
   // State for Excel Import Modal
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -112,6 +113,7 @@ export default function ManageProjects() {
   }, []);
 
   const openModal = (project = null) => {
+    setModalError("");
     if (project) {
       setEditingProject(project);
       
@@ -150,8 +152,14 @@ export default function ManageProjects() {
   };
 
   const handleStudentChange = (index, field, value) => {
+    setModalError("");
     const updated = [...formData.studentsList];
-    updated[index] = { ...updated[index], [field]: value };
+    let val = value;
+    if (field === "id") {
+      // Allow numbers only, max 13 digits
+      val = value.replace(/\D/g, '').slice(0, 13);
+    }
+    updated[index] = { ...updated[index], [field]: val };
     setFormData({ ...formData, studentsList: updated });
   };
 
@@ -193,26 +201,113 @@ export default function ManageProjects() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.titleTh.trim()) {
-      alert("กรุณาระบุชื่อโครงงานภาษาไทย");
+    setModalError("");
+
+    if (!formData.titleTh || !formData.titleTh.trim()) {
+      setModalError("กรุณาระบุชื่อโครงงานภาษาไทย");
       return;
+    }
+
+    // Filter rows that have at least one field filled
+    const filledStudents = formData.studentsList
+      .map((s, originalIndex) => ({
+        id: (s.id || "").trim(),
+        name: (s.name || "").trim(),
+        originalIndex
+      }))
+      .filter(s => s.id !== "" || s.name !== "");
+
+    // TC-PRJ-14: No students filled
+    if (filledStudents.length === 0) {
+      setModalError("กรุณาระบุข้อมูลนักศึกษาผู้จัดทำโครงงานอย่างน้อย 1 คน (พร้อมรหัสนักศึกษา 13 หลัก และชื่อ-นามสกุล)");
+      return;
+    }
+
+    const seenIds = new Set();
+    const seenNames = new Set();
+
+    for (let i = 0; i < filledStudents.length; i++) {
+      const s = filledStudents[i];
+      const rowNum = i + 1;
+
+      // TC-PRJ-14: Empty ID
+      if (!s.id) {
+        setModalError(`กรุณาระบุรหัสนักศึกษาให้ครบถ้วน (นักศึกษาคนที่ ${rowNum})`);
+        return;
+      }
+
+      // TC-PRJ-12, TC-PRJ-13: Validate 13 digits numeric
+      if (!/^\d{13}$/.test(s.id)) {
+        setModalError(`รหัสนักศึกษาต้องเป็นตัวเลข 13 หลักเท่านั้น (นักศึกษาคนที่ ${rowNum} พบ '${s.id}' ซึ่งมี ${s.id.length} หลัก)`);
+        return;
+      }
+
+      // Empty Name
+      if (!s.name) {
+        setModalError(`กรุณาระบุชื่อ-นามสกุลนักศึกษาให้ครบถ้วน (นักศึกษาคนที่ ${rowNum})`);
+        return;
+      }
+
+      // TC-PRJ-15: Duplicate ID in same project
+      if (seenIds.has(s.id)) {
+        setModalError(`พบรหัสนักศึกษาซ้ำกันในโครงงานเดียวกัน: ${s.id}`);
+        return;
+      }
+      seenIds.add(s.id);
+
+      // TC-PRJ-16: Duplicate Name in same project
+      const normalizedName = s.name.replace(/\s+/g, ' ').toLowerCase();
+      if (seenNames.has(normalizedName)) {
+        setModalError(`พบชื่อนักศึกษาซ้ำกันในโครงงานเดียวกัน: ${s.name}`);
+        return;
+      }
+      seenNames.add(normalizedName);
+    }
+
+    // TC-PRJ-17: Check duplicate in same semester across existing projects
+    const targetYear = formData.year ? parseInt(formData.year) : null;
+    const targetSemester = formData.semester ? parseInt(formData.semester) : 1;
+
+    if (targetYear) {
+      const conflictProjects = projects.filter(p => 
+        p.year === targetYear && 
+        p.semester === targetSemester && 
+        (!editingProject || p.id !== editingProject.id)
+      );
+
+      for (const st of filledStudents) {
+        for (const proj of conflictProjects) {
+          let isMatch = false;
+          if (proj.student && proj.student.student_id === st.id) {
+            isMatch = true;
+          }
+          if (!isMatch && proj.students_text && proj.students_text.includes(st.id)) {
+            isMatch = true;
+          }
+
+          if (isMatch) {
+            setModalError(`นักศึกษารหัส ${st.id} (${st.name}) มีโครงงานในภาคเรียนที่ ${targetSemester}/${targetYear} อยู่แล้ว (โครงงาน: "${proj.title_th}")`);
+            return;
+          }
+        }
+      }
     }
 
     try {
       setSubmitting(true);
-      const validStudents = formData.studentsList.filter(s => (s.name && s.name.trim()) || (s.id && s.id.trim()));
+      const validStudents = filledStudents.map(s => ({ id: s.id, name: s.name }));
       const studentsText = validStudents.map(s => {
-        const id = (s.id || "").trim();
-        const name = (s.name || "").trim();
+        const id = s.id;
+        const name = s.name;
         if (id && name) return `${name} (${id})`;
         return name || id;
       }).join("\n");
 
       const payload = {
-        title_th: formData.titleTh,
-        title_en: formData.titleEn,
-        year: formData.year ? parseInt(formData.year) : null,
-        semester: formData.semester ? parseInt(formData.semester) : 1,
+        title_th: formData.titleTh.trim(),
+        title_en: formData.titleEn.trim(),
+        year: targetYear,
+        semester: targetSemester,
         studentsList: validStudents,
         students_text: studentsText,
         advisor_id: formData.advisorId ? parseInt(formData.advisorId) : null,
@@ -232,7 +327,8 @@ export default function ManageProjects() {
       fetchProjects();
     } catch (error) {
       console.error("Save error:", error);
-      alert("เกิดข้อผิดพลาดในการบันทึกโครงงาน");
+      const errMsg = error.response?.data?.error || "เกิดข้อผิดพลาดในการบันทึกโครงงาน";
+      setModalError(errMsg);
     } finally {
       setSubmitting(false);
     }
@@ -753,6 +849,21 @@ export default function ManageProjects() {
               </div>
 
               <form onSubmit={handleSubmit} className="p-8 overflow-y-auto space-y-6">
+                {/* ⚠️ Modal Error Alert */}
+                {modalError && (
+                  <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-700 text-xs flex items-start gap-2.5 font-medium shadow-sm">
+                    <AlertCircle size={18} className="shrink-0 text-rose-500 mt-0.5" />
+                    <div className="flex-1 leading-relaxed">{modalError}</div>
+                    <button 
+                      type="button" 
+                      onClick={() => setModalError("")} 
+                      className="text-rose-400 hover:text-rose-600 transition-colors"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                )}
+
                 {/* ปีการศึกษา & ภาคการศึกษา */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-6 bg-slate-50/50 rounded-3xl border border-slate-100">
                   <div>
@@ -793,7 +904,7 @@ export default function ManageProjects() {
                       <Users size={18}/>
                       <div>
                         <span className="text-xs font-bold uppercase tracking-wider block">นักศึกษาผู้จัดทำโครงงาน</span>
-                        <span className="text-[11px] text-slate-400 font-normal">แยกรหัสประจำตัว และ ชื่อ-นามสกุล (รองรับ 1-4 คน)</span>
+                        <span className="text-[11px] text-slate-400 font-normal">แยกรหัสประจำตัว 13 หลัก และ ชื่อ-นามสกุล (รองรับ 1-4 คน)</span>
                       </div>
                     </div>
                     {formData.studentsList.length < 4 && (
@@ -808,52 +919,72 @@ export default function ManageProjects() {
                   </div>
 
                   <div className="space-y-3">
-                    {formData.studentsList.map((stu, index) => (
-                      <div key={index} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-white p-3 rounded-2xl border border-slate-200/80 shadow-sm">
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-600 text-xs font-bold flex items-center justify-center">
-                            {index + 1}
-                          </span>
-                        </div>
+                    {formData.studentsList.map((stu, index) => {
+                      const idLen = (stu.id || "").length;
+                      const is13 = idLen === 13;
+                      const hasInput = idLen > 0;
 
-                        {/* รหัสนักศึกษา */}
-                        <div className="w-full sm:w-48 shrink-0">
-                          <div className="text-[10px] text-slate-400 font-bold uppercase mb-0.5 ml-1">รหัสนักศึกษา</div>
-                          <input 
-                            type="text" 
-                            placeholder="เช่น 6504062630103"
-                            value={stu.id || ""}
-                            onChange={(e) => handleStudentChange(index, "id", e.target.value)}
-                            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#3F51B5]/20 text-xs font-mono font-medium text-slate-800"
-                          />
-                        </div>
+                      return (
+                        <div key={index} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-white p-3 rounded-2xl border border-slate-200/80 shadow-sm">
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-600 text-xs font-bold flex items-center justify-center">
+                              {index + 1}
+                            </span>
+                          </div>
 
-                        {/* ชื่อ-นามสกุล */}
-                        <div className="flex-1">
-                          <div className="text-[10px] text-slate-400 font-bold uppercase mb-0.5 ml-1">ชื่อ-นามสกุล (พร้อมคำนำหน้า)</div>
-                          <input 
-                            type="text" 
-                            placeholder="เช่น นายณัชพล ทองน่วม"
-                            value={stu.name || ""}
-                            onChange={(e) => handleStudentChange(index, "name", e.target.value)}
-                            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#3F51B5]/20 text-xs font-medium text-slate-800"
-                          />
-                        </div>
+                          {/* รหัสนักศึกษา */}
+                          <div className="w-full sm:w-52 shrink-0">
+                            <div className="flex items-center justify-between mb-0.5 ml-1">
+                              <span className="text-[10px] text-slate-400 font-bold uppercase">รหัสนักศึกษา</span>
+                              <span className={`text-[10px] font-mono font-bold ${
+                                is13 ? "text-emerald-600" : hasInput ? "text-amber-600" : "text-slate-400"
+                              }`}>
+                                {is13 ? "✓ 13 หลัก" : hasInput ? `(${idLen}/13)` : "(13 หลัก)"}
+                              </span>
+                            </div>
+                            <input 
+                              type="text" 
+                              placeholder="เช่น 6504062630103"
+                              value={stu.id || ""}
+                              maxLength={13}
+                              onChange={(e) => handleStudentChange(index, "id", e.target.value)}
+                              className={`w-full p-2.5 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-[#3F51B5]/20 text-xs font-mono font-medium text-slate-800 transition-colors ${
+                                is13 
+                                  ? "border-emerald-300 focus:border-emerald-500" 
+                                  : hasInput 
+                                    ? "border-amber-300 focus:border-amber-500" 
+                                    : "border-slate-200"
+                              }`}
+                            />
+                          </div>
 
-                        {/* ปุ่มลบ */}
-                        <div className="sm:self-end pb-0.5 flex justify-end">
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveStudent(index)}
-                            disabled={formData.studentsList.length <= 1}
-                            className="p-2.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                            title="ลบนักศึกษาคนนี้"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                          {/* ชื่อ-นามสกุล */}
+                          <div className="flex-1">
+                            <div className="text-[10px] text-slate-400 font-bold uppercase mb-0.5 ml-1">ชื่อ-นามสกุล (พร้อมคำนำหน้า)</div>
+                            <input 
+                              type="text" 
+                              placeholder="เช่น นายณัชพล ทองน่วม"
+                              value={stu.name || ""}
+                              onChange={(e) => handleStudentChange(index, "name", e.target.value)}
+                              className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#3F51B5]/20 text-xs font-medium text-slate-800"
+                            />
+                          </div>
+
+                          {/* ปุ่มลบ */}
+                          <div className="sm:self-end pb-0.5 flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveStudent(index)}
+                              disabled={formData.studentsList.length <= 1}
+                              className="p-2.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                              title="ลบนักศึกษาคนนี้"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 

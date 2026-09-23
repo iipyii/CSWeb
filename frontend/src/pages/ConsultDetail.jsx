@@ -44,6 +44,13 @@ export default function ConsultDetail() {
       });
   }, [year, level]);
 
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return "/img/placeholder-user.png";
+    if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) return imagePath;
+    const cleanPath = imagePath.replace(/\\/g, '/').replace(/^\//, '');
+    return `http://localhost:5000/${cleanPath}`;
+  };
+
   const filteredAdvisorGroups = useMemo(() => {
     return advisors
       .map((advisor) => {
@@ -184,13 +191,13 @@ export default function ConsultDetail() {
                     <div className="space-y-4">
                       <div className="w-full max-w-[240px] mx-auto md:mx-0 aspect-[3/4] rounded-2xl overflow-hidden border border-slate-200 shadow-sm bg-slate-100">
                         <img
-                          src={
-                            advisor.lecturer?.image_path
-                              ? `http://localhost:5000/uploads/lecturers/${advisor.lecturer.lecturer_code}.jpg`
-                              : "/img/staff/default.jpg"
-                          }
+                          src={getImageUrl(advisor.lecturer?.image_path)}
                           alt={advisor.lecturer?.fullname_th || "lecturer"}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover object-top"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "/img/placeholder-user.png";
+                          }}
                         />
                       </div>
 

@@ -22,6 +22,8 @@ import curriculumRoutes from './routes/curriculum.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import subjectsRoutes from './routes/subjects.routes.js';
 import handbookRoutes from './routes/handbook.routes.js';
+import aboutRoutes from './routes/about.routes.js';
+import personnelLinksRoutes from './routes/personnel-links.routes.js';
 
 
 const app = express();
@@ -70,6 +72,8 @@ app.use('/api/curriculum', curriculumRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/subjects', subjectsRoutes);
 app.use('/api/handbooks', handbookRoutes);
+app.use('/api/about', aboutRoutes);
+app.use('/api/personnel-links', personnelLinksRoutes);
 app.use("/uploads", express.static(path.join(process.cwd(), "public/uploads")));
 
 

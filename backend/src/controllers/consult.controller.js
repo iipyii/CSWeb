@@ -468,7 +468,8 @@ export const searchStudent = async (req, res) => {
         advisor: advisorGroup ? {
           fullname_th: advisorGroup.lecturer?.fullname_th || "ไม่ทราบชื่อ",
           lecturer_code: advisorGroup.lecturer?.lecturer_code || "",
-          email: advisorGroup.lecturer?.email || "-"
+          email: advisorGroup.lecturer?.email || "-",
+          image_path: advisorGroup.lecturer?.image_path || ""
         } : null
       };
     });

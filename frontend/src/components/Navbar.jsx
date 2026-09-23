@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom"; // 👉 เพิ่ม useNavigate
+import { Link, useNavigate } from "react-router-dom";
 import { Search, ChevronDown, Menu, X } from "lucide-react";
 import axios from "axios";
+import { useLanguage } from "../context/LanguageContext";
 import styles from "./Navbar.module.css";
 
 // เมนูมือถือ: รองรับ item.dropdown / sub.submenu / deepSub.nestedSubmenu แบบ recursive
-// (ใช้ key เดียว "children" เพื่อไม่ต้องเขียน JSX ซ้อนกัน 3 ชั้นตรงๆ)
 function MobileNavItem({ item, onNavigate }) {
   const children = item.dropdown || item.submenu || item.nestedSubmenu;
 
@@ -34,10 +34,8 @@ function MobileNavItem({ item, onNavigate }) {
 }
 
 export default function Navbar() {
-  const [lang, setLang] = useState("TH");
+  const { lang, setLang, t } = useLanguage();
   const [logoUrl, setLogoUrl] = useState("/cis-logo.svg");
-
-  // 👉 1. สร้าง State สำหรับเก็บคำค้นหา และตัวนำทาง (navigate)
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const navigate = useNavigate();
@@ -76,104 +74,104 @@ export default function Navbar() {
     return () => window.removeEventListener("site_config_updated", handleLogoUpdate);
   }, []);
 
-  // 👉 2. ฟังก์ชันจัดการเมื่อกด Enter
   const handleSearch = (e) => {
     if (e.key === "Enter" && searchQuery.trim() !== "") {
-      // พาไปที่หน้า /search พร้อมกับแนบคำค้นหาไปด้วย
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery(""); // ล้างช่องค้นหาหลังจากกด (จะใส่หรือไม่ใส่ก็ได้ครับ)
+      setSearchQuery("");
       setIsMobileOpen(false);
     }
   };
 
   const navItems = [
-    { label: "หน้าหลัก", href: "/" },
+    { label: t("nav_home"), href: "/" },
     { 
-      label: "แนะนำภาควิชาฯ", 
+      label: t("nav_about"), 
       href: "#", 
       dropdown: [
-        { label: "ประวัติภาควิชาฯ", href: "/history" }, 
-        { label: "โครงสร้างการบริหาร", href: "/organization" },
-        { label: "ติดต่อภาควิชาฯ", href: "/contact" },
+        { label: t("nav_history"), href: "/history" }, 
+        { label: t("nav_organization"), href: "/organization" },
+        { label: t("nav_contact"), href: "/contact" },
       ] 
     },
     { 
-      label: "บุคลากร", 
+      label: t("nav_personnel"), 
       href: "#", 
       dropdown: [
-        { label: "บุคลากรสายวิชาการ", href: "/administrator" },
-        { label: "บุคลากรสายสนับสนุน", href: "/staff" },
-        { label: "ดาวน์โหลดเอกสารสำหรับบุคลากร", href: "/staff-download" },
-        { label: "ลิงก์สำหรับบุคลากร", href: "/personnel-links" },
+        { label: t("nav_lecturers"), href: "/administrator" },
+        { label: t("nav_staff"), href: "/staff" },
+        { label: t("nav_staff_download"), href: "/staff-download" },
+        { label: t("nav_personnel_links"), href: "/personnel-links" },
       ] 
     },
     { 
-      label: "นักศึกษา", 
+      label: t("nav_students"), 
       href: "#", 
       dropdown: [
         { 
-          label: "หลักสูตร", 
+          label: t("nav_curriculum"), 
           href: "#",
           submenu: [
             { 
-              label: "หลักสูตรปริญญาตรี", 
+              label: t("nav_bachelor"), 
               href: "#",
               nestedSubmenu: [
-                { label: "ภาคปกติ", href: "/course-sections/bachelor" },
-                { label: "โครงการพิเศษ/สองภาษา", href: "/course-sections/cs-english" },
+                { label: t("nav_bachelor_regular"), href: "/course-sections/bachelor" },
+                { label: t("nav_bachelor_inter"), href: "/course-sections/cs-english" },
               ]
             },
             { 
-              label: "หลักสูตรปริญญาโท", 
+              label: t("nav_master"), 
               href: "#",
               nestedSubmenu: [
-                { label: "สาขาวิชาวิทยาการคอมพิวเตอร์", href: "/course-sections/cs-master" },
-                { label: "สาขาวิชาวิศวกรรมซอฟต์แวร์", href: "/course-sections/se-master" },
+                { label: t("nav_master_cs"), href: "/course-sections/cs-master" },
+                { label: t("nav_master_se"), href: "/course-sections/se-master" },
               ]
             },
-            { label: "หลักสูตรปริญญาเอก", href: "/course-sections/doctor" },
-            { label: "คำอธิบายรายวิชา", href: "/course-description" },
+            { label: t("nav_doctor"), href: "/course-sections/doctor" },
+            { label: t("nav_course_desc"), href: "/course-description" },
           ]
         },
-        { label: "ดาวน์โหลดเอกสารสำหรับนักศึกษา", href: "/student-downloads" },
-        { label: "โครงงานนักศึกษา", href: "/student-projects" },
+        { label: t("nav_student_download"), href: "/student-downloads" },
+        { label: t("nav_student_projects"), href: "/student-projects" },
         { 
-          label: "อาจารย์ที่ปรึกษา", 
+          label: t("nav_consult_student"), 
           href: "#", 
           submenu: [
             { label: "ค้นหารายชื่อนักศึกษา", href: "/consult-student/:code" },
           ]
         },
-        { label: "การฝึกงาน", href: "/internship" },
-        { label: "ปฏิทินการศึกษา", href: 'https://acdserv.kmutnb.ac.th/academic-calendar', isExternal: true },
-        { label: "ขบวนวิชา", href: "/subject-courses" },
-        { label: "คู่มือนักศึกษา", href: "/student-guide" },
-        { label: "ลิงก์สำหรับนักศึกษา", href: "/student-links" },
+        { label: t("nav_internship"), href: "/internship" },
+        { label: t("nav_calendar"), href: 'https://acdserv.kmutnb.ac.th/academic-calendar', isExternal: true },
+        { label: t("nav_subject_courses"), href: "/subject-courses" },
+        { label: t("nav_student_guide"), href: "/student-guide" },
+        { label: t("nav_student_links"), href: "/student-links" },
       ] 
     },
-    { label: "ข่าวสารและกิจกรรม", 
-      href: "/news", // เชื่อมไปหน้า News หลัก
+    { 
+      label: t("nav_news"), 
+      href: "/news",
       dropdown: [
-        { label: "ข่าวภาควิชาฯ", href: "/news?tab=ข่าวภาควิชาฯ" },
-        { label: "ข่าวคณะ/มหาวิทยาลัย", href: "/news?tab=ข่าวคณะและมหาวิทยาลัย" },
-        { label: "ข่าวทุนการศึกษา", href: "/news?tab=ข่าวทุนการศึกษา" },
-        { label: "ข่าวรับสมัครงาน/ประชาสัมพันธ์", href: "/news?tab=ข่าวรับสมัครงาน-ประชาสัมพันธ์" },
+        { label: t("nav_news_dept"), href: "/news?tab=ข่าวภาควิชาฯ" },
+        { label: t("nav_news_faculty"), href: "/news?tab=ข่าวคณะและมหาวิทยาลัย" },
+        { label: t("nav_news_scholarship"), href: "/news?tab=ข่าวทุนการศึกษา" },
+        { label: t("nav_news_jobs"), href: "/news?tab=ข่าวรับสมัครงาน-ประชาสัมพันธ์" },
       ] 
     },
-    { label: "ระเบียบ/ประกาศ", 
+    { 
+      label: t("nav_regulations"), 
       href: "#", 
       dropdown: [
-        { label: "งานการเงิน", href: "/finance-regulations" },
-        { label: "งานวิชาการ", href: "/academic-regulations" },
-        { label: "งานบุคคล", href: "/personnel-regulations" },
-        { label: "ระดับบัณฑิตศึกษา", href: "/graduate-regulations" },
-        { label: "งานกิจการนักศึกษา", href: "/student-affairs-regulations" },
-        { label: "สหกิจศึกษา", href: "/coop-regulations" },
-        { label: "งานทุนการศึกษา", href: "/scholarship-regulations" },
+        { label: t("nav_reg_finance"), href: "/finance-regulations" },
+        { label: t("nav_reg_academic"), href: "/academic-regulations" },
+        { label: t("nav_reg_personnel"), href: "/personnel-regulations" },
+        { label: t("nav_reg_graduate"), href: "/graduate-regulations" },
+        { label: t("nav_reg_student_affairs"), href: "/student-affairs-regulations" },
+        { label: t("nav_reg_coop"), href: "/coop-regulations" },
+        { label: t("nav_reg_scholarship"), href: "/scholarship-regulations" },
       ] 
     },
-    { label: "CS Greenoffice", href: "/green-office" },
-    { label: "FAQ", href: "/faq" },
+    { label: t("nav_green_office"), href: "/green-office" },
+    { label: t("nav_faq"), href: "/faq" },
   ];
 
   return (
@@ -197,14 +195,12 @@ export default function Navbar() {
         <div className={styles.navContent}>
           {/* Top Row: Search & Lang */}
           <div className={styles.topRow}>
-            
-            {/* 👉 3. ปรับแต่งช่องค้นหาให้ผูกกับ State และตรวจจับปุ่ม Enter */}
             <div className={styles.searchBar}>
               <Search size={14} className={styles.searchIcon} />
               <input 
                 type="text" 
                 className={styles.searchInput} 
-                placeholder="ค้นหา..." 
+                placeholder={t("search_placeholder")} 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={handleSearch}
@@ -279,7 +275,7 @@ export default function Navbar() {
           </nav>
         </div>
 
-        {/* Hamburger: แสดงเฉพาะจอเล็ก (ดู @media ใน Navbar.module.css) */}
+        {/* Hamburger: แสดงเฉพาะจอเล็ก */}
         <button
           type="button"
           className={styles.hamburgerBtn}
@@ -291,7 +287,7 @@ export default function Navbar() {
         </button>
       </div>
 
-      {/* Mobile Panel: เปิด/ปิดด้วย hamburger แทน hover dropdown */}
+      {/* Mobile Panel */}
       {isMobileOpen && (
         <div className={styles.mobilePanel}>
           <div className={styles.mobileSearchBar}>
@@ -299,7 +295,7 @@ export default function Navbar() {
             <input
               type="text"
               className={styles.searchInput}
-              placeholder="ค้นหา..."
+              placeholder={t("search_placeholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleSearch}

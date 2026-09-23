@@ -1,15 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
+import { ArrowRight, Compass, FolderGit2, BookOpen, Users, Newspaper, FileText } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
+import Footer from '../components/Footer';
 
 export default function SearchResults() {
   const query = new URLSearchParams(useLocation().search).get('q') || "";
+  const { t } = useLanguage();
 
-  // 1. สร้าง State มารับข้อมูลจาก Backend
-  const [results, setResults] = useState({ news: [], lecturers: [], courses: [] });
+  const [results, setResults] = useState({ 
+    menus: [], 
+    projects: [], 
+    news: [], 
+    lecturers: [], 
+    courses: [], 
+    downloads: [] 
+  });
   const [isLoading, setIsLoading] = useState(false);
 
-  // 2. ดึงข้อมูลทันทีที่คำค้นหา (query) เปลี่ยนแปลง
   useEffect(() => {
     if (!query) return;
 
@@ -17,7 +26,14 @@ export default function SearchResults() {
       setIsLoading(true);
       try {
         const response = await axios.get(`http://localhost:5000/api/search?q=${encodeURIComponent(query)}`);
-        setResults(response.data);
+        setResults({
+          menus: response.data.menus || [],
+          projects: response.data.projects || [],
+          news: response.data.news || [],
+          lecturers: response.data.lecturers || [],
+          courses: response.data.courses || [],
+          downloads: response.data.downloads || []
+        });
       } catch (error) {
         console.error("Error fetching search results:", error);
       } finally {
@@ -28,82 +44,263 @@ export default function SearchResults() {
     fetchSearchResults();
   }, [query]);
 
-  const hasResults = results.news.length > 0 || results.lecturers.length > 0 || results.courses.length > 0;
+  const hasResults = 
+    (results.menus?.length > 0) ||
+    (results.projects?.length > 0) ||
+    (results.news?.length > 0) ||
+    (results.lecturers?.length > 0) ||
+    (results.courses?.length > 0) ||
+    (results.downloads?.length > 0);
 
   return (
-    <div className="container-1440 mx-auto px-6 py-16 min-h-screen">
-      <h1 className="text-3xl font-bold mb-10 text-gray-800">
-        ผลการค้นหาสำหรับ: <span className="text-indigo-600">"{query}"</span>
-      </h1>
-
-      {/* สถานะตอนกำลังโหลด */}
-      {isLoading ? (
-        <div className="flex justify-center py-20">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+    <div className="bg-slate-50 min-h-screen flex flex-col justify-between">
+      <div className="max-w-[1440px] mx-auto px-6 md:px-10 py-12 w-full flex-grow">
+        
+        {/* Header / Query badge */}
+        <div className="mb-10">
+          <p className="text-sm font-semibold uppercase tracking-wider text-indigo-600 mb-1">
+            Search
+          </p>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+            {t('search_title')} <span className="text-indigo-600">"{query}"</span>
+          </h1>
         </div>
-      ) : !hasResults && query ? (
-        /* UI ตอนหาไม่เจอ (ใช้สไตล์เดิมของเพื่อน) */
-        <div className="bg-white p-20 rounded-2xl text-center shadow-inner border border-gray-100">
-          <p className="text-2xl text-gray-400 italic">ไม่พบข้อมูลที่ตรงกับการค้นหาของคุณ</p>
-        </div>
-      ) : (
-        /* UI ตอนหาเจอ (แยกเป็น 3 หมวดหมู่ แต่คุมโทนด้วยสไตล์การ์ดของเพื่อน) */
-        <div className="space-y-12">
 
-          {/* 📚 หมวดรายวิชา */}
-          {results.courses.length > 0 && (
-            <div>
-              <h2 className="text-2xl font-bold mb-6 text-gray-800 border-b-2 border-indigo-100 pb-2">
-                📚 คำอธิบายรายวิชา
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {results.courses.map(course => (
-                  <Link to="/course-description" key={`course-${course.id}`} className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md hover:border-indigo-500 border border-transparent transition-all group block">
-                    <span className="text-xs font-bold text-indigo-600 uppercase">รายวิชา</span>
-                    <h3 className="text-xl font-bold mt-2 text-gray-800 group-hover:text-indigo-600 transition-colors line-clamp-2">{course.title}</h3>
-                  </Link>
-                ))}
-              </div>
+        {/* Loading State */}
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-24">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 border-t-transparent mb-4"></div>
+            <p className="text-slate-500 text-sm">กำลังค้นหาข้อมูล...</p>
+          </div>
+        ) : !hasResults && query ? (
+          /* Empty State */
+          <div className="bg-white p-16 md:p-24 rounded-2xl text-center shadow-sm border border-gray-100 max-w-2xl mx-auto">
+            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
+              <Compass size={32} />
             </div>
-          )}
+            <p className="text-xl font-medium text-slate-700 mb-2">{t('search_no_results')}</p>
+            <p className="text-sm text-slate-400">ลองค้นหาด้วยคำสำคัญอื่น เช่น "โครงงาน", "หลักสูตร", "อาจารย์", หรือ "ทุนการศึกษา"</p>
+          </div>
+        ) : (
+          <div className="space-y-12">
 
-          {/* 👥 หมวดบุคลากร */}
-          {results.lecturers.length > 0 && (
-            <div>
-              <h2 className="text-2xl font-bold mb-6 text-gray-800 border-b-2 border-indigo-100 pb-2">
-                👥 บุคลากร / อาจารย์
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {results.lecturers.map(person => (
-                  <Link to="/administrator" key={`person-${person.id}`} className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md hover:border-indigo-500 border border-transparent transition-all group block">
-                    <span className="text-xs font-bold text-indigo-600 uppercase">บุคลากร</span>
-                    <h3 className="text-xl font-bold mt-2 text-gray-800 group-hover:text-indigo-600 transition-colors">{person.fullname_th}</h3>
-                    {person.email && <p className="text-gray-500 text-sm mt-3">{person.email}</p>}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
+            {/* 🔗 1. หมวดหมู่เมนู / ทางลัดหน้าเว็บ */}
+            {results.menus?.length > 0 && (
+              <section>
+                <div className="flex items-center gap-2 border-b-2 border-indigo-100 pb-3 mb-6">
+                  <Compass className="text-indigo-600" size={22} />
+                  <h2 className="text-xl font-bold text-gray-800">
+                    {t('search_menu_section')}
+                  </h2>
+                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 ml-2">
+                    {results.menus.length}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {results.menus.map((m, idx) => (
+                    m.isExternal ? (
+                      <a 
+                        key={`menu-${idx}`} 
+                        href={m.path} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="bg-white p-5 rounded-xl shadow-sm hover:shadow-md border border-slate-100 hover:border-indigo-400 transition-all group flex items-center justify-between"
+                      >
+                        <div>
+                          <span className="text-[11px] font-bold text-indigo-500 uppercase tracking-wider">{t('menu')} / ลิงก์ภายนอก</span>
+                          <h3 className="text-base font-bold text-gray-800 group-hover:text-indigo-600 transition-colors mt-1">{m.title}</h3>
+                          <p className="text-xs text-slate-400 mt-1">{m.category}</p>
+                        </div>
+                        <ArrowRight size={18} className="text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all shrink-0 ml-3" />
+                      </a>
+                    ) : (
+                      <Link 
+                        key={`menu-${idx}`} 
+                        to={m.path}
+                        className="bg-white p-5 rounded-xl shadow-sm hover:shadow-md border border-slate-100 hover:border-indigo-400 transition-all group flex items-center justify-between"
+                      >
+                        <div>
+                          <span className="text-[11px] font-bold text-indigo-500 uppercase tracking-wider">{t('menu')}</span>
+                          <h3 className="text-base font-bold text-gray-800 group-hover:text-indigo-600 transition-colors mt-1">{m.title}</h3>
+                          <p className="text-xs text-slate-400 mt-1">{m.category}</p>
+                        </div>
+                        <ArrowRight size={18} className="text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all shrink-0 ml-3" />
+                      </Link>
+                    )
+                  ))}
+                </div>
+              </section>
+            )}
 
-          {/* 📰 หมวดข่าวสาร */}
-          {results.news.length > 0 && (
-            <div>
-              <h2 className="text-2xl font-bold mb-6 text-gray-800 border-b-2 border-indigo-100 pb-2">
-                📰 ข่าวสารและประกาศ
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {results.news.map(item => (
-                  <Link to={`/news/${item.id}`} key={`news-${item.id}`} className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md hover:border-indigo-500 border border-transparent transition-all group block">
-                    <span className="text-xs font-bold text-indigo-600 uppercase">ข่าวสาร</span>
-                    <h3 className="text-xl font-bold mt-2 text-gray-800 group-hover:text-indigo-600 transition-colors line-clamp-2">{item.title}</h3>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
+            {/* 📁 2. หมวดโครงงานนักศึกษา */}
+            {results.projects?.length > 0 && (
+              <section>
+                <div className="flex items-center gap-2 border-b-2 border-indigo-100 pb-3 mb-6">
+                  <FolderGit2 className="text-indigo-600" size={22} />
+                  <h2 className="text-xl font-bold text-gray-800">
+                    {t('search_projects_section')}
+                  </h2>
+                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 ml-2">
+                    {results.projects.length}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {results.projects.map((p) => (
+                    <Link 
+                      key={`proj-${p.id}`} 
+                      to={`/student-projects?q=${encodeURIComponent(p.title_th || p.title_en || '')}`}
+                      className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md hover:border-indigo-500 border border-transparent transition-all group block"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-bold text-indigo-600 uppercase">{t('project')}</span>
+                        {p.academic_year && (
+                          <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
+                            {t('year')} {p.academic_year}
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="text-base font-bold text-gray-800 group-hover:text-indigo-600 transition-colors line-clamp-2">
+                        {p.title_th}
+                      </h3>
+                      {p.title_en && (
+                        <p className="text-xs text-slate-500 italic mt-1 line-clamp-1">{p.title_en}</p>
+                      )}
+                      {p.abstract && (
+                        <p className="text-xs text-slate-400 mt-2 line-clamp-2 font-light">{p.abstract}</p>
+                      )}
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
 
-        </div>
-      )}
+            {/* 📚 3. หมวดคำอธิบายรายวิชา */}
+            {results.courses?.length > 0 && (
+              <section>
+                <div className="flex items-center gap-2 border-b-2 border-indigo-100 pb-3 mb-6">
+                  <BookOpen className="text-indigo-600" size={22} />
+                  <h2 className="text-xl font-bold text-gray-800">
+                    {t('search_courses_section')}
+                  </h2>
+                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 ml-2">
+                    {results.courses.length}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {results.courses.map(course => (
+                    <Link 
+                      to="/course-description" 
+                      key={`course-${course.id}`} 
+                      className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md hover:border-indigo-500 border border-transparent transition-all group block"
+                    >
+                      <span className="text-xs font-bold text-indigo-600 uppercase">รายวิชา</span>
+                      <h3 className="text-base font-bold mt-2 text-gray-800 group-hover:text-indigo-600 transition-colors line-clamp-2">
+                        {course.title}
+                      </h3>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* 👥 4. หมวดบุคลากร / อาจารย์ */}
+            {results.lecturers?.length > 0 && (
+              <section>
+                <div className="flex items-center gap-2 border-b-2 border-indigo-100 pb-3 mb-6">
+                  <Users className="text-indigo-600" size={22} />
+                  <h2 className="text-xl font-bold text-gray-800">
+                    {t('search_lecturers_section')}
+                  </h2>
+                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 ml-2">
+                    {results.lecturers.length}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {results.lecturers.map(person => (
+                    <Link 
+                      to="/administrator" 
+                      key={`person-${person.id}`} 
+                      className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md hover:border-indigo-500 border border-transparent transition-all group block"
+                    >
+                      <span className="text-xs font-bold text-indigo-600 uppercase">{t('nav_personnel')}</span>
+                      <h3 className="text-base font-bold mt-2 text-gray-800 group-hover:text-indigo-600 transition-colors">
+                        {person.fullname_th}
+                      </h3>
+                      {person.fullname_en && (
+                        <p className="text-xs text-slate-400 mt-0.5">{person.fullname_en}</p>
+                      )}
+                      {person.email && <p className="text-slate-500 text-xs mt-2">{person.email}</p>}
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* 📰 5. หมวดข่าวสาร */}
+            {results.news?.length > 0 && (
+              <section>
+                <div className="flex items-center gap-2 border-b-2 border-indigo-100 pb-3 mb-6">
+                  <Newspaper className="text-indigo-600" size={22} />
+                  <h2 className="text-xl font-bold text-gray-800">
+                    {t('search_news_section')}
+                  </h2>
+                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 ml-2">
+                    {results.news.length}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {results.news.map(item => (
+                    <Link 
+                      to={`/news/${item.id}`} 
+                      key={`news-${item.id}`} 
+                      className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md hover:border-indigo-500 border border-transparent transition-all group block"
+                    >
+                      <span className="text-xs font-bold text-indigo-600 uppercase">{t('nav_news')}</span>
+                      <h3 className="text-base font-bold mt-2 text-gray-800 group-hover:text-indigo-600 transition-colors line-clamp-2">
+                        {item.title}
+                      </h3>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* 📄 6. หมวดเอกสารดาวน์โหลด */}
+            {results.downloads?.length > 0 && (
+              <section>
+                <div className="flex items-center gap-2 border-b-2 border-indigo-100 pb-3 mb-6">
+                  <FileText className="text-indigo-600" size={22} />
+                  <h2 className="text-xl font-bold text-gray-800">
+                    {t('search_downloads_section')}
+                  </h2>
+                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 ml-2">
+                    {results.downloads.length}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {results.downloads.map(doc => (
+                    <a 
+                      href={doc.file_url ? (doc.file_url.startsWith('http') ? doc.file_url : `http://localhost:5000${doc.file_url}`) : '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      key={`doc-${doc.id}`} 
+                      className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md hover:border-indigo-500 border border-transparent transition-all group block"
+                    >
+                      <span className="text-xs font-bold text-indigo-600 uppercase">{t('download')}</span>
+                      <h3 className="text-base font-bold mt-2 text-gray-800 group-hover:text-indigo-600 transition-colors line-clamp-2">
+                        {doc.title}
+                      </h3>
+                      {doc.category && <p className="text-xs text-slate-400 mt-2">{doc.category}</p>}
+                    </a>
+                  ))}
+                </div>
+              </section>
+            )}
+
+          </div>
+        )}
+      </div>
+      <Footer />
     </div>
   );
 }

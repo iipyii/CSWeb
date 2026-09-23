@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
-import { Palette, ShieldCheck } from 'lucide-react';
+import { Palette, ShieldCheck, Building2 } from 'lucide-react';
 import { 
   LayoutDashboard, Newspaper, Archive, GraduationCap, 
   Files, Users, BookOpen, FolderGit2, LogOut, UserCircle,
@@ -45,6 +45,8 @@ export default function AdminSidebar({ onNavigate }) {
   const menuItems = [
     { label: 'แดชบอร์ด', icon: <LayoutDashboard size={22} />, path: '/admin', roles: ['admin', 'lecturer'] },
     { label: 'ภาพลักษณ์', icon: <Palette size={22} />, path: '/admin/appearance', roles: ['admin'] },
+    { label: 'จัดการข้อมูลแนะนำภาควิชาฯ', icon: <Building2 size={22} />, path: '/admin/about', roles: ['admin'] },
+    { label: 'จัดการข้อมูลบุคลากร', icon: <Users size={22} />, path: '/admin/personnel', roles: ['admin'] },
     { label: 'ข่าวสาร', icon: <Newspaper size={22} />, path: '/admin/news', roles: ['admin', 'lecturer'] },
     { label: 'คลังข่าว', icon: <Archive size={22} />, path: '/admin/news/archive', roles: ['admin'] }, 
     { label: 'ข้อมูลส่วนตัวอาจารย์', icon: <UserCircle size={22} />, path: '/admin/profile', roles: ['lecturer', 'admin'] },

@@ -81,6 +81,13 @@ export default function ConsultStudent() {
     return level || "ปริญญาตรี";
   };
 
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return "/img/placeholder-user.png";
+    if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) return imagePath;
+    const cleanPath = imagePath.replace(/\\/g, '/').replace(/^\//, '');
+    return `http://localhost:5000/${cleanPath}`;
+  };
+
   // ดึงสรุปรายชื่ออาจารย์ทั้งหมดในภาควิชา
   useEffect(() => {
     axios.get("http://localhost:5000/api/consult/advisors-summary")
@@ -350,26 +357,42 @@ export default function ConsultStudent() {
             className="bg-white border-2 border-indigo-200 rounded-3xl p-6 md:p-8 shadow-sm space-y-6"
           >
             {/* Header การ์ดอาจารย์ */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-indigo-50">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#183153] to-[#3F51B5] text-white flex items-center justify-center font-bold text-2xl shadow-md flex-shrink-0">
-                  {advisorData.fullname_th ? advisorData.fullname_th.charAt(0) : "อ"}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-indigo-50">
+              <div className="flex items-start sm:items-center gap-5">
+                <div className="w-20 h-24 sm:w-24 sm:h-28 rounded-2xl overflow-hidden shadow-md border-2 border-indigo-100 bg-slate-100 flex-shrink-0">
+                  <img
+                    src={getImageUrl(advisorData.image_path)}
+                    alt={advisorData.fullname_th || "อาจารย์ที่ปรึกษา"}
+                    className="w-full h-full object-cover object-top"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "/img/placeholder-user.png";
+                    }}
+                  />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-0.5 rounded-md text-[11px] font-black bg-[#183153] text-white uppercase">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-md text-[11px] font-black bg-[#183153] text-white uppercase tracking-wider">
                       {advisorData.lecturer_code || "ADVISOR"}
                     </span>
                     <span className="text-xs text-slate-500 font-semibold">อาจารย์ที่ปรึกษาประจำภาควิชา</span>
                   </div>
+                  {advisorData.position_th && (
+                    <p className="text-xs font-semibold text-[#3F51B5] mt-1.5">
+                      {advisorData.position_th}
+                    </p>
+                  )}
                   <h2 className="text-xl md:text-2xl font-bold text-slate-800 mt-1">
-                    {advisorData.position_th || ""}{advisorData.fullname_th}
+                    {advisorData.fullname_th}
                   </h2>
-                  <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 mt-1.5">
+                  <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 mt-2">
                     {advisorData.email && (
-                      <span className="flex items-center gap-1.5 text-slate-600">
+                      <a 
+                        href={`mailto:${advisorData.email}`}
+                        className="flex items-center gap-1.5 text-slate-600 hover:text-[#3F51B5] transition-colors"
+                      >
                         <Mail size={14} className="text-[#3F51B5]" /> {advisorData.email}
-                      </span>
+                      </a>
                     )}
                     {advisorData.tel && (
                       <span className="flex items-center gap-1.5 text-slate-600">
@@ -531,25 +554,37 @@ export default function ConsultStudent() {
                             <div className="md:col-span-5">
                               <p className="text-[11px] text-slate-400 font-semibold mb-0.5">อาจารย์ที่ปรึกษา</p>
                               {student.advisor?.fullname_th ? (
-                                <div>
-                                  <button
-                                    onClick={() => handleSelectAdvisor(student.advisor.lecturer_code || student.advisor.fullname_th)}
-                                    className="text-xs md:text-sm font-bold text-[#183153] hover:text-[#3F51B5] hover:underline flex items-center gap-1.5 transition-colors text-left"
-                                  >
-                                    <UserCheck size={15} className="text-[#3F51B5]" />
-                                    <span>{student.advisor.fullname_th}</span>
-                                    {student.advisor.lecturer_code && (
-                                      <span className="px-1.5 py-0.2 bg-indigo-50 text-[#3F51B5] text-[10px] rounded border border-indigo-100">
-                                        {student.advisor.lecturer_code}
-                                      </span>
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-12 rounded-xl overflow-hidden border border-indigo-100 bg-slate-100 flex-shrink-0 shadow-sm">
+                                    <img
+                                      src={getImageUrl(student.advisor.image_path)}
+                                      alt={student.advisor.fullname_th}
+                                      className="w-full h-full object-cover object-top"
+                                      onError={(e) => {
+                                        e.target.onerror = null;
+                                        e.target.src = "/img/placeholder-user.png";
+                                      }}
+                                    />
+                                  </div>
+                                  <div>
+                                    <button
+                                      onClick={() => handleSelectAdvisor(student.advisor.lecturer_code || student.advisor.fullname_th)}
+                                      className="text-xs md:text-sm font-bold text-[#183153] hover:text-[#3F51B5] hover:underline flex items-center gap-1.5 transition-colors text-left"
+                                    >
+                                      <span>{student.advisor.fullname_th}</span>
+                                      {student.advisor.lecturer_code && (
+                                        <span className="px-1.5 py-0.2 bg-indigo-50 text-[#3F51B5] text-[10px] rounded border border-indigo-100">
+                                          {student.advisor.lecturer_code}
+                                        </span>
+                                      )}
+                                    </button>
+                                    {student.advisor?.email && (
+                                      <p className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
+                                        <Mail size={12} className="text-slate-400" />
+                                        {student.advisor.email}
+                                      </p>
                                     )}
-                                  </button>
-                                  {student.advisor?.email && (
-                                    <p className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
-                                      <Mail size={12} className="text-slate-400" />
-                                      {student.advisor.email}
-                                    </p>
-                                  )}
+                                  </div>
                                 </div>
                               ) : (
                                 <p className="text-xs text-slate-400 italic">ยังไม่ระบุอาจารย์ที่ปรึกษา</p>

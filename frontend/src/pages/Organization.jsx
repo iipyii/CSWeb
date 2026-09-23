@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import axios from 'axios';
 import Footer from '../components/Footer';
+import { useLanguage } from '../context/LanguageContext';
 
-const orgData = {
+const defaultOrgData = {
   head: {
     name: 'รศ.ดร.ธนภัทร์ อนุศาสน์อมรกุล',
     role: 'หัวหน้าภาควิชาฯ',
@@ -13,7 +15,6 @@ const orgData = {
     role: 'รองหัวหน้าภาควิชาฯ',
     image: '/img/lecturers/LPP.jpg'
   },
-
   assistants: [
     { 
       name: 'ผศ.ดร.นิกร สุทธิเสงี่ยม', 
@@ -52,6 +53,33 @@ const fadeInUp = {
 };
 
 export default function Organization() {
+  const { t } = useLanguage();
+  const [orgData, setOrgData] = useState(defaultOrgData);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOrg = async () => {
+      try {
+        const res = await axios.get('http://localhost:5000/api/about/organization');
+        if (res.data?.data) {
+          setOrgData(res.data.data);
+        }
+      } catch (err) {
+        console.error('Failed to load organization data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrg();
+  }, []);
+
+  const getImageUrl = (img) => {
+    if (!img) return '/cis-logo.svg';
+    if (img.startsWith('http://') || img.startsWith('https://')) return img;
+    if (img.startsWith('/uploads')) return `http://localhost:5000${img}`;
+    return img;
+  };
+
   return (
     <div className="bg-white min-h-screen text-slate-700">
       {/* Header Section */}
@@ -62,7 +90,9 @@ export default function Organization() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight text-center md:text-left">โครงสร้างการบริหารภาควิชาวิทยาการคอมพิวเตอร์และสารสนเทศ</h1>
+            <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight text-center md:text-left">
+              {t('org_title')}
+            </h1>
             <div className="w-12 h-1 bg-white/30 mb-4 mx-auto md:mx-0"></div>
           </motion.div>
         </div>
@@ -74,63 +104,75 @@ export default function Organization() {
       <main className="max-w-6xl mx-auto px-6 md:px-10 py-20">
         
         {/* ระดับที่ 1: หัวหน้าภาควิชา */}
-        <div className="flex justify-center mb-16 relative">
-          <motion.div 
-            variants={fadeInUp}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            className="w-full max-w-sm"
-          >
-            <div className="bg-white rounded-xl shadow-lg border border-slate-100 p-8 text-center relative overflow-hidden group">
-              <div className="absolute top-0 left-0 w-full h-1.5 bg-[#3F51B5]"></div>
-              <div className="w-32 h-32 mx-auto rounded-full overflow-hidden mb-6 border-4 border-slate-50 shadow-md">
-                {/* ลบ grayscale ออกเพื่อให้เป็นรูปสีปกติ */}
-                <img src={orgData.head.image} alt={orgData.head.name} className="w-full h-full object-cover transition-all duration-500" />
+        {orgData.head && (
+          <div className="flex justify-center mb-16 relative">
+            <motion.div 
+              variants={fadeInUp}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              className="w-full max-w-sm"
+            >
+              <div className="bg-white rounded-xl shadow-lg border border-slate-100 p-8 text-center relative overflow-hidden group">
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-[#3F51B5]"></div>
+                <div className="w-32 h-32 mx-auto rounded-full overflow-hidden mb-6 border-4 border-slate-50 shadow-md">
+                  <img 
+                    src={getImageUrl(orgData.head.image)} 
+                    alt={orgData.head.name} 
+                    className="w-full h-full object-cover transition-all duration-500" 
+                    onError={(e) => { e.target.src = '/cis-logo.svg'; }}
+                  />
+                </div>
+                <h3 className="text-[#3F51B5] font-bold text-lg mb-1">{orgData.head.name}</h3>
+                <p className="text-slate-500 text-sm font-medium">{orgData.head.role}</p>
               </div>
-              <h3 className="text-[#3F51B5] font-bold text-lg mb-1">{orgData.head.name}</h3>
-              <p className="text-slate-500 text-sm font-medium">{orgData.head.role}</p>
-            </div>
-          </motion.div>
-        </div>
+            </motion.div>
+          </div>
+        )}
 
         {/* เส้นเชื่อมลงมา (Vertical Line) */}
         <div className="hidden md:block w-px h-12 bg-slate-200 mx-auto -mt-16 mb-8"></div>
 
         {/* ระดับที่ 2: รองหัวหน้าภาควิชา */}
-        <div className="flex justify-center mb-16 relative">
-          <motion.div 
-            variants={fadeInUp}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            className="w-full max-w-sm"
-          >
-            <div className="bg-white rounded-xl shadow-lg border border-slate-100 p-8 text-center relative overflow-hidden group">
-              <div className="absolute top-0 left-0 w-full h-1.5 bg-[#3F51B5]"></div>
-              <div className="w-32 h-32 mx-auto rounded-full overflow-hidden mb-6 border-4 border-slate-50 shadow-md">
-                {/* ลบ grayscale ออกเพื่อให้เป็นรูปสีปกติ */}
-                <img src={orgData.deputy.image} alt={orgData.deputy.name} className="w-full h-full object-cover transition-all duration-500" />
+        {orgData.deputy && (
+          <div className="flex justify-center mb-16 relative">
+            <motion.div 
+              variants={fadeInUp}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              className="w-full max-w-sm"
+            >
+              <div className="bg-white rounded-xl shadow-lg border border-slate-100 p-8 text-center relative overflow-hidden group">
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-[#3F51B5]"></div>
+                <div className="w-32 h-32 mx-auto rounded-full overflow-hidden mb-6 border-4 border-slate-50 shadow-md">
+                  <img 
+                    src={getImageUrl(orgData.deputy.image)} 
+                    alt={orgData.deputy.name} 
+                    className="w-full h-full object-cover transition-all duration-500" 
+                    onError={(e) => { e.target.src = '/cis-logo.svg'; }}
+                  />
+                </div>
+                <h3 className="text-[#3F51B5] font-bold text-lg mb-1">{orgData.deputy.name}</h3>
+                <p className="text-slate-500 text-sm font-medium">{orgData.deputy.role}</p>
               </div>
-              <h3 className="text-[#3F51B5] font-bold text-lg mb-1">{orgData.deputy.name}</h3>
-              <p className="text-slate-500 text-sm font-medium">{orgData.deputy.role}</p>
-            </div>
-          </motion.div>
-        </div>
+            </motion.div>
+          </div>
+        )}
 
         {/* ส่วนกรรมการบริหาร (Section Divider) */}
         <div className="flex flex-col items-center mb-20">
           <div className="w-px h-12 bg-slate-200"></div>
           <div className="bg-slate-800 text-white px-8 py-2 rounded-md text-xs font-bold uppercase tracking-[0.2em] shadow-md">
-            กรรมการบริหาร
+            {t('org_exec_board')}
           </div>
           <div className="w-px h-12 bg-slate-200"></div>
           <div className="hidden lg:block w-[75%] h-px bg-slate-200 -mt-px"></div>
         </div>
 
-        {/* ระดับที่ 3: ผู้ช่วยหัวหน้าภาควิชา (4 ท่าน) */}
+        {/* ระดับที่ 3: ผู้ช่วยหัวหน้าภาควิชา */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {orgData.assistants.map((item, idx) => (
+          {orgData.assistants && orgData.assistants.map((item, idx) => (
             <motion.div 
               key={idx}
               variants={fadeInUp}
@@ -144,13 +186,19 @@ export default function Organization() {
               
               <div className="bg-white rounded-xl shadow-md border border-slate-50 p-6 text-center hover:shadow-xl transition-all duration-300 group h-full">
                 <div className="w-24 h-24 mx-auto rounded-full overflow-hidden mb-4 border-2 border-slate-100 shadow-sm">
-                  {/* ลบ grayscale ออกเพื่อให้เป็นรูปสีปกติ */}
-                  <img src={item.image} alt={item.name} className="w-full h-full object-cover transition-all duration-500" />
+                  <img 
+                    src={getImageUrl(item.image)} 
+                    alt={item.name} 
+                    className="w-full h-full object-cover transition-all duration-500" 
+                    onError={(e) => { e.target.src = '/cis-logo.svg'; }}
+                  />
                 </div>
                 <h4 className="text-slate-800 font-bold text-sm mb-2 group-hover:text-[#3F51B5] transition-colors">{item.name}</h4>
                 <div className="space-y-1">
                   <p className="text-[#3F51B5] text-[10px] font-bold uppercase tracking-tighter leading-tight">{item.role}</p>
-                  <p className="text-slate-400 text-[10px] font-light italic leading-tight">{item.detail}</p>
+                  {item.detail && (
+                    <p className="text-slate-400 text-[10px] font-light italic leading-tight">{item.detail}</p>
+                  )}
                 </div>
               </div>
             </motion.div>

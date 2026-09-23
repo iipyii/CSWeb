@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, useScroll, useSpring } from 'framer-motion';
+import axios from 'axios';
 import Footer from '../components/Footer';
+import { useLanguage } from '../context/LanguageContext';
 
-const timelineData = [
+const defaultTimeline = [
   {
     year: '2530',
     title: 'การเปิดรับนักศึกษาระดับปริญญาตรีรุ่นแรก',
@@ -44,18 +46,42 @@ const itemVariants = {
   hidden: { opacity: 0, x: -20 },
   visible: { 
     opacity: 1, 
-    x: 0,
+    x: 0, 
     transition: { duration: 0.7, ease: "easeOut" }
   }
 };
 
 export default function History() {
+  const { t } = useLanguage();
+  const [historyIntro, setHistoryIntro] = useState(
+    'ภาควิชาวิทยาการคอมพิวเตอร์และสารสนเทศ ก่อตั้งขึ้นในปีพุทธศักราช 2536\nโดยแยกออกมาจาก ภาควิชาคณิตศาสตร์และวิทยาการคอมพิวเตอร์\nคณะวิทยาศาสตร์ประยุกต์ซึ่งเดิมคือภาควิชาคณิตศาสตร์ คณะครุศาสตร์อุตสาหกรรม'
+  );
+  const [timelineData, setTimelineData] = useState(defaultTimeline);
+
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, {
     stiffness: 100,
     damping: 30,
     restDelta: 0.001
   });
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const res = await axios.get('http://localhost:5000/api/about/history');
+        if (res.data?.data) {
+          const intro = res.data.data.header_text || res.data.data.intro;
+          if (intro !== undefined && intro !== null) setHistoryIntro(intro);
+          if (res.data.data.timeline && Array.isArray(res.data.data.timeline)) {
+            setTimelineData(res.data.data.timeline);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load history data:', err);
+      }
+    };
+    fetchHistory();
+  }, []);
 
   return (
     <div className="bg-white min-h-screen text-slate-700 overflow-x-hidden">
@@ -73,7 +99,7 @@ export default function History() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">ประวัติความเป็นมา</h1>
+            <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">{t('history_title')}</h1>
             <div className="w-12 h-1 bg-white/30 mb-5"></div>
           </motion.div>
         </div>
@@ -92,19 +118,14 @@ export default function History() {
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
           >
-
-            <p className="text-slate-800 mb-0 leading-relaxed font-light text-base md:text-lg">
-              ภาควิชาวิทยาการคอมพิวเตอร์และสารสนเทศ ก่อตั้งขึ้นในปีพุทธศักราช 2536<br/>
-              โดยแยกออกมาจาก ภาควิชาคณิตศาสตร์และวิทยาการคอมพิวเตอร์<br/>
-              คณะวิทยาศาสตร์ประยุกต์ซึ่งเดิมคือภาควิชาคณิตศาสตร์ คณะครุศาสตร์อุตสาหกรรม
+            <p className="text-slate-800 mb-0 leading-relaxed font-light text-base md:text-lg whitespace-pre-line">
+              {historyIntro}
             </p>
           </motion.div>
         </div>
 
         {/* Vertical Timeline Section */}
         <div className="relative max-w-4xl mx-auto">
-         
-
           {/* เส้นแนวตั้งหลัก (ชิดซ้าย) */}
           <div className="absolute left-4 md:left-8 top-0 w-[2px] h-full bg-slate-100"></div>
 
@@ -139,7 +160,9 @@ export default function History() {
                   className="group cursor-default"
                 >
                   <div className="inline-block px-3 py-1 bg-slate-50 border border-slate-100 rounded text-[#3F51B5] font-bold text-sm mb-3 group-hover:bg-[#3F51B5] group-hover:text-white transition-all duration-300">
-                    พ.ศ. {item.year}
+                    {item.year.toLowerCase().includes('ปัจจุบัน') || item.year.toLowerCase().includes('present') 
+                      ? item.year 
+                      : `${t('history_year_prefix')} ${item.year}`}
                   </div>
                   <h4 className="text-lg font-bold text-slate-800 mb-2 group-hover:text-[#3F51B5] transition-colors duration-300">
                     {item.title}

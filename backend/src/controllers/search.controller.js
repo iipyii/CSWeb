@@ -1,55 +1,177 @@
 import { prisma } from "../lib/prisma.js";
 
+// รายการเมนูและหน้าเว็บทั้งหมดของระบบ (Site Navigation & Pages)
+const SITE_MENUS = [
+  { title: "หน้าหลัก", title_en: "Home", url: "/", category: "หน้าหลัก", keywords: "home main หน้าแรก cis kmutnb" },
+  { title: "ประวัติภาควิชาฯ", title_en: "Department History", url: "/history", category: "แนะนำภาควิชา", keywords: "ประวัติ history ความเป็นมา ก่อตั้ง 2530 2536 ประวัติความเป็นมา" },
+  { title: "โครงสร้างการบริหาร", title_en: "Organization Structure", url: "/organization", category: "แนะนำภาควิชา", keywords: "โครงสร้าง องค์กร organization ผู้บริหาร หัวหน้าภาค รองหัวหน้า กรรมการบริหาร" },
+  { title: "ติดต่อภาควิชาฯ", title_en: "Contact Us", url: "/contact", category: "แนะนำภาควิชา", keywords: "ติดต่อ contact ที่อยู่ เบอร์โทร โทรศัพท์ แผนที่ map facebook email ติดต่อเรา" },
+  
+  { title: "บุคลากรสายวิชาการ (อาจารย์)", title_en: "Academic Personnel (Lecturers)", url: "/administrator", category: "บุคลากร", keywords: "อาจารย์ บุคลากร สายวิชาการ lecturers professor teacher ผู้สอน คณาจารย์" },
+  { title: "บุคลากรสายสนับสนุน (เจ้าหน้าที่)", title_en: "Supporting Staff", url: "/staff", category: "บุคลากร", keywords: "เจ้าหน้าที่ บุคลากร สายสนับสนุน staff officer นักวิทยาศาสตร์ ธุรการ" },
+  { title: "ดาวน์โหลดเอกสารสำหรับบุคลากร", title_en: "Staff Downloads", url: "/staff-download", category: "บุคลากร", keywords: "ดาวน์โหลด download เอกสาร staff ฟอร์ม ใบคำร้อง บุคลากร แบบฟอร์ม" },
+  { title: "ลิงก์สำหรับบุคลากร", title_en: "Personnel Links", url: "/personnel-links", category: "บุคลากร", keywords: "ลิงก์ link ระบบสารสนเทศ บุคลากร intranet azure office365" },
+  
+  { title: "หลักสูตรระดับปริญญาตรี (ภาคปกติ)", title_en: "Bachelor Degree (Regular)", url: "/course-sections/bachelor", category: "หลักสูตร", keywords: "หลักสูตร ปริญญาตรี ป.ตรี bachelor curriculum cs64 cs69 cs59 วิทยาการคอมพิวเตอร์" },
+  { title: "หลักสูตรระดับปริญญาตรี (โครงการพิเศษ/สองภาษา)", title_en: "Bachelor Degree (English Program)", url: "/course-sections/cs-english", category: "หลักสูตร", keywords: "สองภาษา english inter พิเศษ cs-inter ปริญญาตรี english program" },
+  { title: "หลักสูตรระดับปริญญาโท (วิทยาการคอมพิวเตอร์)", title_en: "Master Degree (Computer Science)", url: "/course-sections/cs-master", category: "หลักสูตร", keywords: "ปริญญาโท ป.โท master cs ms-cs วิทยาการคอมพิวเตอร์" },
+  { title: "หลักสูตรระดับปริญญาโท (วิศวกรรมซอฟต์แวร์)", title_en: "Master Degree (Software Engineering)", url: "/course-sections/se-master", category: "หลักสูตร", keywords: "วิศวกรรมซอฟต์แวร์ software engineering ปริญญาโท se ms-se" },
+  { title: "หลักสูตรระดับปริญญาเอก", title_en: "Doctoral Degree (Ph.D.)", url: "/course-sections/doctor", category: "หลักสูตร", keywords: "ปริญญาเอก ป.เอก phd doctor ดุษฎีบัณฑิต" },
+  { title: "คำอธิบายรายวิชา (Course Description)", title_en: "Course Description", url: "/course-description", category: "หลักสูตร", keywords: "คำอธิบายรายวิชา course description วิชา subject syllabus รายวิชา" },
+  
+  { title: "โครงงานนักศึกษา (Student Projects)", title_en: "Student Projects", url: "/student-projects", category: "นักศึกษา", keywords: "โครงงานนักศึกษา โครงงาน ปริญญานิพนธ์ โปรเจกต์ project student projects วิทยานิพนธ์ senior project ผู้จัดทำ" },
+  { title: "ดาวน์โหลดเอกสารสำหรับนักศึกษา", title_en: "Student Downloads", url: "/student-downloads", category: "นักศึกษา", keywords: "ดาวน์โหลด download เอกสาร student แบบฟอร์ม ใบคำร้อง นักศึกษา" },
+  { title: "อาจารย์ที่ปรึกษา / ค้นหารายชื่อนักศึกษาในที่ปรึกษา", title_en: "Advisors & Consult Students", url: "/consult-student", category: "นักศึกษา", keywords: "ที่ปรึกษา อาจารย์ที่ปรึกษา advisor consult นักศึกษาในที่ปรึกษา รายชื่อนักศึกษา" },
+  { title: "การฝึกงานและสหกิจศึกษา", title_en: "Internship & Co-op", url: "/internship", category: "นักศึกษา", keywords: "ฝึกงาน internship สหกิจ coop ฝึกงานสหกิจ สถานประกอบการ" },
+  { title: "ปฏิทินการศึกษา", title_en: "Academic Calendar", url: "https://acdserv.kmutnb.ac.th/academic-calendar", isExternal: true, category: "นักศึกษา", keywords: "ปฏิทินการศึกษา calendar กำหนดการ ลงทะเบียน สอบ เปิดเทอม" },
+  { title: "ขบวนวิชาและแผนการเรียน", title_en: "Subject Courses & Study Plan", url: "/subject-courses", category: "นักศึกษา", keywords: "ขบวนวิชา แผนการเรียน course map study plan วิชา ผังวิชา" },
+  { title: "คู่มือนักศึกษา", title_en: "Student Handbook", url: "/student-guide", category: "นักศึกษา", keywords: "คู่มือนักศึกษา handbook guide กฎระเบียบ ข้อบังคับ นักศึกษาใหม่" },
+  { title: "ลิงก์สำหรับนักศึกษา", title_en: "Student Links", url: "/student-links", category: "นักศึกษา", keywords: "ลิงก์ student links portal reg klogic ict e-learning" },
+  
+  { title: "ข่าวสารและกิจกรรม", title_en: "News & Events", url: "/news", category: "ข่าวสาร", keywords: "ข่าว news ประชาสัมพันธ์ ประกาศ กิจกรรม ทุนการศึกษา รับสมัครงาน ข่าวสาร" },
+  { title: "ข่าวภาควิชาฯ", title_en: "Department News", url: "/news?tab=ข่าวภาควิชาฯ", category: "ข่าวสาร", keywords: "ข่าวภาควิชา กิจกรรมภาควิชา" },
+  { title: "ข่าวทุนการศึกษา", title_en: "Scholarship News", url: "/news?tab=ข่าวทุนการศึกษา", category: "ข่าวสาร", keywords: "ข่าวทุน ทุนการศึกษา" },
+  
+  { title: "ระเบียบและประกาศงานการเงิน", title_en: "Finance Regulations", url: "/finance-regulations", category: "ระเบียบ/ประกาศ", keywords: "การเงิน finance ค่าธรรมเนียม เบิกจ่าย ระเบียบ ประกาศ" },
+  { title: "ระเบียบและประกาศงานวิชาการ", title_en: "Academic Regulations", url: "/academic-regulations", category: "ระเบียบ/ประกาศ", keywords: "วิชาการ academic ระเบียบ ประกาศ เกณฑ์ ผลการเรียน" },
+  { title: "ระเบียบและประกาศงานบุคคล", title_en: "Personnel Regulations", url: "/personnel-regulations", category: "ระเบียบ/ประกาศ", keywords: "บุคคล personnel ระเบียบ ประกาศ" },
+  { title: "ระเบียบและประกาศระดับบัณฑิตศึกษา", title_en: "Graduate Regulations", url: "/graduate-regulations", category: "ระเบียบ/ประกาศ", keywords: "บัณฑิตศึกษา graduate ป.โท ป.เอก ระเบียบ" },
+  { title: "ระเบียบและประกาศงานกิจการนักศึกษา", title_en: "Student Affairs Regulations", url: "/student-affairs-regulations", category: "ระเบียบ/ประกาศ", keywords: "กิจการนักศึกษา student affairs ระเบียบ ประกาศ วินัย" },
+  { title: "ระเบียบและประกาศสหกิจศึกษา", title_en: "Co-op Regulations", url: "/coop-regulations", category: "ระเบียบ/ประกาศ", keywords: "สหกิจศึกษา coop ระเบียบ ประกาศ" },
+  { title: "ระเบียบและประกาศงานทุนการศึกษา", title_en: "Scholarship Regulations", url: "/scholarship-regulations", category: "ระเบียบ/ประกาศ", keywords: "ทุนการศึกษา scholarship ระเบียบ ประกาศ ทุน" },
+  
+  { title: "สำนักงานสีเขียว (CS Green Office)", title_en: "CS Green Office", url: "/green-office", category: "Green Office", keywords: "green office สำนักงานสีเขียว สิ่งแวดล้อม พลังงาน ขยะ คาร์บอน ขยะอิเล็กทรอนิกส์" },
+  { title: "คำถามที่พบบ่อย (FAQ)", title_en: "Frequently Asked Questions (FAQ)", url: "/faq", category: "FAQ", keywords: "faq คำถามที่พบบ่อย ถามตอบ ข้อสงสัย ติดต่อสอบถาม ข้อข้องใจ" }
+];
+
 export const globalSearch = async (req, res) => {
     try {
         const { q } = req.query;
 
         if (!q || q.trim() === "") {
-            return res.json({ news: [], lecturers: [], courses: [] });
+            return res.json({ menus: [], projects: [], news: [], lecturers: [], courses: [], downloads: [] });
         }
 
-        const keyword = String(q).trim();
+        const keyword = String(q).trim().toLowerCase();
         console.log(`🔍 ค้นหาแบบ Global Search ด้วยคำว่า: "${keyword}"`);
 
-        // ค้นหา 3 ตารางพร้อมกันแบบปลอดภัย (ถ้าตารางไหน error จะส่ง array ว่างกลับมาแทนการพัง)
-        const [newsResults, lecturerResults, courseResults] = await Promise.all([
-            // 1. หาข่าว (หาจาก title)
+        // 1. ค้นหาเมนูหน้าเว็บ (Navigation Menus)
+        const matchedMenus = SITE_MENUS.filter(item => {
+          const matchTitle = item.title.toLowerCase().includes(keyword);
+          const matchTitleEn = item.title_en.toLowerCase().includes(keyword);
+          const matchCategory = item.category.toLowerCase().includes(keyword);
+          const matchKeywords = (item.keywords || "").toLowerCase().includes(keyword);
+          return matchTitle || matchTitleEn || matchCategory || matchKeywords;
+        }).slice(0, 6);
+
+        // 2. ค้นหาตารางฐานข้อมูลพร้อมกัน
+        const [projectResults, newsResults, lecturerResults, courseResults, downloadResults] = await Promise.all([
+            // 2.1 โครงงานนักศึกษา (projects)
+            prisma.projects.findMany({
+                where: {
+                    OR: [
+                        { title_th: { contains: keyword, mode: "insensitive" } },
+                        { title_en: { contains: keyword, mode: "insensitive" } },
+                        { students_text: { contains: keyword, mode: "insensitive" } },
+                        { student: { firstname: { contains: keyword, mode: "insensitive" } } },
+                        { student: { lastname: { contains: keyword, mode: "insensitive" } } },
+                        { student: { student_id: { contains: keyword } } }
+                    ]
+                },
+                select: {
+                    id: true,
+                    title_th: true,
+                    title_en: true,
+                    year: true,
+                    semester: true,
+                    students_text: true,
+                    student: { select: { firstname: true, lastname: true, student_id: true } }
+                },
+                take: 6
+            }).catch((err) => {
+                console.warn("⚠️ ค้นหา projects ไม่สำเร็จ:", err.message);
+                return [];
+            }),
+
+            // 2.2 ข่าวสาร (news)
             prisma.news.findMany({
-                where: { title: { contains: keyword } },
-                select: { id: true, title: true },
-                take: 5 
+                where: { 
+                    OR: [
+                        { title: { contains: keyword, mode: "insensitive" } },
+                        { content: { contains: keyword, mode: "insensitive" } },
+                        { category: { contains: keyword, mode: "insensitive" } }
+                    ]
+                },
+                select: { id: true, title: true, category: true, created_at: true },
+                take: 6
             }).catch((err) => {
-                console.warn("⚠️ ค้นหาตาราง news ไม่สำเร็จ (อาจยังไม่มีตาราง):", err.message);
+                console.warn("⚠️ ค้นหา news ไม่สำเร็จ:", err.message);
                 return [];
             }),
 
-            // 2. หาอาจารย์ (หาจาก fullname_th)
+            // 2.3 บุคลากร / อาจารย์ (lecturers & staff)
             prisma.lecturers.findMany({
-                where: { fullname_th: { contains: keyword } },
-                select: { id: true, fullname_th: true, email: true },
-                take: 5
+                where: {
+                    OR: [
+                        { fullname_th: { contains: keyword, mode: "insensitive" } },
+                        { fullname_en: { contains: keyword, mode: "insensitive" } },
+                        { lecturer_code: { contains: keyword, mode: "insensitive" } },
+                        { email: { contains: keyword, mode: "insensitive" } }
+                    ]
+                },
+                select: { id: true, fullname_th: true, fullname_en: true, lecturer_code: true, email: true, image_path: true },
+                take: 6
             }).catch((err) => {
-                console.warn("⚠️ ค้นหาตาราง lecturers ไม่สำเร็จ:", err.message);
+                console.warn("⚠️ ค้นหา lecturers ไม่สำเร็จ:", err.message);
                 return [];
             }),
 
-            // 3. หาวิชา (👉 แก้เป็นค้นหาจาก content ตาม Database ของคุณ)
-            prisma.program_sections.findMany({
-                where: { content: { contains: keyword } }, 
-                select: { id: true, title: true, version: { select: { year: true } } },
-                take: 5
+            // 2.4 คำอธิบายรายวิชา (program_sections / subjects)
+            prisma.subjects.findMany({
+                where: {
+                    OR: [
+                        { subject_code: { contains: keyword, mode: "insensitive" } },
+                        { title_th: { contains: keyword, mode: "insensitive" } },
+                        { title_en: { contains: keyword, mode: "insensitive" } }
+                    ]
+                },
+                select: { id: true, subject_code: true, title_th: true, title_en: true, category: true },
+                take: 6
+            }).catch(async (err) => {
+                // Fallback to program_sections if subjects table not yet populated
+                return prisma.program_sections.findMany({
+                    where: { content: { contains: keyword, mode: "insensitive" } },
+                    select: { id: true, title: true, version: { select: { year: true } } },
+                    take: 6
+                }).catch(() => []);
+            }),
+
+            // 2.5 เอกสารดาวน์โหลด (downloads)
+            prisma.downloads.findMany({
+                where: {
+                    OR: [
+                        { title: { contains: keyword, mode: "insensitive" } },
+                        { file_name: { contains: keyword, mode: "insensitive" } },
+                        { category: { contains: keyword, mode: "insensitive" } }
+                    ]
+                },
+                select: { id: true, title: true, file_path: true, category: true, audience: true },
+                take: 6
             }).catch((err) => {
-                console.warn("⚠️ ค้นหาตาราง program_sections ไม่สำเร็จ:", err.message);
+                console.warn("⚠️ ค้นหา downloads ไม่สำเร็จ:", err.message);
                 return [];
             })
         ]);
 
-        console.log("✅ ค้นหาสำเร็จ! เจอข่าว:", newsResults.length, "เจออาจารย์:", lecturerResults.length, "เจอกลุ่มวิชา:", courseResults.length);
+        console.log("✅ ค้นหาสำเร็จ! เจอเมนู:", matchedMenus.length, "โครงงาน:", projectResults.length, "ข่าว:", newsResults.length, "อาจารย์:", lecturerResults.length, "วิชา:", courseResults.length, "ดาวน์โหลด:", downloadResults.length);
 
         res.json({
+            menus: matchedMenus,
+            projects: projectResults,
             news: newsResults,
             lecturers: lecturerResults,
-            courses: courseResults
+            courses: courseResults,
+            downloads: downloadResults
         });
 
     } catch (error) {

@@ -54,6 +54,8 @@ import GreenOffice from './pages/GreenOffice';
 import Login from './pages/admin/Login';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ManageAppearance from './pages/admin/ManageAppearance';
+import ManageAbout from './pages/admin/ManageAbout';
+import ManagePersonnel from './pages/admin/ManagePersonnel';
 import ManageNews from './pages/admin/ManageNews';
 import CreateNews from './pages/admin/CreateNews';
 import EditNews from './pages/admin/EditNews';
@@ -69,8 +71,9 @@ import ManageConsultants from './pages/admin/ManageConsultants';
 import ManageChatbot from './pages/admin/ManageChatbot';
 import ManageProfile from './pages/admin/ManageProfile';
 
-// Auth & Access Control
+// Auth & Language Context
 import { AuthProvider } from './context/AuthContext';
+import { LanguageProvider } from './context/LanguageContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AuthCallback from './pages/AuthCallback';
 
@@ -129,124 +132,138 @@ const AdminLayout = () => {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <Routes>
-        {/* 🏡 กลุ่มหน้าบ้าน */}
-        <Route element={<MainLayout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/history" element={<History />} />
-          <Route path="/organization" element={<Organization />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/administrator" element={<Administrator />} />
-          <Route path="/administrator/:code" element={<AdministratorDetail />} />
-          <Route path="/staff" element={<Staff />} />
-          <Route path="/staff-download" element={<StaffDownloads />} />
-          <Route path="/news" element={<News />} />
-          <Route path="/news/:id" element={<NewsDetail />} />
-          <Route path="/course-sections/:level" element={<CourseSections />} />
-          <Route path="/course-section/:id" element={<CourseSectionContent />} />
-          <Route path="/course-detail/:id" element={<CourseDetail />} />
-          <Route path="/course-description" element={<CourseDescription />} />
-          <Route path="/student-downloads" element={<StudentDownloads />} />
-          <Route path="/personnel-links" element={<PersonnelLinks />} />
+    <LanguageProvider>
+      <AuthProvider>
+        <Routes>
+          {/* 🏡 กลุ่มหน้าบ้าน */}
+          <Route element={<MainLayout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/history" element={<History />} />
+            <Route path="/organization" element={<Organization />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/administrator" element={<Administrator />} />
+            <Route path="/administrator/:code" element={<AdministratorDetail />} />
+            <Route path="/staff" element={<Staff />} />
+            <Route path="/staff-download" element={<StaffDownloads />} />
+            <Route path="/news" element={<News />} />
+            <Route path="/news/:id" element={<NewsDetail />} />
+            <Route path="/course-sections/:level" element={<CourseSections />} />
+            <Route path="/course-section/:id" element={<CourseSectionContent />} />
+            <Route path="/course-detail/:id" element={<CourseDetail />} />
+            <Route path="/course-description" element={<CourseDescription />} />
+            <Route path="/student-downloads" element={<StudentDownloads />} />
+            <Route path="/personnel-links" element={<PersonnelLinks />} />
 
-          <Route path="/student-projects" element={<StudentProjects />} />
-          <Route path="/student-projects/:id" element={<ProjectDetail />} />
-          <Route path="/consult-student" element={<ConsultStudent />} />
-          <Route path="/consult-student/:code" element={<ConsultStudent />} />
-          <Route path="/consult-detail/:level/:year" element={<ConsultDetail />} />
-          <Route path="/internship" element={<Internship />} />
-          <Route path="/subject-courses" element={<SubjectCourses />} />
-          <Route path="/subject-courses/detail/:year/:term" element={<SubjectDetail />} />
-          <Route path="/student-guide" element={<StudentGuide />} />
-          <Route path="/student-links" element={<StudentLinks />} />
-          <Route path="/search" element={<SearchResults />} />
-          
-          <Route path="/finance-regulations" element={<FinanceRegs />} />
-          <Route path="/academic-regulations" element={<AcademicRegs />} />
-          <Route path="/personnel-regulations" element={<PersonnelRegs />} />
-          <Route path="/graduate-regulations" element={<GraduateRegs />} />
-          <Route path="/student-affairs-regulations" element={<StudentAffairsRegs />} />
-          <Route path="/coop-regulations" element={<CoopRegs />} />
-          <Route path="/scholarship-regulations" element={<ScholarshipRegs />} />
+            <Route path="/student-projects" element={<StudentProjects />} />
+            <Route path="/student-projects/:id" element={<ProjectDetail />} />
+            <Route path="/consult-student" element={<ConsultStudent />} />
+            <Route path="/consult-student/:code" element={<ConsultStudent />} />
+            <Route path="/consult-detail/:level/:year" element={<ConsultDetail />} />
+            <Route path="/internship" element={<Internship />} />
+            <Route path="/subject-courses" element={<SubjectCourses />} />
+            <Route path="/subject-courses/detail/:year/:term" element={<SubjectDetail />} />
+            <Route path="/student-guide" element={<StudentGuide />} />
+            <Route path="/student-links" element={<StudentLinks />} />
+            <Route path="/search" element={<SearchResults />} />
+            
+            <Route path="/finance-regulations" element={<FinanceRegs />} />
+            <Route path="/academic-regulations" element={<AcademicRegs />} />
+            <Route path="/personnel-regulations" element={<PersonnelRegs />} />
+            <Route path="/graduate-regulations" element={<GraduateRegs />} />
+            <Route path="/student-affairs-regulations" element={<StudentAffairsRegs />} />
+            <Route path="/coop-regulations" element={<CoopRegs />} />
+            <Route path="/scholarship-regulations" element={<ScholarshipRegs />} />
 
-          <Route path="/green-office" element={<GreenOffice />} />
+            <Route path="/green-office" element={<GreenOffice />} />
 
-          <Route path="/faq" element={<FAQ />} />
+            <Route path="/faq" element={<FAQ />} />
 
-          <Route path="*" element={<Home />} />
+            <Route path="*" element={<Home />} />
 
-        </Route>
+          </Route>
 
-        {/* 🔐 Admin Login & OAuth SSO Callback */}
-        <Route path="/admin/login" element={<Login />} />
-        <Route path="/auth/callback" element={<AuthCallback />} />
+          {/* 🔐 Admin Login & OAuth SSO Callback */}
+          <Route path="/admin/login" element={<Login />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
 
-        {/* 🔐 กลุ่มหน้า Admin (ป้องกันด้วย ProtectedRoute) */}
-        <Route 
-          path="/admin" 
-          element={
-            <ProtectedRoute>
-              <AdminLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<AdminDashboard />} />
-          <Route path="dashboard" element={<AdminDashboard />} />
-          <Route path="profile" element={<ManageProfile />} />
+          {/* 🔐 กลุ่มหน้า Admin (ป้องกันด้วย ProtectedRoute) */}
+          <Route 
+            path="/admin" 
+            element={
+              <ProtectedRoute>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<AdminDashboard />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="profile" element={<ManageProfile />} />
 
-          {/* เมนูสำหรับ Admin เท่านั้น */}
-          <Route path="appearance" element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <ManageAppearance />
-            </ProtectedRoute>
-          } />
+            {/* เมนูสำหรับ Admin เท่านั้น */}
+            <Route path="appearance" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <ManageAppearance />
+              </ProtectedRoute>
+            } />
 
-          <Route path="curriculum" element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <ManageCurriculum />
-            </ProtectedRoute>
-          } />
+            <Route path="about" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <ManageAbout />
+              </ProtectedRoute>
+            } />
 
-          <Route path="files" element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <ManageFiles />
-            </ProtectedRoute>
-          } />
-          <Route path="files/create" element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <CreateFile />
-            </ProtectedRoute>
-          } />
-          <Route path="files/edit/:id" element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <EditFile />
-            </ProtectedRoute>
-          } />
+            <Route path="personnel" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <ManagePersonnel />
+              </ProtectedRoute>
+            } />
 
-          <Route path="roles" element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <ManageRoles />
-            </ProtectedRoute>
-          } />
+            <Route path="curriculum" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <ManageCurriculum />
+              </ProtectedRoute>
+            } />
 
-          <Route path="chatbot" element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <ManageChatbot />
-            </ProtectedRoute>
-          } />
+            <Route path="files" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <ManageFiles />
+              </ProtectedRoute>
+            } />
+            <Route path="files/create" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <CreateFile />
+              </ProtectedRoute>
+            } />
+            <Route path="files/edit/:id" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <EditFile />
+              </ProtectedRoute>
+            } />
 
-          {/* เมนูสำหรับทั้ง Admin และ Lecturer */}
-          <Route path="news" element={<ManageNews />} />
-          <Route path="news/create" element={<CreateNews />} />
-          <Route path="news/edit/:id" element={<EditNews />} />
-          <Route path="news/archive" element={<NewsArchive />} />
+            <Route path="roles" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <ManageRoles />
+              </ProtectedRoute>
+            } />
 
-          <Route path="projects" element={<ManageProjects />} />
-          <Route path="subjects" element={<ManageSubjects />} />
-          <Route path="consultants" element={<ManageConsultants />} />
-        </Route>
-      </Routes>
-    </AuthProvider>
+            <Route path="chatbot" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <ManageChatbot />
+              </ProtectedRoute>
+            } />
+
+            {/* เมนูสำหรับทั้ง Admin และ Lecturer */}
+            <Route path="news" element={<ManageNews />} />
+            <Route path="news/create" element={<CreateNews />} />
+            <Route path="news/edit/:id" element={<EditNews />} />
+            <Route path="news/archive" element={<NewsArchive />} />
+
+            <Route path="projects" element={<ManageProjects />} />
+            <Route path="subjects" element={<ManageSubjects />} />
+            <Route path="consultants" element={<ManageConsultants />} />
+          </Route>
+        </Routes>
+      </AuthProvider>
+    </LanguageProvider>
   );
 }

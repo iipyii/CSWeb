@@ -66,6 +66,134 @@ export const getProjectById = async (req, res) => {
   }
 };
 
+// Validation function for student list and project constraints
+async function validateProjectStudents({
+  title_th,
+  year,
+  semester,
+  studentsList,
+  student1Id,
+  student1Name,
+  student2Id,
+  student2Name,
+  projectId = null
+}) {
+  if (!title_th || !title_th.trim()) {
+    return { error: "กรุณาระบุชื่อโครงงานภาษาไทย" };
+  }
+
+  let rawList = [];
+  if (Array.isArray(studentsList) && studentsList.length > 0) {
+    rawList = studentsList;
+  } else if (student1Name || student1Id || student2Name || student2Id) {
+    if (student1Name || student1Id) rawList.push({ id: student1Id, name: student1Name });
+    if (student2Name || student2Id) rawList.push({ id: student2Id, name: student2Name });
+  }
+
+  // Filter items: if a row has any non-whitespace characters in id or name
+  const filteredList = rawList
+    .map(s => ({
+      id: (s.id !== undefined && s.id !== null ? String(s.id) : "").trim(),
+      name: (s.name !== undefined && s.name !== null ? String(s.name) : "").trim()
+    }))
+    .filter(s => s.id !== "" || s.name !== "");
+
+  // TC-PRJ-14: No students provided
+  if (filteredList.length === 0) {
+    return { error: "กรุณาระบุข้อมูลนักศึกษาผู้จัดทำโครงงานอย่างน้อย 1 คน (พร้อมรหัสนักศึกษา 13 หลัก และชื่อ-นามสกุล)" };
+  }
+
+  const seenIds = new Set();
+  const seenNames = new Set();
+
+  for (let i = 0; i < filteredList.length; i++) {
+    const s = filteredList[i];
+    const rowNum = i + 1;
+
+    // TC-PRJ-14: Empty student ID
+    if (!s.id) {
+      return { error: `กรุณาระบุรหัสนักศึกษาให้ครบถ้วน (แถวที่ ${rowNum})` };
+    }
+
+    // TC-PRJ-12, TC-PRJ-13: Validate 13 digits numeric
+    if (!/^\d{13}$/.test(s.id)) {
+      return { error: `รหัสนักศึกษาต้องเป็นตัวเลข 13 หลักเท่านั้น (แถวที่ ${rowNum} พบ '${s.id}')` };
+    }
+
+    // Empty student Name
+    if (!s.name) {
+      return { error: `กรุณาระบุชื่อ-นามสกุลนักศึกษาให้ครบถ้วน (แถวที่ ${rowNum})` };
+    }
+
+    // TC-PRJ-15: Duplicate student ID in the same project
+    if (seenIds.has(s.id)) {
+      return { error: `พบรหัสนักศึกษาซ้ำกันในโครงงานเดียวกัน: ${s.id}` };
+    }
+    seenIds.add(s.id);
+
+    // TC-PRJ-16: Duplicate student name in the same project
+    const normalizedName = s.name.replace(/\s+/g, ' ').toLowerCase();
+    if (seenNames.has(normalizedName)) {
+      return { error: `พบชื่อนักศึกษาซ้ำกันในโครงงานเดียวกัน: ${s.name}` };
+    }
+    seenNames.add(normalizedName);
+  }
+
+  // TC-PRJ-17: Check if student already has a project in the same semester and year
+  const targetYear = year ? parseInt(year) : null;
+  const targetSemester = semester ? parseInt(semester) : 1;
+
+  if (targetYear) {
+    const whereCondition = {
+      year: targetYear,
+      semester: targetSemester
+    };
+    if (projectId) {
+      whereCondition.id = { not: parseInt(projectId) };
+    }
+
+    const existingProjects = await prisma.projects.findMany({
+      where: whereCondition,
+      select: {
+        id: true,
+        title_th: true,
+        students_text: true,
+        student: {
+          select: {
+            student_id: true,
+            firstname: true,
+            lastname: true
+          }
+        }
+      }
+    });
+
+    for (const student of filteredList) {
+      for (const proj of existingProjects) {
+        let isMatch = false;
+
+        // Check linked student relation
+        if (proj.student && proj.student.student_id === student.id) {
+          isMatch = true;
+        }
+
+        // Check in students_text
+        if (!isMatch && proj.students_text && proj.students_text.includes(student.id)) {
+          isMatch = true;
+        }
+
+        if (isMatch) {
+          return {
+            error: `นักศึกษารหัส ${student.id} (${student.name}) มีโครงงานในภาคเรียนที่ ${targetSemester}/${targetYear} อยู่แล้ว (โครงงาน: "${proj.title_th}")`
+          };
+        }
+      }
+    }
+  }
+
+  return { validStudents: filteredList };
+}
+
 export const createProject = async (req, res) => {
   try {
     const { 
@@ -75,83 +203,63 @@ export const createProject = async (req, res) => {
       advisor_id, co_advisor_id, student_id 
     } = req.body;
 
+    // Validate students and project constraints
+    const validation = await validateProjectStudents({
+      title_th,
+      year,
+      semester,
+      studentsList,
+      student1Id,
+      student1Name,
+      student2Id,
+      student2Name
+    });
+
+    if (validation.error) {
+      return res.status(400).json({ error: validation.error });
+    }
+
+    const { validStudents } = validation;
     let targetStudentId = student_id ? parseInt(student_id) : null;
-    let finalStudentsText = students_text;
+    const formattedList = [];
 
-    // ถ้ามี studentsList ส่งมา (แบบแยกช่อง รหัสนักศึกษา - ชื่อ-นามสกุล)
-    if (Array.isArray(studentsList) && studentsList.length > 0) {
-      const validStudents = studentsList.filter(s => (s.name && s.name.trim()) || (s.id && s.id.trim()));
-      const formattedList = [];
+    for (let i = 0; i < validStudents.length; i++) {
+      const s = validStudents[i];
+      const sId = s.id;
+      const sName = s.name;
+      const formatted = formatStudentItem(sName, sId);
+      if (formatted) formattedList.push(formatted);
 
-      for (let i = 0; i < validStudents.length; i++) {
-        const s = validStudents[i];
-        const sId = (s.id || "").trim();
-        const sName = (s.name || "").trim();
-        const formatted = formatStudentItem(sName, sId);
-        if (formatted) formattedList.push(formatted);
-
-        // Upsert student ลงตาราง students
-        if (sId) {
-          const parts = sName.split(/\s+/);
-          const firstname = parts[0] || "นักศึกษา";
-          const lastname = parts.slice(1).join(" ") || "";
-          try {
-            const stu = await prisma.students.upsert({
-              where: { student_id: String(sId) },
-              update: {
-                firstname: firstname || undefined,
-                lastname: lastname || undefined
-              },
-              create: {
-                student_id: String(sId),
-                title: "นาย/นางสาว",
-                firstname,
-                lastname
-              }
-            });
-            // คนแรกเชื่อมโยงเป็น student_id ของ project
-            if (i === 0 && !targetStudentId) {
-              targetStudentId = stu.id;
-            }
-          } catch (err) {
-            console.error(`Failed to upsert student ${sId}:`, err);
-          }
-        }
-      }
-      finalStudentsText = formattedList.join("\n");
-    } else {
-      // Legacy fallback
-      if (!targetStudentId && student1Id) {
-        const parts = (student1Name || "").trim().split(/\s+/);
+      // Upsert student ลงตาราง students
+      if (sId) {
+        const parts = sName.split(/\s+/);
         const firstname = parts[0] || "นักศึกษา";
         const lastname = parts.slice(1).join(" ") || "";
-        const stu = await prisma.students.upsert({
-          where: { student_id: String(student1Id) },
-          update: {
-            firstname: firstname || undefined,
-            lastname: lastname || undefined
-          },
-          create: {
-            student_id: String(student1Id),
-            title: "นาย/นางสาว",
-            firstname,
-            lastname
+        try {
+          const stu = await prisma.students.upsert({
+            where: { student_id: String(sId) },
+            update: {
+              firstname: firstname || undefined,
+              lastname: lastname || undefined
+            },
+            create: {
+              student_id: String(sId),
+              title: "นาย/นางสาว",
+              firstname,
+              lastname
+            }
+          });
+          // คนแรกเชื่อมโยงเป็น student_id ของ project
+          if (i === 0 && !targetStudentId) {
+            targetStudentId = stu.id;
           }
-        });
-        targetStudentId = stu.id;
-      }
-
-      if (!finalStudentsText && (student1Name || student2Name)) {
-        const sList = [];
-        if (student1Name) {
-          sList.push(student1Id ? `${student1Name.trim()} (${student1Id.trim()})` : student1Name.trim());
+        } catch (err) {
+          console.error(`Failed to upsert student ${sId}:`, err);
         }
-        if (student2Name) {
-          sList.push(student2Id ? `${student2Name.trim()} (${student2Id.trim()})` : student2Name.trim());
-        }
-        finalStudentsText = sList.join("\n");
       }
     }
+
+    const finalStudentsText = formattedList.join("\n");
 
     const newProject = await prisma.projects.create({
       data: {
@@ -178,7 +286,7 @@ export const createProject = async (req, res) => {
     res.status(201).json({ message: "สร้างโครงงานสำเร็จ", data: newProject });
   } catch (error) {
     console.error("Create project error:", error);
-    res.status(500).json({ error: "Failed to create project" });
+    res.status(500).json({ error: error.message || "Failed to create project" });
   }
 };
 
@@ -192,17 +300,40 @@ export const updateProject = async (req, res) => {
       advisor_id, co_advisor_id, student_id 
     } = req.body;
 
-    let targetStudentId = student_id ? parseInt(student_id) : undefined;
-    let finalStudentsText = students_text;
+    // Validate students and project constraints if title_th or studentsList provided
+    if (title_th !== undefined || studentsList !== undefined || student1Name !== undefined) {
+      const currentProj = await prisma.projects.findUnique({
+        where: { id: parseInt(id) }
+      });
 
-    if (Array.isArray(studentsList) && studentsList.length > 0) {
-      const validStudents = studentsList.filter(s => (s.name && s.name.trim()) || (s.id && s.id.trim()));
+      if (!currentProj) {
+        return res.status(404).json({ error: "ไม่พบข้อมูลโครงงาน" });
+      }
+
+      const validation = await validateProjectStudents({
+        title_th: title_th !== undefined ? title_th : currentProj.title_th,
+        year: year !== undefined ? year : currentProj.year,
+        semester: semester !== undefined ? semester : currentProj.semester,
+        studentsList,
+        student1Id,
+        student1Name,
+        student2Id,
+        student2Name,
+        projectId: id
+      });
+
+      if (validation.error) {
+        return res.status(400).json({ error: validation.error });
+      }
+
+      const { validStudents } = validation;
+      let targetStudentId = student_id ? parseInt(student_id) : undefined;
       const formattedList = [];
 
       for (let i = 0; i < validStudents.length; i++) {
         const s = validStudents[i];
-        const sId = (s.id || "").trim();
-        const sName = (s.name || "").trim();
+        const sId = s.id;
+        const sName = s.name;
         const formatted = formatStudentItem(sName, sId);
         if (formatted) formattedList.push(formatted);
 
@@ -232,38 +363,33 @@ export const updateProject = async (req, res) => {
           }
         }
       }
-      finalStudentsText = formattedList.join("\n");
-    } else {
-      if (student1Id) {
-        const parts = (student1Name || "").trim().split(/\s+/);
-        const firstname = parts[0] || "นักศึกษา";
-        const lastname = parts.slice(1).join(" ") || "";
-        const stu = await prisma.students.upsert({
-          where: { student_id: String(student1Id) },
-          update: {
-            firstname: firstname || undefined,
-            lastname: lastname || undefined
-          },
-          create: {
-            student_id: String(student1Id),
-            title: "นาย/นางสาว",
-            firstname,
-            lastname
-          }
-        });
-        targetStudentId = stu.id;
-      }
 
-      if (finalStudentsText === undefined && (student1Name || student2Name)) {
-        const sList = [];
-        if (student1Name) {
-          sList.push(student1Id ? `${student1Name.trim()} (${student1Id.trim()})` : student1Name.trim());
+      const finalStudentsText = formattedList.join("\n");
+
+      const updated = await prisma.projects.update({
+        where: { id: parseInt(id) },
+        data: {
+          title_th: title_th || undefined,
+          title_en: title_en !== undefined ? title_en : undefined,
+          abstract: abstract !== undefined ? abstract : undefined,
+          image_path: image_path !== undefined ? image_path : undefined,
+          document_url: document_url !== undefined ? document_url : undefined,
+          github_url: github_url !== undefined ? github_url : undefined,
+          year: year ? parseInt(year) : undefined,
+          semester: semester !== undefined ? parseInt(semester) : undefined,
+          students_text: finalStudentsText !== undefined ? finalStudentsText : undefined,
+          student_id: targetStudentId,
+          advisor_id: advisor_id !== undefined ? (advisor_id ? parseInt(advisor_id) : null) : undefined,
+          co_advisor_id: co_advisor_id !== undefined ? (co_advisor_id ? parseInt(co_advisor_id) : null) : undefined
+        },
+        include: {
+          student: true,
+          advisor: true,
+          co_advisor: true
         }
-        if (student2Name) {
-          sList.push(student2Id ? `${student2Name.trim()} (${student2Id.trim()})` : student2Name.trim());
-        }
-        finalStudentsText = sList.join("\n");
-      }
+      });
+
+      return res.json({ message: "แก้ไขโครงงานสำเร็จ", data: updated });
     }
 
     const updated = await prisma.projects.update({
@@ -277,8 +403,6 @@ export const updateProject = async (req, res) => {
         github_url: github_url !== undefined ? github_url : undefined,
         year: year ? parseInt(year) : undefined,
         semester: semester !== undefined ? parseInt(semester) : undefined,
-        students_text: finalStudentsText !== undefined ? finalStudentsText : undefined,
-        student_id: targetStudentId,
         advisor_id: advisor_id !== undefined ? (advisor_id ? parseInt(advisor_id) : null) : undefined,
         co_advisor_id: co_advisor_id !== undefined ? (co_advisor_id ? parseInt(co_advisor_id) : null) : undefined
       },
@@ -292,7 +416,7 @@ export const updateProject = async (req, res) => {
     res.json({ message: "แก้ไขโครงงานสำเร็จ", data: updated });
   } catch (error) {
     console.error("Update project error:", error);
-    res.status(500).json({ error: "Failed to update project" });
+    res.status(500).json({ error: error.message || "Failed to update project" });
   }
 };
 

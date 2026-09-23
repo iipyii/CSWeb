@@ -1,16 +1,18 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Phone, Facebook, Clock, Globe } from 'lucide-react';
+import axios from 'axios';
 import Footer from '../components/Footer';
+import { useLanguage } from '../context/LanguageContext';
 
-const contactInfo = {
+const defaultContactInfo = {
   name: "ภาควิชาวิทยาการคอมพิวเตอร์และสารสนเทศ",
   faculty: "คณะวิทยาศาสตร์ประยุกต์ มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ",
   address: "1518 ถนนประชาราษฎร์ 1 แขวงวงศ์สว่าง เขตบางซื่อ กรุงเทพฯ 10800",
   phone: "02-555-2000 ต่อ 4601, 4602 (ในเวลาราชการ)",
+  officeHours: "จันทร์ - ศุกร์ | 08:30 - 16:30 น.",
   facebook: "CIS KMUTNB",
   facebookUrl: "https://www.facebook.com/profile.php?id=100057122843991#",
-  // พิกัดสำหรับ Google Maps
   mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3874.331163158434!2d100.51184657589574!3d13.819129595749764!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x30e29b9f7158782f%3A0xc3f832729a8a783!2sDepartment%20of%20Computer%20and%20Information%20Science%20(CIS)%2C%20KMUTNB!5e0!3m2!1sen!2sth!4v1708600000000!5m2!1sen!2sth"
 };
 
@@ -24,6 +26,23 @@ const cardVariants = {
 };
 
 export default function Contact() {
+  const { t } = useLanguage();
+  const [contactInfo, setContactInfo] = useState(defaultContactInfo);
+
+  useEffect(() => {
+    const fetchContact = async () => {
+      try {
+        const res = await axios.get('http://localhost:5000/api/about/contact');
+        if (res.data?.data) {
+          setContactInfo(prev => ({ ...prev, ...res.data.data }));
+        }
+      } catch (err) {
+        console.error('Failed to load contact data:', err);
+      }
+    };
+    fetchContact();
+  }, []);
+
   return (
     <div className="bg-slate-50 min-h-screen text-slate-700">
       
@@ -35,9 +54,8 @@ export default function Contact() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">ติดต่อเรา</h1>
+            <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">{t('contact_title')}</h1>
             <div className="w-12 h-1 bg-white/30 mb-5 mx-auto md:mx-0"></div>
-        
           </motion.div>
         </div>
         <div className="absolute right-[0%] bottom-[5%] opacity-5 select-none pointer-events-none">
@@ -69,7 +87,7 @@ export default function Contact() {
                     <MapPin size={18} />
                   </div>
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">ที่อยู่</p>
+                    <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">{t('contact_address')}</p>
                     <p className="text-sm leading-relaxed text-slate-600">{contactInfo.address}</p>
                   </div>
                 </div>
@@ -79,7 +97,7 @@ export default function Contact() {
                     <Phone size={18} />
                   </div>
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">โทรศัพท์</p>
+                    <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">{t('contact_phone')}</p>
                     <p className="text-sm text-slate-600">{contactInfo.phone}</p>
                   </div>
                 </div>
@@ -89,8 +107,8 @@ export default function Contact() {
                     <Clock size={18} />
                   </div>
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">เวลาทำการ</p>
-                    <p className="text-sm text-slate-600">จันทร์ - ศุกร์ | 08:30 - 16:30 น.</p>
+                    <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">{t('contact_hours')}</p>
+                    <p className="text-sm text-slate-600">{contactInfo.officeHours || "จันทร์ - ศุกร์ | 08:30 - 16:30 น."}</p>
                   </div>
                 </div>
               </div>
@@ -113,10 +131,10 @@ export default function Contact() {
                   <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
                     <Facebook size={24} className="text-blue-200"  />
                   </div>
-                    <div>
-                        <p className="text-xs text-white font-light">ติดตามข่าวสารทาง Facebook</p>
-                        <p className="font-bold text-lg leading-none text-white">{contactInfo.facebook}</p>
-                    </div>
+                  <div>
+                    <p className="text-xs text-white font-light">{t('contact_facebook')}</p>
+                    <p className="font-bold text-lg leading-none text-white">{contactInfo.facebook}</p>
+                  </div>
                 </div>
                 <div className="w-8 h-8 rounded-full border border-white/30 flex items-center justify-center group-hover:bg-white group-hover:text-[#1877F2] transition-colors">
                   <Globe size={14} className="text-white group-hover:text-[#1877F2]" />
@@ -144,8 +162,7 @@ export default function Contact() {
               ></iframe>
             </div>
             <div className="mt-4 flex items-center justify-between px-2">
-               <span className="text-[10px] text-slate-400 italic">* คลิกที่แผนที่เพื่อนำทางด้วย Google Maps</span>
-               
+               <span className="text-[10px] text-slate-400 italic">{t('contact_map_tip')}</span>
             </div>
           </motion.div>
         </div>

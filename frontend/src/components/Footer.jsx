@@ -1,7 +1,11 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { MapPin, Phone, Facebook, ChevronUp } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Footer() {
+  const { t } = useLanguage();
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -14,45 +18,46 @@ export default function Footer() {
           {/* ส่วนที่ 1: ชื่อหน่วยงาน */}
           <div>
             <h3 className="text-lg font-bold mb-4 leading-tight">
-              ภาควิชาวิทยาการคอมพิวเตอร์และสารสนเทศ
+              {t('footer_dept_name')}
             </h3>
-            <p className="text-sm opacity-80 mb-2">คณะวิทยาศาสตร์ประยุกต์</p>
-            <p className="text-sm opacity-80">
-              มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ
-            </p>
+            <p className="text-sm opacity-80 mb-2">{t('footer_faculty_name')}</p>
           </div>
 
           {/* ส่วนที่ 2: เมนูลัด */}
           <div>
-            <h3 className="text-lg font-bold mb-4">เมนูลัด</h3>
+            <h3 className="text-lg font-bold mb-4">{t('footer_quick_links')}</h3>
             <ul className="space-y-3">
               <li>
-                <a href="#" className="text-sm opacity-80 hover:opacity-100 underline decoration-white/30 transition-all">
-                  คู่มือนักศึกษา
-                </a>
+                <Link to="/student-guide" className="text-sm opacity-80 hover:opacity-100 underline decoration-white/30 transition-all">
+                  {t('nav_student_guide')}
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm opacity-80 hover:opacity-100 underline decoration-white/30 transition-all">
-                  Link สำหรับนักศึกษา
-                </a>
+                <Link to="/student-links" className="text-sm opacity-80 hover:opacity-100 underline decoration-white/30 transition-all">
+                  {t('nav_student_links')}
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm opacity-80 hover:opacity-100 underline decoration-white/30 transition-all">
-                  Link สำหรับบุคลากร
-                </a>
+                <Link to="/personnel-links" className="text-sm opacity-80 hover:opacity-100 underline decoration-white/30 transition-all">
+                  {t('nav_personnel_links')}
+                </Link>
+              </li>
+              <li>
+                <Link to="/student-projects" className="text-sm opacity-80 hover:opacity-100 underline decoration-white/30 transition-all">
+                  {t('nav_student_projects')}
+                </Link>
               </li>
             </ul>
           </div>
 
           {/* ส่วนที่ 3: ติดต่อเรา */}
           <div className="space-y-4">
-            <h3 className="text-lg font-bold mb-4">ติดต่อเรา</h3>
+            <h3 className="text-lg font-bold mb-4">{t('footer_contact_info')}</h3>
             <div className="flex items-start space-x-3">
               <MapPin size={18} className="mt-1 shrink-0" />
               <p className="text-sm opacity-80 leading-relaxed">
-                ภาควิชาวิทยาการคอมพิวเตอร์และสารสนเทศ<br />
-                คณะวิทยาศาสตร์ประยุกต์<br />
-                มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ
+                {t('footer_dept_name')}<br />
+                {t('footer_faculty_name')}
               </p>
             </div>
             <div className="flex items-center space-x-3">
@@ -63,7 +68,12 @@ export default function Footer() {
             </div>
             <div className="flex items-center space-x-3">
               <Facebook size={18} className="shrink-0" />
-              <a href="#" className="text-sm opacity-80 hover:opacity-100">
+              <a 
+                href="https://www.facebook.com/profile.php?id=100057122843991#" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-sm opacity-80 hover:opacity-100"
+              >
                 CIS KMUTNB
               </a>
             </div>
