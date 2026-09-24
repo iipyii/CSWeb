@@ -1,140 +1,259 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { ChevronLeft, FileText, BookOpen, Clock, Download } from "lucide-react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { 
+  ChevronLeft, ChevronRight, FileText, BookOpen, 
+  Clock, Download, ExternalLink, GraduationCap, 
+  Layers, AlertCircle, ArrowLeft, ArrowRight, Loader2
+} from "lucide-react";
 import { motion } from "framer-motion";
 import Footer from "../components/Footer";
+
+const getPdfUrl = (path) => {
+  if (!path) return "";
+  if (path.startsWith("http://") || path.startsWith("https://")) return path;
+  let clean = path.replace(/\\/g, "/").trim();
+  if (!clean.startsWith("/")) clean = "/" + clean;
+  if (!clean.startsWith("/uploads/")) clean = "/uploads" + clean;
+  clean = clean.replace(/^\/uploads\/uploads\//, "/uploads/");
+  return `http://localhost:5000${clean}`;
+};
 
 export default function CourseSectionContent() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [section, setSection] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // ดึงข้อมูลจาก API
+    setLoading(true);
     fetch(`http://localhost:5000/api/program-sections/${id}`)
-      .then((res) => res.json())
-      .then((data) => setSection(data))
-      .catch((err) => console.error(err));
+      .then((res) => {
+        if (!res.ok) throw new Error("Section not found");
+        return res.json();
+      })
+      .then((data) => {
+        setSection(data);
+      })
+      .catch((err) => {
+        console.error("Fetch section error:", err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, [id]);
 
-  // ✨ ฟังก์ชันสำหรับจัดรูปแบบข้อความอัตโนมัติ (Content Parser)
-  const renderFormattedContent = (text) => {
-    if (!text) return null;
-    
-    return text.split('\n').map((line, index) => {
-      const trimmedLine = line.trim();
-      if (!trimmedLine) return <br key={index} />;
-
-      // ตรวจสอบว่าเป็นหัวข้อหลัก (เช่น "1. ", "2. ")
-      const isHeader = /^\d+\./.test(trimmedLine);
-
-      if (isHeader) {
-        return (
-          <motion.h3 
-            key={index}
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="text-xl font-bold text-[#183153] mt-10 mb-5 pb-2 border-b-2 border-slate-100 flex items-center gap-3"
-          >
-            <span className="w-2 h-6 bg-[#3F51B5] rounded-full"></span>
-            {trimmedLine}
-          </motion.h3>
-        );
-      }
-
-      // สำหรับข้อความปกติ จัดย่อหน้าให้อ่านง่าย
-      return (
-        <p key={index} className="text-slate-600 leading-extra-relaxed mb-4 text-[17px] font-light md:indent-10 text-left">
-          {trimmedLine}
-        </p>
-      );
-    });
-  };
-
-  if (!section) {
+  if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
-        <div className="w-10 h-10 border-4 border-[#3F51B5] border-t-transparent rounded-full animate-spin mb-4"></div>
-        <span className="text-slate-500">กำลังโหลดเนื้อหาหลักสูตร...</span>
+      <div className="bg-[#f8fafc] min-h-screen flex flex-col">
+        <div className="flex-grow flex flex-col items-center justify-center py-32 text-slate-500 gap-3">
+          <Loader2 className="animate-spin text-[#183153]" size={36} />
+          <span className="text-base font-medium">กำลังโหลดเอกสารหลักสูตร...</span>
+        </div>
+        <Footer />
       </div>
     );
   }
 
-  return (
-    <div className="bg-[#f8fafc] min-h-screen flex flex-col">
-      {/* 🏛️ Header Section - ส่วนแบนเนอร์ด้านบน */}
-      <div className="bg-[#183153] text-white pt-16 pb-24 relative overflow-hidden">
-        <div className="max-w-6xl mx-auto px-6 relative z-10 text-left">
+  if (!section) {
+    return (
+      <div className="bg-[#f8fafc] min-h-screen flex flex-col">
+        <div className="flex-grow flex flex-col items-center justify-center p-10 text-center">
+          <div className="p-4 bg-amber-50 text-amber-600 rounded-full mb-4">
+            <AlertCircle size={36} />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-800 mb-2">ไม่พบข้อมูลหมวดหลักสูตรนี้</h2>
+          <p className="text-slate-500 text-sm mb-6">กรุณากลับไปเลือกหมวดหลักสูตรใหม่อีกครั้ง</p>
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center text-blue-400 hover:text-blue-300 font-bold mb-8 transition-all group"
+            className="bg-[#183153] text-white px-6 py-2.5 rounded-xl font-bold shadow-md hover:bg-slate-700 transition-colors inline-flex items-center gap-2 text-sm"
           >
-            <ChevronLeft size={20} className="mr-1 group-hover:-translate-x-1 transition-transform" />
-            กลับไปหน้าหลักสูตร
+            <ChevronLeft size={18} /> ย้อนกลับ
           </button>
-          
-          <motion.h1 
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-3xl md:text-4xl font-bold leading-tight max-w-4xl"
-          >
-            {section.title}
-          </motion.h1>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
-          <div className="flex flex-wrap items-center gap-6 mt-8 text-sm font-light text-slate-300">
-            <div className="flex items-center gap-2">
-              <BookOpen size={16} className="text-blue-400" />
-              <span>หมวดหมู่รายวิชา</span>
+  const version = section.version;
+  const program = version?.program;
+  const degree = program?.degree;
+  const allSections = version?.sections || [];
+  
+  // Find current index and prev/next
+  const currentIndex = allSections.findIndex((s) => s.id === section.id);
+  const prevSection = currentIndex > 0 ? allSections[currentIndex - 1] : null;
+  const nextSection = currentIndex >= 0 && currentIndex < allSections.length - 1 ? allSections[currentIndex + 1] : null;
+
+  const pdfUrl = getPdfUrl(section.pdf_path);
+
+  return (
+    <div className="bg-[#f8fafc] min-h-screen flex flex-col">
+      
+      {/* 🏛️ Header Banner */}
+      <div className="bg-[#183153] text-white pt-10 pb-16 shadow-lg">
+        <div className="max-w-[1440px] mx-auto px-6 md:px-10 text-left">
+          
+          {/* Breadcrumbs */}
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs md:text-sm font-light opacity-90 mb-4">
+            <Link to="/" className="text-blue-300 hover:text-blue-200 transition-colors">
+              หน้าหลัก
+            </Link>
+            <ChevronRight size={14} className="opacity-40" />
+            <Link 
+              to={`/course-sections/${degree?.slug || 'bachelor'}`}
+              className="text-blue-300 hover:text-blue-200 transition-colors"
+            >
+              หลักสูตร ({degree?.name_th || 'ปริญญาตรี'})
+            </Link>
+            <ChevronRight size={14} className="opacity-40" />
+            <span className="text-slate-200">
+              {program?.name_th || 'วิทยาการคอมพิวเตอร์'} (พ.ศ. {version?.year || '2564'})
+            </span>
+            <ChevronRight size={14} className="opacity-40" />
+            <span className="text-amber-300 font-medium">
+              {section.title}
+            </span>
+          </div>
+
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="px-3 py-1 bg-blue-500/20 text-blue-200 border border-blue-400/30 rounded-lg text-xs font-bold">
+                  {program?.name_th || 'หลักสูตรวิทยาการคอมพิวเตอร์'}
+                </span>
+                <span className="px-3 py-1 bg-amber-500/20 text-amber-200 border border-amber-400/30 rounded-lg text-xs font-bold">
+                  พ.ศ. {version?.year}
+                </span>
+              </div>
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">
+                {section.title}
+              </h1>
             </div>
-            <div className="flex items-center gap-2">
-              <Clock size={16} className="text-blue-400" />
-              <span>อัปเดตข้อมูลล่าสุดปี 2568</span>
+
+            {/* Quick Action Buttons */}
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={() => navigate(-1)}
+                className="px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 backdrop-blur-sm"
+              >
+                <ChevronLeft size={16} /> ย้อนกลับ
+              </button>
+              {pdfUrl && (
+                <>
+                  <a
+                    href={pdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 backdrop-blur-sm"
+                  >
+                    <ExternalLink size={15} /> เปิดแท็บใหม่
+                  </a>
+                  <a
+                    href={pdfUrl}
+                    download
+                    className="px-5 py-2.5 bg-[#3F51B5] hover:bg-[#2f3ea3] text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-lg shadow-indigo-900/30"
+                  >
+                    <Download size={15} /> ดาวน์โหลด PDF
+                  </a>
+                </>
+              )}
             </div>
           </div>
-        </div>
-        {/* Background Decoration */}
-        <div className="absolute right-[-5%] top-[-10%] opacity-10 select-none pointer-events-none text-white">
-          <FileText size={400} />
         </div>
       </div>
 
-      {/* 📄 Main Content Card - ขยายความกว้างเป็น 6xl */}
-      <main className="max-w-6xl mx-auto w-full px-6 -mt-12 mb-24 flex-grow relative z-20">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-[40px] shadow-2xl shadow-slate-200/50 border border-slate-100 p-8 md:p-16"
-        >
-          {/* ส่วนเนื้อหาที่จัดรูปแบบแล้ว */}
-          <article className="prose prose-slate max-w-none">
-            {renderFormattedContent(section.content)}
-          </article>
+      {/* 📑 Main Content Area */}
+      <main className="max-w-[1440px] mx-auto w-full px-6 md:px-10 -mt-8 mb-20 flex-grow relative z-20 space-y-6">
+        
+        {/* Sections Navigation Bar */}
+        {allSections.length > 0 && (
+          <div className="bg-white rounded-2xl p-3 shadow-md border border-slate-100 flex items-center gap-2 overflow-x-auto no-scrollbar">
+            <span className="text-xs font-bold text-slate-400 px-3 whitespace-nowrap flex items-center gap-1.5">
+              <Layers size={15} className="text-[#3F51B5]" /> เลือกหมวด:
+            </span>
+            {allSections.map((s) => {
+              const isActive = s.id === section.id;
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => navigate(`/course-section/${s.id}`)}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                    isActive
+                      ? 'bg-[#3F51B5] text-white shadow-md shadow-indigo-100 scale-105'
+                      : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-100'
+                  }`}
+                >
+                  <span>หมวด {s.section_no || s.order_index}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
-          {/* 📥 PDF Download Section - กล่องดาวน์โหลดด้านล่าง */}
-          <div className="mt-16 pt-10 border-t border-slate-50">
-            <div className="bg-slate-50 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 border border-slate-100">
-              <div className="flex items-center gap-5">
-                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-red-500 shadow-sm border border-slate-100">
-                  <FileText size={32} />
+        {/* 📄 Interactive Embedded PDF Viewer Card */}
+        <div className="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/60 border border-slate-100 p-4 md:p-8 overflow-hidden">
+          {pdfUrl ? (
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-2">
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
+                  <FileText size={16} className="text-[#3F51B5]" />
+                  <span>เอกสารหลักสูตร มคอ.2 ฉบับทางการ</span>
                 </div>
-                <div className="text-left">
-                  <h4 className="font-bold text-[#183153] text-lg">เอกสารต้นฉบับ</h4>
-                  <p className="text-slate-500 text-sm">ดาวน์โหลดไฟล์ PDF เพื่ออ่านรายละเอียดฉบับเต็ม</p>
+                <div className="text-xs text-slate-400">
+                  หากเอกสารไม่แสดงผล กรุณาคลิก <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="text-[#3F51B5] underline font-bold">เปิดดูเอกสาร PDF โดยตรง</a>
                 </div>
               </div>
-              
-              <a
-                href={`http://localhost:5000/uploads/${section.pdf_path}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full md:w-auto inline-flex items-center justify-center gap-3 bg-[#3F51B5] text-white px-10 py-4 rounded-2xl font-bold hover:bg-[#2f3ea3] hover:shadow-xl transition-all active:scale-95 shadow-lg shadow-indigo-100"
-              >
-                <Download size={20} />
-                เปิดไฟล์ PDF
-              </a>
+
+              {/* PDF Viewer Container */}
+              <div className="w-full h-[78vh] min-h-[550px] bg-slate-100 rounded-3xl overflow-hidden border border-slate-200/80 shadow-inner">
+                <iframe
+                  src={`${pdfUrl}#toolbar=1&navpanes=1&scrollbar=1`}
+                  title={section.title}
+                  className="w-full h-full border-none"
+                />
+              </div>
             </div>
-          </div>
-        </motion.div>
+          ) : (
+            <div className="py-24 text-center space-y-3">
+              <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mx-auto">
+                <FileText size={32} />
+              </div>
+              <h3 className="text-lg font-bold text-slate-600">ยังไม่มีเอกสาร PDF สำหรับหมวดนี้</h3>
+              <p className="text-xs text-slate-400">กรุณาติดต่อผู้ดูแลระบบเพื่อทำการอัปโหลดเอกสาร มคอ.2</p>
+            </div>
+          )}
+        </div>
+
+        {/* 🔄 Next / Previous Section Navigation Card */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+          {prevSection ? (
+            <button
+              onClick={() => navigate(`/course-section/${prevSection.id}`)}
+              className="w-full sm:w-auto px-6 py-3.5 bg-white hover:bg-slate-50 text-slate-700 rounded-2xl text-xs font-bold shadow-sm border border-slate-200 transition-all flex items-center justify-center gap-2"
+            >
+              <ArrowLeft size={16} className="text-[#3F51B5]" />
+              <div className="text-left">
+                <div className="text-[10px] text-slate-400 uppercase font-medium">หมวดก่อนหน้า</div>
+                <div>{prevSection.title}</div>
+              </div>
+            </button>
+          ) : <div />}
+
+          {nextSection && (
+            <button
+              onClick={() => navigate(`/course-section/${nextSection.id}`)}
+              className="w-full sm:w-auto px-6 py-3.5 bg-[#3F51B5] hover:bg-[#2f3ea3] text-white rounded-2xl text-xs font-bold shadow-md shadow-indigo-100 transition-all flex items-center justify-center gap-2 text-right"
+            >
+              <div className="text-right">
+                <div className="text-[10px] text-indigo-200 uppercase font-medium">หมวดถัดไป</div>
+                <div>{nextSection.title}</div>
+              </div>
+              <ArrowRight size={16} />
+            </button>
+          )}
+        </div>
+
       </main>
 
       <Footer />

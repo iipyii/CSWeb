@@ -57,15 +57,18 @@ export const globalSearch = async (req, res) => {
 
         // 1. ค้นหาเมนูหน้าเว็บ (Navigation Menus)
         const matchedMenus = SITE_MENUS.filter(item => {
-          const matchTitle = item.title.toLowerCase().includes(keyword);
-          const matchTitleEn = item.title_en.toLowerCase().includes(keyword);
-          const matchCategory = item.category.toLowerCase().includes(keyword);
+          const matchTitle = (item.title || "").toLowerCase().includes(keyword);
+          const matchTitleEn = (item.title_en || "").toLowerCase().includes(keyword);
+          const matchCategory = (item.category || "").toLowerCase().includes(keyword);
           const matchKeywords = (item.keywords || "").toLowerCase().includes(keyword);
           return matchTitle || matchTitleEn || matchCategory || matchKeywords;
-        }).slice(0, 6);
+        }).map(m => ({
+          ...m,
+          path: m.url
+        })).slice(0, 8);
 
         // 2. ค้นหาตารางฐานข้อมูลพร้อมกัน
-        const [projectResults, newsResults, lecturerResults, courseResults, downloadResults] = await Promise.all([
+        const [rawProjects, rawNews, rawLecturers, rawCourses, rawDownloads] = await Promise.all([
             // 2.1 โครงงานนักศึกษา (projects)
             prisma.projects.findMany({
                 where: {
@@ -85,9 +88,11 @@ export const globalSearch = async (req, res) => {
                     year: true,
                     semester: true,
                     students_text: true,
-                    student: { select: { firstname: true, lastname: true, student_id: true } }
+                    abstract: true,
+                    student: { select: { firstname: true, lastname: true, student_id: true } },
+                    advisor: { select: { fullname_th: true, lecturer_code: true } }
                 },
-                take: 6
+                take: 8
             }).catch((err) => {
                 console.warn("⚠️ ค้นหา projects ไม่สำเร็จ:", err.message);
                 return [];
@@ -103,7 +108,7 @@ export const globalSearch = async (req, res) => {
                     ]
                 },
                 select: { id: true, title: true, category: true, created_at: true },
-                take: 6
+                take: 8
             }).catch((err) => {
                 console.warn("⚠️ ค้นหา news ไม่สำเร็จ:", err.message);
                 return [];
@@ -119,31 +124,59 @@ export const globalSearch = async (req, res) => {
                         { email: { contains: keyword, mode: "insensitive" } }
                     ]
                 },
-                select: { id: true, fullname_th: true, fullname_en: true, lecturer_code: true, email: true, image_path: true },
-                take: 6
+                select: { id: true, fullname_th: true, fullname_en: true, lecturer_code: true, email: true, image_path: true, position_th: true, position_en: true },
+                take: 8
             }).catch((err) => {
                 console.warn("⚠️ ค้นหา lecturers ไม่สำเร็จ:", err.message);
                 return [];
             }),
 
-            // 2.4 คำอธิบายรายวิชา (program_sections / subjects)
+            // 2.4 คำอธิบายรายวิชา (subjects / program_sections)
             prisma.subjects.findMany({
                 where: {
                     OR: [
                         { subject_code: { contains: keyword, mode: "insensitive" } },
                         { title_th: { contains: keyword, mode: "insensitive" } },
-                        { title_en: { contains: keyword, mode: "insensitive" } }
+                        { title_en: { contains: keyword, mode: "insensitive" } },
+                        { description_th: { contains: keyword, mode: "insensitive" } },
+                        { description_en: { contains: keyword, mode: "insensitive" } }
                     ]
                 },
-                select: { id: true, subject_code: true, title_th: true, title_en: true, category: true },
-                take: 6
+                select: { 
+                    id: true, 
+                    subject_code: true, 
+                    title_th: true, 
+                    title_en: true, 
+                    category: true,
+                    credit: true,
+                    curriculum_year: true,
+                    degree_level: true
+                },
+                take: 12
+            }).then(subs => {
+                return subs.map(s => ({
+                    id: s.id,
+                    subject_code: s.subject_code,
+                    title_th: s.title_th,
+                    title_en: s.title_en,
+                    title: s.subject_code ? `${s.subject_code} ${s.title_th || s.title_en || ''}`.trim() : (s.title_th || s.title_en),
+                    category: s.category,
+                    credit: s.credit,
+                    curriculum_year: s.curriculum_year,
+                    degree_level: s.degree_level
+                }));
             }).catch(async (err) => {
-                // Fallback to program_sections if subjects table not yet populated
+                // Fallback to program_sections if subjects table query encounters issue
                 return prisma.program_sections.findMany({
                     where: { content: { contains: keyword, mode: "insensitive" } },
                     select: { id: true, title: true, version: { select: { year: true } } },
-                    take: 6
-                }).catch(() => []);
+                    take: 8
+                }).then(secs => secs.map(sec => ({
+                    id: sec.id,
+                    title: sec.title,
+                    title_th: sec.title,
+                    curriculum_year: sec.version?.year
+                }))).catch(() => []);
             }),
 
             // 2.5 เอกสารดาวน์โหลด (downloads)
@@ -155,23 +188,28 @@ export const globalSearch = async (req, res) => {
                         { category: { contains: keyword, mode: "insensitive" } }
                     ]
                 },
-                select: { id: true, title: true, file_path: true, category: true, audience: true },
-                take: 6
+                select: { id: true, title: true, file_name: true, file_path: true, category: true, audience: true },
+                take: 12
+            }).then(docs => {
+                return docs.map(d => ({
+                    ...d,
+                    file_url: `http://localhost:5000/api/downloads/download/${d.id}`
+                }));
             }).catch((err) => {
                 console.warn("⚠️ ค้นหา downloads ไม่สำเร็จ:", err.message);
                 return [];
             })
         ]);
 
-        console.log("✅ ค้นหาสำเร็จ! เจอเมนู:", matchedMenus.length, "โครงงาน:", projectResults.length, "ข่าว:", newsResults.length, "อาจารย์:", lecturerResults.length, "วิชา:", courseResults.length, "ดาวน์โหลด:", downloadResults.length);
+        console.log("✅ ค้นหาสำเร็จ! เจอเมนู:", matchedMenus.length, "โครงงาน:", rawProjects.length, "ข่าว:", rawNews.length, "อาจารย์:", rawLecturers.length, "วิชา:", rawCourses.length, "ดาวน์โหลด:", rawDownloads.length);
 
         res.json({
             menus: matchedMenus,
-            projects: projectResults,
-            news: newsResults,
-            lecturers: lecturerResults,
-            courses: courseResults,
-            downloads: downloadResults
+            projects: rawProjects,
+            news: rawNews,
+            lecturers: rawLecturers,
+            courses: rawCourses,
+            downloads: rawDownloads
         });
 
     } catch (error) {

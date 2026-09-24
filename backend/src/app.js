@@ -24,6 +24,8 @@ import subjectsRoutes from './routes/subjects.routes.js';
 import handbookRoutes from './routes/handbook.routes.js';
 import aboutRoutes from './routes/about.routes.js';
 import personnelLinksRoutes from './routes/personnel-links.routes.js';
+import studentGuidesRoutes from './routes/student-guides.routes.js';
+import studentLinksRoutes from './routes/student-links.routes.js';
 
 
 const app = express();
@@ -49,23 +51,25 @@ app.use(cookieParser());
 //   });
 // }
 
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+app.use("/uploads", express.static(path.join(process.cwd(), "public/uploads")));
+app.use("/downloads", express.static(path.join(process.cwd(), "uploads/downloads")));
+
 app.use("/api/news", newsRoutes);
 app.use("/api/users", usersRoutes);
 app.use("/api/faq", faqRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/lecturers", lecturersRoutes);
-app.use('/uploads', express.static('uploads'));
 app.set("json spaces", 2);
 app.use("/api/downloads", downloadsRoutes);
 app.use("/auth", authRoutes);
 app.use("/api/staff", staffRoutes);
-app.use("/api/programs", programRoutes)
-app.use("/api/program-sections", programSectionRoutes)
+app.use("/api/programs", programRoutes);
+app.use("/api/program-sections", programSectionRoutes);
 app.use("/api/consult", consultRoutes);
 app.use("/api/internships", internshipsRoutes);
 app.use("/api/courses", subjectcoursesRoutes);
 app.use("/api/search", searchRoutes);
-app.use("/downloads", express.static("uploads/downloads"));
 app.use('/api/appearance', appearanceRoutes);
 app.use('/api/projects', projectsRoutes);
 app.use('/api/curriculum', curriculumRoutes);
@@ -74,7 +78,8 @@ app.use('/api/subjects', subjectsRoutes);
 app.use('/api/handbooks', handbookRoutes);
 app.use('/api/about', aboutRoutes);
 app.use('/api/personnel-links', personnelLinksRoutes);
-app.use("/uploads", express.static(path.join(process.cwd(), "public/uploads")));
-
+app.use('/api/student-guides', studentGuidesRoutes);
+app.use('/api/student-links', studentLinksRoutes);
 
 export default app;
+

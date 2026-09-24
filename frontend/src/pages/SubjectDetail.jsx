@@ -18,14 +18,27 @@ export default function SubjectDetail() {
   const navigate = useNavigate();
   const [subjects, setSubjects] = useState([]);
 
-  useEffect(() => {
+  const getPdfUrl = (filePath) => {
+    if (!filePath) return "#";
+    if (filePath.startsWith("http://") || filePath.startsWith("https://")) return filePath;
+    let clean = filePath.replace(/\\/g, "/").trim();
+    if (!clean.startsWith("/")) clean = "/" + clean;
+    if (!clean.startsWith("/uploads/")) {
+      if (clean.startsWith("/course/")) {
+        clean = "/uploads" + clean;
+      } else {
+        clean = "/uploads/course" + clean;
+      }
+    }
+    return `http://localhost:5000${clean}`;
+  };
 
+  useEffect(() => {
     axios
       .get(`http://localhost:5000/api/courses/${year}/${term}`)
       .then(res => {
         setSubjects(res.data);
       });
-
   }, [year, term]);
 
   const grouped = subjects.reduce((acc, item) => {
@@ -393,7 +406,7 @@ export default function SubjectDetail() {
 
                     <a
                       key={item.id}
-                      href={`http://localhost:5000/uploads/${item.file_path}`}
+                      href={getPdfUrl(item.file_path)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md hover:border-[#3F51B5]/30 hover:bg-indigo-50/30 transition-all group"

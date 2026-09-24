@@ -8,7 +8,8 @@ import {
   FileText,
   CheckCircle2,
   Eye,
-  MapPin
+  MapPin,
+  ExternalLink
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Footer from '../components/Footer';
@@ -17,44 +18,45 @@ import axios from "axios";
 export default function Internship() {
   const navigate = useNavigate();
   const [internships, setInternships] = useState([]);
+  const [config, setConfig] = useState({
+    links: {
+      docsUrl: "https://drive.google.com/drive/mobile/folders/1FgrgA1v6hOujVkCUFFtfEHV5cOmofhGK?usp=drive_link",
+      placesUrl: "https://docs.google.com/spreadsheets/d/1tguBraKR6NkJRQJkZuBtu5KsPsW5CDj8taq536B1t1Y/htmlview"
+    },
+    evaluation: {
+      items: [
+        { title: "ระเบียบวินัย", score: 20 },
+        { title: "พฤติกรรมในการปฏิบัติงาน", score: 20 },
+        { title: "ผลงาน", score: 20 },
+        { title: "วิธีการปฏิบัติงาน", score: 20 },
+        { title: "มนุษย์สัมพันธ์", score: 20 }
+      ],
+      note: "นิสิตจะไม่ผ่านการฝึกงานในกรณีดังต่อไปนี้: คะแนนประเมินรวมจากสถานประกอบการทั้งหมด ได้น้อยกว่า 70 คะแนน"
+    }
+  });
 
   useEffect(() => {
-    axios
-      .get("http://localhost:5000/api/internships")
-      .then(res => {
-        setInternships(res.data);
-      });
+    Promise.all([
+      axios.get("http://localhost:5000/api/internships"),
+      axios.get("http://localhost:5000/api/internships/config")
+    ]).then(([itemsRes, configRes]) => {
+      if (itemsRes.data) setInternships(itemsRes.data);
+      if (configRes.data) {
+        setConfig({
+          links: configRes.data.links || config.links,
+          evaluation: configRes.data.evaluation || config.evaluation
+        });
+      }
+    }).catch(err => {
+      console.error("Fetch internship data error:", err);
+    });
   }, []);
 
   const qualification = internships.filter(i => i.section === "qualification");
   const criteria = internships.filter(i => i.section === "criteria");
   const notes = internships.filter(i => i.section === "note");
-  const evaluation = internships.filter(i => i.section === "evaluation");
   const schedule = internships.filter(i => i.section === "schedule");
   const steps = internships.filter(i => i.section === "process");
-
-  // 📅 ข้อมูลปฏิทินกิจกรรมการฝึกงานปี 2568
-  // const schedule = [
-  //   { event: "นักศึกษาติดต่อกับหน่วยงานด้วยตนเอง (คนละ 1 หน่วยงานเท่านั้น)", date: "บัดนี้ - 13 มีนาคม 2569" },
-  //   { event: "กรอกคำร้องขอฝึกงาน (คพ.05) และส่งคำร้องที่สำนักงานภาควิชาฯ (ดาวน์โหลดคำร้องได้ที่เว็บไซต์ภาควิชา)", date: "บัดนี้ - 13 มีนาคม 2569" },
-  //   { event: "วันปิดภาคการศึกษาที่ 2/2568", date: "30 มีนาคม 2569" },
-  //   { event: "รับเอกสารส่งตัวเข้าฝึกงาน", date: "รอประกาศแจ้งอีกครั้ง" },
-  //   { event: "ช่วงเวลาการออกฝึกงานภาคฤดูร้อน ปีการศึกษา 2568", date: "1 เมษายน 2569 - 21 มิถุนายน 2569" },
-  //   { event: "วันเปิดภาคการศึกษาที่ 1/2569", date: "22 มิถุนายน 2569" }
-  // ];
-
-  // 🛠️ ลำดับกระบวนการฝึกงาน 9 ขั้นตอน
-  // const steps = [
-  //   { title: "ติดต่อ", desc: "นักศึกษาติดต่อสถานที่ฝึกงาน (คณะละ 1 สถานที่เท่านั้น)" },
-  //   { title: "กรอก", desc: "กรอกคำร้องขอฝึกงาน คพ.05 (ดาวน์โหลดคำร้องได้ที่เว็บไซต์ของภาควิชาฯ)" },
-  //   { title: "ยื่น", desc: "ยื่น คพ.05 และเอกสารแสดงผลการเรียน ส่งที่สำนักงานภาควิชาฯ (เอกสารแสดงผลการเรียนปริ้นท์ได้จากระบบลงทะเบียน)" },
-  //   { title: "รอรับ", desc: "เจ้าหน้าที่ออกหนังสือขอความอนุเคราะห์ฝึกงาน (นักศึกษารอรับเอกสารได้ทันที)" },
-  //   { title: "ยื่น", desc: "นักศึกษานำหนังสือขอความอนุเคราะห์ฝึกงาน + แบบตอบรับ ไปยื่นให้กับสถานประกอบการด้วยตนเอง" },
-  //   { title: "ส่ง", desc: "นักศึกษานำแบบตอบรับเข้าฝึกงานจากหน่วยงานมาส่งให้กับภาควิชาฯ *หากหน่วยงานปฏิเสธ ให้เริ่มขั้นตอนที่ 1 ใหม่" },
-  //   { title: "รับ", desc: "นักศึกษารับเอกสารส่งตัว" },
-  //   { title: "เข้าฝึก", desc: "เข้ารับการฝึกงานตามระยะเวลาที่กำหนด (ไม่ต่ำกว่า 40 วันทำการหรือ 240 ชั่วโมง ไม่นับวันหยุดราชการ ขาด สาย ลา)" },
-  //   { title: "ส่ง", desc: "หลังฝึกงานเสร็จ ส่งใบประเมินการฝึกงาน, ใบลงเวลา, สมุดบันทึกการฝึกงาน (ส่งที่สำนักงานภาควิชาฯ ภายใน 2 สัปดาห์หลังจากนักศึกษาฝึกงานเสร็จ)" }
-  // ];
 
   return (
     <div className="bg-white min-h-screen flex flex-col text-left">
@@ -92,7 +94,10 @@ export default function Internship() {
                   className="bg-white p-5 rounded-2xl border border-slate-200 flex items-start gap-3 md:col-span-2"
                 >
                   <CheckCircle2 size={18} className="text-emerald-500 shrink-0 mt-0.5" />
-                  <p>{item.content}</p>
+                  <div>
+                    {item.title && <div className="text-xs font-bold text-[#3F51B5] mb-1">{item.title}</div>}
+                    <p>{item.content}</p>
+                  </div>
                 </div>
               ))}
 
@@ -105,21 +110,32 @@ export default function Internship() {
                   key={idx}
                   className="bg-white p-5 rounded-2xl border border-slate-200 flex items-start gap-3 md:col-span-2"
                 >
-                  <p>{item.content}</p>
+                  <div>
+                    {item.title && <div className="text-xs font-bold text-[#3F51B5] mb-1">{item.title}</div>}
+                    <p>{item.content}</p>
+                  </div>
                 </div>
               ))}
-              <div className="lg:col-span-2 bg-slate-50 p-1 rounded-3xl border border-slate-100"></div>
-              <h2 className="flex items-center gap-3 text-xl font-bold text-slate-800 mb-1">
-                <ClipboardCheck className="text-[#3F51B5]" /> *หมายเหตุ
-              </h2>
-              {notes.map((item, idx) => (
-                <div
-                  key={idx}
-                  className="bg-white p-5 rounded-2xl border border-slate-200 flex items-start gap-3 md:col-span-2"
-                >
-                  <p>{item.content}</p>
-                </div>
-              ))}
+              
+              {notes.length > 0 && (
+                <>
+                  <div className="lg:col-span-2 bg-slate-50 p-1 rounded-3xl border border-slate-100"></div>
+                  <h2 className="flex items-center gap-3 text-xl font-bold text-slate-800 mb-1">
+                    <ClipboardCheck className="text-[#3F51B5]" /> *หมายเหตุ
+                  </h2>
+                  {notes.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-white p-5 rounded-2xl border border-slate-200 flex items-start gap-3 md:col-span-2"
+                    >
+                      <div>
+                        {item.title && <div className="text-xs font-bold text-amber-700 mb-1">{item.title}</div>}
+                        <p>{item.content}</p>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
           </div>
 
@@ -128,22 +144,17 @@ export default function Internship() {
               <Info size={20} /> เกณฑ์การประเมิน
             </h2>
             <div className="space-y-4 text-sm relative z-10">
-              {[
-                { title: "ระเบียบวินัย", score: 20 },
-                { title: "พฤติกรรมในการปฏิบัติงาน", score: 20 },
-                { title: "ผลงาน", score: 20 },
-                { title: "วิธีการปฏิบัติงาน", score: 20 },
-                { title: "มนุษย์สัมพันธ์", score: 20 }
-              ].map((item, idx) => (
+              {config.evaluation.items?.map((item, idx) => (
                 <div key={idx} className="flex justify-between border-b border-white/10 pb-2">
                   <span>{item.title}</span>
                   <span className="font-bold">{item.score} คะแนน</span>
                 </div>
               ))}
-              <div className="mt-4 p-3 bg-red-500/20 border border-red-400/30 rounded-xl text-[11px] leading-relaxed">
-                <strong>นิสิตจะไม่ผ่านการฝึกงานในกรณีดังต่อไปนี้:</strong><br />
-                คะแนนประเมินรวมจากสถานประกอบการทั้งหมด ได้น้อยกว่า 70 คะแนน
-              </div>
+              {config.evaluation.note && (
+                <div className="mt-4 p-3 bg-red-500/20 border border-red-400/30 rounded-xl text-[11px] leading-relaxed">
+                  {config.evaluation.note}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -151,7 +162,7 @@ export default function Internship() {
         {/* 📅 ส่วนที่ 2: ปฏิทินกิจกรรม */}
         <div className="space-y-6 text-left">
           <h2 className="flex items-center gap-3 text-2xl font-bold text-slate-800">
-            <Calendar className="text-[#3F51B5]" /> กำหนดการประจำปีการศึกษา 2568
+            <Calendar className="text-[#3F51B5]" /> กำหนดการประจำปีการศึกษา
           </h2>
           <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
@@ -163,21 +174,29 @@ export default function Internship() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {schedule.map((item, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="px-6 py-4 text-slate-700">{item.title}</td>
-                      <td className="px-6 py-4 text-center text-[#3F51B5] font-semibold">
-                        {item.content}
+                  {schedule.length === 0 ? (
+                    <tr>
+                      <td colSpan={2} className="px-6 py-8 text-center text-slate-400 text-xs">
+                        ยังไม่มีข้อมูลกำหนดการ
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    schedule.map((item, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="px-6 py-4 text-slate-700">{item.title}</td>
+                        <td className="px-6 py-4 text-center text-[#3F51B5] font-semibold">
+                          {item.content}
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
           </div>
         </div>
 
-        {/* 🚀 ส่วนที่ 3: ลำดับขั้นตอน 9 ขั้นตอน */}
+        {/* 🚀 ส่วนที่ 3: ลำดับขั้นตอน */}
         <div className="space-y-8 text-left">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-slate-100 pb-6">
             <h2 className="flex items-center gap-3 text-2xl font-bold text-slate-800">
@@ -185,23 +204,27 @@ export default function Internship() {
             </h2>
 
             <div className="flex flex-wrap gap-3">
-              <a
-                href="https://drive.google.com/drive/mobile/folders/1FgrgA1v6hOujVkCUFFtfEHV5cOmofhGK?usp=drive_link"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 bg-slate-300 text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-[#3F51B5] transition-all shadow-lg"
-              >
-                <Eye size={16} /> ดูเอกสารประกอบการฝึกงาน
-              </a>
+              {config.links.docsUrl && (
+                <a
+                  href={config.links.docsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 bg-slate-300 text-slate-800 px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-[#3F51B5] hover:text-white transition-all shadow-md"
+                >
+                  <Eye size={16} /> ดูเอกสารประกอบการฝึกงาน
+                </a>
+              )}
 
-              <a
-                href="https://docs.google.com/spreadsheets/d/1tguBraKR6NkJRQJkZuBtu5KsPsW5CDj8taq536B1t1Y/htmlview"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 bg-slate-300 text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-[#3F51B5] transition-all shadow-lg"
-              >
-                <MapPin size={16} /> ตรวจสอบสถานที่ฝึกงาน
-              </a>
+              {config.links.placesUrl && (
+                <a
+                  href={config.links.placesUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 bg-slate-300 text-slate-800 px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-[#3F51B5] hover:text-white transition-all shadow-md"
+                >
+                  <MapPin size={16} /> ตรวจสอบสถานที่ฝึกงาน
+                </a>
+              )}
             </div>
           </div>
 
@@ -216,7 +239,7 @@ export default function Internship() {
                   {idx + 1}
                 </div>
                 <h4 className="text-[#3F51B5] font-bold text-lg mb-2 mt-2">{step.title}</h4>
-                <p className="text-xs text-slate-500 leading-relaxed">
+                <p className="text-xs text-slate-500 leading-relaxed whitespace-pre-wrap">
                   {step.content}
                 </p>
               </motion.div>

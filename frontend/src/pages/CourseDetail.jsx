@@ -5,6 +5,7 @@ import { Eye, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import Footer from "../components/Footer";
 
 const idMap = {
+  "cs-normal-2569": { slug: "regular", year: 2569 },
   "cs-normal-2564": { slug: "regular", year: 2564 },
   "cs-normal-2559": { slug: "regular", year: 2559 },
   "cs-old-2554": { slug: "regular", year: 2554 },

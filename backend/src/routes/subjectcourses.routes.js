@@ -1,31 +1,51 @@
 import express from "express";
 import multer from "multer";
-
+import fs from "fs";
+import path from "path";
 import {
   getCourseYears,
+  createCourseYear,
+  deleteCourseYear,
   getCourses,
-  uploadCourse
+  getAllCourses,
+  uploadCourse,
+  updateCourse,
+  deleteCourse
 } from "../controllers/subjectcourses.controller.js";
+import { verifyToken } from "../middlewares/auth.middleware.js";
+import { checkRole } from "../middlewares/role.middleware.js";
 
 const router = express.Router();
 
 /* ---------- multer config ---------- */
+const uploadDir = path.join(process.cwd(), "uploads", "course");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 const storage = multer.diskStorage({
-  destination: "uploads/course",
+  destination: (req, file, cb) => {
+    cb(null, "uploads/course");
+  },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + "-" + file.originalname);
+    const ext = path.extname(file.originalname);
+    cb(null, Date.now() + "-" + Math.round(Math.random() * 1e9) + ext);
   },
 });
 
 const upload = multer({ storage });
 
-/* ---------- routes ---------- */
-
+/* ---------- public routes ---------- */
 router.get("/years", getCourseYears);
-
+router.get("/all", getAllCourses);
 router.get("/:year/:semester", getCourses);
 
-router.post("/upload", upload.single("file"), uploadCourse);
+/* ---------- protected admin / lecturer routes ---------- */
+router.post("/years", verifyToken, checkRole(["admin", "lecturer"]), createCourseYear);
+router.delete("/years/:id", verifyToken, checkRole(["admin", "lecturer"]), deleteCourseYear);
+
+router.post("/upload", verifyToken, checkRole(["admin", "lecturer"]), upload.single("file"), uploadCourse);
+router.put("/:id", verifyToken, checkRole(["admin", "lecturer"]), upload.single("file"), updateCourse);
+router.delete("/:id", verifyToken, checkRole(["admin", "lecturer"]), deleteCourse);
 
 export default router;

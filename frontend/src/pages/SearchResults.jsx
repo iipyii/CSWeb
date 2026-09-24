@@ -101,10 +101,10 @@ export default function SearchResults() {
                     m.isExternal ? (
                       <a 
                         key={`menu-${idx}`} 
-                        href={m.path} 
+                        href={m.url || m.path} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="bg-white p-5 rounded-xl shadow-sm hover:shadow-md border border-slate-100 hover:border-indigo-400 transition-all group flex items-center justify-between"
+                        className="bg-white p-5 rounded-2xl shadow-xs hover:shadow-md border border-slate-100 hover:border-indigo-400 transition-all group flex items-center justify-between"
                       >
                         <div>
                           <span className="text-[11px] font-bold text-indigo-500 uppercase tracking-wider">{t('menu')} / ลิงก์ภายนอก</span>
@@ -116,8 +116,8 @@ export default function SearchResults() {
                     ) : (
                       <Link 
                         key={`menu-${idx}`} 
-                        to={m.path}
-                        className="bg-white p-5 rounded-xl shadow-sm hover:shadow-md border border-slate-100 hover:border-indigo-400 transition-all group flex items-center justify-between"
+                        to={m.url || m.path}
+                        className="bg-white p-5 rounded-2xl shadow-xs hover:shadow-md border border-slate-100 hover:border-indigo-400 transition-all group flex items-center justify-between"
                       >
                         <div>
                           <span className="text-[11px] font-bold text-indigo-500 uppercase tracking-wider">{t('menu')}</span>
@@ -148,26 +148,37 @@ export default function SearchResults() {
                   {results.projects.map((p) => (
                     <Link 
                       key={`proj-${p.id}`} 
-                      to={`/student-projects?q=${encodeURIComponent(p.title_th || p.title_en || '')}`}
-                      className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md hover:border-indigo-500 border border-transparent transition-all group block"
+                      to={`/student-projects/${p.id}`}
+                      className="bg-white p-6 rounded-2xl shadow-xs hover:shadow-md hover:border-indigo-400 border border-slate-100 transition-all group flex flex-col justify-between"
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-bold text-indigo-600 uppercase">{t('project')}</span>
-                        {p.academic_year && (
-                          <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
-                            {t('year')} {p.academic_year}
+                      <div>
+                        <div className="flex items-center justify-between gap-2 mb-2.5">
+                          <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md uppercase">
+                            {t('project')}
                           </span>
+                          {(p.year || p.academic_year) && (
+                            <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                              ปี {p.year || p.academic_year} {p.semester ? `(ภาค ${p.semester})` : ''}
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="text-base font-bold text-gray-800 group-hover:text-indigo-600 transition-colors line-clamp-2">
+                          {p.title_th}
+                        </h3>
+                        {p.title_en && (
+                          <p className="text-xs text-slate-500 italic mt-1 line-clamp-1">{p.title_en}</p>
+                        )}
+                        {p.abstract && (
+                          <p className="text-xs text-slate-400 mt-2 line-clamp-2 font-light">{p.abstract}</p>
                         )}
                       </div>
-                      <h3 className="text-base font-bold text-gray-800 group-hover:text-indigo-600 transition-colors line-clamp-2">
-                        {p.title_th}
-                      </h3>
-                      {p.title_en && (
-                        <p className="text-xs text-slate-500 italic mt-1 line-clamp-1">{p.title_en}</p>
-                      )}
-                      {p.abstract && (
-                        <p className="text-xs text-slate-400 mt-2 line-clamp-2 font-light">{p.abstract}</p>
-                      )}
+
+                      <div className="mt-4 pt-3 border-t border-slate-50 text-xs text-slate-500 flex items-center justify-between">
+                        <span className="truncate">
+                          {p.advisor?.fullname_th ? `ที่ปรึกษา: ${p.advisor.fullname_th}` : 'คลิกเพื่อดูรายละเอียดโครงงาน'}
+                        </span>
+                        <ArrowRight size={14} className="text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
+                      </div>
                     </Link>
                   ))}
                 </div>
@@ -189,14 +200,35 @@ export default function SearchResults() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {results.courses.map(course => (
                     <Link 
-                      to="/course-description" 
+                      to={`/course-description?q=${encodeURIComponent(course.subject_code || course.title_th || course.title || '')}`} 
                       key={`course-${course.id}`} 
-                      className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md hover:border-indigo-500 border border-transparent transition-all group block"
+                      className="bg-white p-6 rounded-2xl shadow-xs hover:shadow-md hover:border-indigo-400 border border-slate-100 transition-all group flex flex-col justify-between"
                     >
-                      <span className="text-xs font-bold text-indigo-600 uppercase">รายวิชา</span>
-                      <h3 className="text-base font-bold mt-2 text-gray-800 group-hover:text-indigo-600 transition-colors line-clamp-2">
-                        {course.title}
-                      </h3>
+                      <div>
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md font-mono">
+                            {course.subject_code || 'รายวิชา'}
+                          </span>
+                          {course.credit && (
+                            <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                              {course.credit} หน่วยกิต
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="text-base font-bold text-gray-800 group-hover:text-indigo-600 transition-colors line-clamp-2">
+                          {course.title_th || course.title || course.title_en}
+                        </h3>
+                        {course.title_en && course.title_th && (
+                          <p className="text-xs text-slate-400 italic mt-1 line-clamp-1">{course.title_en}</p>
+                        )}
+                      </div>
+
+                      <div className="mt-4 pt-3 border-t border-slate-50 text-xs text-slate-500 flex items-center justify-between">
+                        <span className="text-slate-400">
+                          {course.category || (course.curriculum_year ? `หลักสูตรปี ${course.curriculum_year}` : 'ดูคำอธิบายรายวิชา')}
+                        </span>
+                        <ArrowRight size={14} className="text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
+                      </div>
                     </Link>
                   ))}
                 </div>
@@ -218,18 +250,36 @@ export default function SearchResults() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {results.lecturers.map(person => (
                     <Link 
-                      to="/administrator" 
+                      to={person.lecturer_code ? `/administrator/${person.lecturer_code}` : `/administrator`} 
                       key={`person-${person.id}`} 
-                      className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md hover:border-indigo-500 border border-transparent transition-all group block"
+                      className="bg-white p-6 rounded-2xl shadow-xs hover:shadow-md hover:border-indigo-400 border border-slate-100 transition-all group flex flex-col justify-between"
                     >
-                      <span className="text-xs font-bold text-indigo-600 uppercase">{t('nav_personnel')}</span>
-                      <h3 className="text-base font-bold mt-2 text-gray-800 group-hover:text-indigo-600 transition-colors">
-                        {person.fullname_th}
-                      </h3>
-                      {person.fullname_en && (
-                        <p className="text-xs text-slate-400 mt-0.5">{person.fullname_en}</p>
-                      )}
-                      {person.email && <p className="text-slate-500 text-xs mt-2">{person.email}</p>}
+                      <div>
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md uppercase">
+                            {t('nav_personnel')}
+                          </span>
+                          {person.lecturer_code && (
+                            <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md font-mono">
+                              {person.lecturer_code}
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="text-base font-bold text-gray-800 group-hover:text-indigo-600 transition-colors">
+                          {person.fullname_th}
+                        </h3>
+                        {person.fullname_en && (
+                          <p className="text-xs text-slate-400 mt-0.5">{person.fullname_en}</p>
+                        )}
+                        {person.email && (
+                          <p className="text-slate-500 text-xs mt-2 font-mono">{person.email}</p>
+                        )}
+                      </div>
+
+                      <div className="mt-4 pt-3 border-t border-slate-50 text-xs text-slate-400 flex items-center justify-between">
+                        <span>{person.position_th || 'ดูประวัติและผลงานวิจัย'}</span>
+                        <ArrowRight size={14} className="text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
+                      </div>
                     </Link>
                   ))}
                 </div>
@@ -253,12 +303,20 @@ export default function SearchResults() {
                     <Link 
                       to={`/news/${item.id}`} 
                       key={`news-${item.id}`} 
-                      className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md hover:border-indigo-500 border border-transparent transition-all group block"
+                      className="bg-white p-6 rounded-2xl shadow-xs hover:shadow-md hover:border-indigo-400 border border-slate-100 transition-all group flex flex-col justify-between"
                     >
-                      <span className="text-xs font-bold text-indigo-600 uppercase">{t('nav_news')}</span>
-                      <h3 className="text-base font-bold mt-2 text-gray-800 group-hover:text-indigo-600 transition-colors line-clamp-2">
-                        {item.title}
-                      </h3>
+                      <div>
+                        <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md uppercase">
+                          {item.category || t('nav_news')}
+                        </span>
+                        <h3 className="text-base font-bold mt-2.5 text-gray-800 group-hover:text-indigo-600 transition-colors line-clamp-2">
+                          {item.title}
+                        </h3>
+                      </div>
+                      <div className="mt-4 pt-3 border-t border-slate-50 text-xs text-slate-400 flex items-center justify-between">
+                        <span>{item.created_at ? new Date(item.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' }) : 'อ่านข่าวสาร'}</span>
+                        <ArrowRight size={14} className="text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
+                      </div>
                     </Link>
                   ))}
                 </div>
@@ -278,21 +336,45 @@ export default function SearchResults() {
                   </span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {results.downloads.map(doc => (
-                    <a 
-                      href={doc.file_url ? (doc.file_url.startsWith('http') ? doc.file_url : `http://localhost:5000${doc.file_url}`) : '#'}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      key={`doc-${doc.id}`} 
-                      className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md hover:border-indigo-500 border border-transparent transition-all group block"
-                    >
-                      <span className="text-xs font-bold text-indigo-600 uppercase">{t('download')}</span>
-                      <h3 className="text-base font-bold mt-2 text-gray-800 group-hover:text-indigo-600 transition-colors line-clamp-2">
-                        {doc.title}
-                      </h3>
-                      {doc.category && <p className="text-xs text-slate-400 mt-2">{doc.category}</p>}
-                    </a>
-                  ))}
+                  {results.downloads.map(doc => {
+                    const downloadHref = doc.file_url || (doc.file_path ? `http://localhost:5000/uploads/downloads/${doc.file_path}` : `http://localhost:5000/api/downloads/download/${doc.id}`);
+                    return (
+                      <a 
+                        href={downloadHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        key={`doc-${doc.id}`} 
+                        className="bg-white p-6 rounded-2xl shadow-xs hover:shadow-md hover:border-indigo-400 border border-slate-100 transition-all group flex flex-col justify-between"
+                      >
+                        <div>
+                          <div className="flex items-center justify-between gap-2 mb-2">
+                            <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md uppercase">
+                              {t('download')}
+                            </span>
+                            {doc.audience && (
+                              <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                                {doc.audience === 'staff' ? 'สำหรับบุคลากร' : 'สำหรับนักศึกษา'}
+                              </span>
+                            )}
+                          </div>
+                          <h3 className="text-base font-bold text-gray-800 group-hover:text-indigo-600 transition-colors line-clamp-2">
+                            {doc.title}
+                          </h3>
+                          {doc.category && (
+                            <p className="text-xs text-slate-400 mt-2 font-medium">หมวดหมู่: {doc.category}</p>
+                          )}
+                          {doc.file_name && (
+                            <p className="text-xs text-slate-400 font-mono mt-1 truncate">📄 {doc.file_name}</p>
+                          )}
+                        </div>
+
+                        <div className="mt-4 pt-3 border-t border-slate-50 text-xs font-bold text-[#3F51B5] group-hover:text-indigo-700 flex items-center justify-between">
+                          <span>คลิกเพื่อเปิด / ดาวน์โหลดไฟล์</span>
+                          <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
+                        </div>
+                      </a>
+                    );
+                  })}
                 </div>
               </section>
             )}

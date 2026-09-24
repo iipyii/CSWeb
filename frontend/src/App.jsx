@@ -70,6 +70,10 @@ import ManageProjects from './pages/admin/ManageProjects';
 import ManageConsultants from './pages/admin/ManageConsultants';
 import ManageChatbot from './pages/admin/ManageChatbot';
 import ManageProfile from './pages/admin/ManageProfile';
+import ManageInternship from './pages/admin/ManageInternship';
+import ManageSubjectCourses from './pages/admin/ManageSubjectCourses';
+import ManageStudentGuide from './pages/admin/ManageStudentGuide';
+import ManageStudentLinks from './pages/admin/ManageStudentLinks';
 
 // Auth & Language Context
 import { AuthProvider } from './context/AuthContext';
@@ -261,6 +265,10 @@ export default function App() {
             <Route path="projects" element={<ManageProjects />} />
             <Route path="subjects" element={<ManageSubjects />} />
             <Route path="consultants" element={<ManageConsultants />} />
+            <Route path="internship" element={<ManageInternship />} />
+            <Route path="subject-courses" element={<ManageSubjectCourses />} />
+            <Route path="student-guide" element={<ManageStudentGuide />} />
+            <Route path="student-links" element={<ManageStudentLinks />} />
           </Route>
         </Routes>
       </AuthProvider>

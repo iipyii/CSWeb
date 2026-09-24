@@ -3,9 +3,11 @@ import { getLocalEmbedding } from "../services/embedding.service.js";
 import Fuse from 'fuse.js';
 
 const GEMINI_MODELS = [
-  "gemini-2.5-flash",   // อันดับ 1: ลองก่อน
-  // "gemini-1.5-flash",   // อันดับ 2: fallback ถ้าอันแรกยุ่ง
-  // "gemini-1.5-flash-8b" // อันดับ 3: เบาที่สุด ใช้เป็น last resort
+  "gemini-3.6-flash",         // อันดับ 1: เร็ว แม่นยำ และรองรับล่าสุด
+  "gemini-3.5-flash",         // อันดับ 2: สำรองคุณภาพสูง
+  "gemini-flash-lite-latest", // อันดับ 3: สำรองเบาและเร็ว
+  "gemini-flash-latest",      // อันดับ 4: fallback อัตโนมัติ
+  "gemini-2.5-flash"          // อันดับ 5: fallback
 ];
 
 const isOverloadedError = (err) => {
@@ -280,15 +282,20 @@ export const chatWithAI = async (req, res) => {
 
     // 🎯 4.4 ค้นหารายวิชาในตาราง subjects ใหม่
     try {
+      const keywords = message.trim().split(/\s+/).filter(w => w.length >= 2);
+      const orConditions = [
+        { subject_code: { contains: message.trim() } },
+        { title_th: { contains: message.trim() } },
+        { title_en: { contains: message.trim(), mode: "insensitive" } }
+      ];
+      keywords.forEach(kw => {
+        orConditions.push({ title_th: { contains: kw } });
+        orConditions.push({ title_en: { contains: kw, mode: "insensitive" } });
+      });
+
       const matchedSubjects = await prisma.subjects.findMany({
-        where: {
-          OR: [
-            { subject_code: { contains: message.trim() } },
-            { title_th: { contains: message.trim() } },
-            { title_en: { contains: message.trim(), mode: "insensitive" } }
-          ]
-        },
-        take: 5
+        where: { OR: orConditions },
+        take: 8
       });
 
       matchedSubjects.forEach(s => {
@@ -296,6 +303,89 @@ export const chatWithAI = async (req, res) => {
       });
     } catch (err) {
       console.warn("Could not query subjects:", err.message);
+    }
+
+    // 🎯 4.5 ค้นหาข้อมูลการฝึกงานและสหกิจศึกษา (internships)
+    try {
+      if (message.includes("ฝึกงาน") || message.includes("สหกิจ") || message.includes("internship") || message.includes("coop")) {
+        const internshipData = await prisma.internships.findMany({
+          take: 10
+        });
+        internshipData.forEach(item => {
+          contextText += `[ข้อมูลการฝึกงาน/สหกิจศึกษา] หัวข้อ: ${item.title} หมวดหมู่: ${item.category} รายละเอียด: ${item.content}\n`;
+        });
+      }
+    } catch (err) {
+      console.warn("Could not query internships:", err.message);
+    }
+
+    // 🎯 4.6 ค้นหาแบบฟอร์มและเอกสารดาวน์โหลด (downloads)
+    try {
+      if (message.includes("แบบฟอร์ม") || message.includes("ดาวน์โหลด") || message.includes("เอกสาร") || message.includes("ใบคำร้อง") || message.includes("คพ.") || message.includes("บ.") || message.includes("CSB")) {
+        const downloadDocs = await prisma.downloads.findMany({
+          where: {
+            OR: [
+              { title: { contains: message.trim(), mode: "insensitive" } },
+              { file_name: { contains: message.trim(), mode: "insensitive" } },
+              { category: { contains: message.trim(), mode: "insensitive" } }
+            ]
+          },
+          take: 8
+        });
+
+        downloadDocs.forEach(d => {
+          contextText += `[เอกสารดาวน์โหลด/แบบฟอร์ม] ชื่อเอกสาร: ${d.title} (สำหรับ: ${d.audience === 'staff' ? 'บุคลากร' : 'นักศึกษา'}) หมวดหมู่: ${d.category} ไฟล์: ${d.file_name} ลิงก์ดาวน์โหลด: /api/downloads/download/${d.id}\n`;
+        });
+      }
+    } catch (err) {
+      console.warn("Could not query downloads:", err.message);
+    }
+
+    // 🎯 4.7 ค้นหาโครงงานนักศึกษา (projects)
+    try {
+      if (message.includes("โครงงาน") || message.includes("โปรเจกต์") || message.includes("ปริญญานิพนธ์") || message.includes("project")) {
+        const matchedProjects = await prisma.projects.findMany({
+          where: {
+            OR: [
+              { title_th: { contains: message.trim(), mode: "insensitive" } },
+              { title_en: { contains: message.trim(), mode: "insensitive" } },
+              { students_text: { contains: message.trim(), mode: "insensitive" } }
+            ]
+          },
+          include: {
+            advisor: { select: { fullname_th: true } }
+          },
+          take: 6
+        });
+
+        matchedProjects.forEach(p => {
+          contextText += `[โครงงานนักศึกษา] ชื่อเรื่อง: ${p.title_th} (${p.title_en || '-'}) ปีการศึกษา: ${p.year} ผู้จัดทำ: ${p.students_text || '-'} ที่ปรึกษา: ${p.advisor?.fullname_th || '-'} บทคัดย่อ: ${p.abstract ? p.abstract.substring(0, 150) + '...' : '-'}\n`;
+        });
+      }
+    } catch (err) {
+      console.warn("Could not query projects:", err.message);
+    }
+
+    // 🎯 4.8 ค้นหาข่าวสารและประกาศ (news)
+    try {
+      if (message.includes("ข่าว") || message.includes("ประกาศ") || message.includes("ทุน") || message.includes("กิจกรรม")) {
+        const newsItems = await prisma.news.findMany({
+          where: {
+            OR: [
+              { title: { contains: message.trim(), mode: "insensitive" } },
+              { content: { contains: message.trim(), mode: "insensitive" } },
+              { category: { contains: message.trim(), mode: "insensitive" } }
+            ]
+          },
+          take: 5
+        });
+
+        newsItems.forEach(n => {
+          contextText += `[ข่าวสาร/ประกาศ] หัวข้อ: ${n.title} หมวดหมู่: ${n.category} รายละเอียด: ${n.content ? n.content.substring(0, 150) + '...' : '-'}\n`;
+        });
+      }
+    } catch (err) {
+      console.warn("Could not query news:", err.message);
     }
 
     faqResult.forEach((faq) => {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { 
   Search, ChevronDown, BookOpen, Layers, Filter, X, 
   ExternalLink, Sparkles, Check, Copy, Info 
@@ -8,6 +9,7 @@ import axios from "axios";
 import Footer from "../components/Footer";
 
 export default function CourseDescription() {
+  const location = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDegree, setSelectedDegree] = useState("bachelor-normal");
   const [selectedYear, setSelectedYear] = useState("2569");
@@ -19,6 +21,14 @@ export default function CourseDescription() {
   const [activeModalSubject, setActiveModalSubject] = useState(null);
   const [copiedCode, setCopiedCode] = useState(null);
 
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const q = params.get('q') || params.get('search') || "";
+    if (q) {
+      setSearchTerm(q);
+    }
+  }, [location.search]);
+
   // ข้อมูลหลักสูตรครบถ้วนทั้งใหม่และเก่า ตามโครงสร้างภาควิชาฯ
   const curriculumOptions = [
     {
@@ -28,7 +38,8 @@ export default function CourseDescription() {
       years: [
         { year: "2569", code: "CS69", name: "หลักสูตรปรับปรุง พ.ศ. 2569 (ใหม่ล่าสุด)" },
         { year: "2564", code: "CS64", name: "หลักสูตรปรับปรุง พ.ศ. 2564" },
-        { year: "2559", code: "CS59", name: "หลักสูตรปรับปรุง พ.ศ. 2559" }
+        { year: "2559", code: "CS59", name: "หลักสูตรปรับปรุง พ.ศ. 2559" },
+        { year: "2554", code: "CS54", name: "หลักสูตร พ.ศ. 2554" }
       ]
     },
     {

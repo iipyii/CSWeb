@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -44,7 +45,20 @@ const COLOR_OPTIONS = [
 ];
 
 export default function ManagePersonnel() {
-  const [activeTab, setActiveTab] = useState('lecturers'); // 'lecturers' | 'staff' | 'links'
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(tabParam || 'lecturers'); // 'lecturers' | 'staff' | 'links'
+
+  useEffect(() => {
+    if (tabParam && ['lecturers', 'staff', 'links'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setSearchParams({ tab });
+  };
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [alertInfo, setAlertInfo] = useState({ show: false, type: '', message: '' });
@@ -474,7 +488,7 @@ export default function ManagePersonnel() {
       {/* 🧭 Tabs Navigation */}
       <div className="flex flex-wrap gap-2 border-b border-slate-200/80 pb-2">
         <button
-          onClick={() => setActiveTab('lecturers')}
+          onClick={() => handleTabChange('lecturers')}
           className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm transition-all ${
             activeTab === 'lecturers'
               ? 'bg-[#3F51B5] text-white shadow-md shadow-indigo-100'
@@ -485,7 +499,7 @@ export default function ManagePersonnel() {
         </button>
 
         <button
-          onClick={() => setActiveTab('staff')}
+          onClick={() => handleTabChange('staff')}
           className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm transition-all ${
             activeTab === 'staff'
               ? 'bg-[#3F51B5] text-white shadow-md shadow-indigo-100'
@@ -496,7 +510,7 @@ export default function ManagePersonnel() {
         </button>
 
         <button
-          onClick={() => setActiveTab('links')}
+          onClick={() => handleTabChange('links')}
           className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm transition-all ${
             activeTab === 'links'
               ? 'bg-[#3F51B5] text-white shadow-md shadow-indigo-100'
