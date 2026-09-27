@@ -11,7 +11,7 @@ export default function NewsArchive() {
   // 🟢 1. ดึงข้อมูลข่าวเฉพาะที่ถูกจัดเก็บแล้ว
   const fetchArchivedNews = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/news/all");
+      const res = await axios.get("/api/news/all");
       const archived = res.data
         .filter(item => item.status === 'archived')
         .map(item => ({
@@ -34,7 +34,7 @@ export default function NewsArchive() {
   const handleRestore = async (id) => {
     if (window.confirm("ต้องการกู้คืนข่าวนี้กลับไปหน้าหลักใช่หรือไม่?")) {
       try {
-        await axios.put(`http://localhost:5000/api/news/${id}`, { status: 'active' });
+        await axios.put(`/api/news/${id}`, { status: 'active' });
         alert("กู้คืนข่าวสารกลับไปหน้าหลักเรียบร้อยแล้ว");
         fetchArchivedNews(); // โหลดข้อมูลใหม่
       } catch (error) {
@@ -48,7 +48,7 @@ export default function NewsArchive() {
   const handleDelete = async (id) => {
     if (window.confirm("คำเตือน: คุณต้องการลบข่าวนี้ทิ้งถาวรใช่หรือไม่? (ไม่สามารถกู้คืนได้)")) {
       try {
-        await axios.delete(`http://localhost:5000/api/news/${id}`);
+        await axios.delete(`/api/news/${id}`);
         alert("ลบข่าวสารเรียบร้อยแล้ว");
         fetchArchivedNews();
       } catch (error) {

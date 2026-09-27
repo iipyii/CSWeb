@@ -15,7 +15,7 @@ const getPdfUrl = (path) => {
   if (!clean.startsWith("/")) clean = "/" + clean;
   if (!clean.startsWith("/uploads/")) clean = "/uploads" + clean;
   clean = clean.replace(/^\/uploads\/uploads\//, "/uploads/");
-  return `http://localhost:5000${clean}`;
+  return `${clean}`;
 };
 
 export default function CourseSectionContent() {
@@ -26,7 +26,7 @@ export default function CourseSectionContent() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`http://localhost:5000/api/program-sections/${id}`)
+    fetch(`/api/program-sections/${id}`)
       .then((res) => {
         if (!res.ok) throw new Error("Section not found");
         return res.json();

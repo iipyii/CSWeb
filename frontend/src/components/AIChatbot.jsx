@@ -89,7 +89,7 @@ export default function AIChatbot() {
     setIsLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:5000/api/chat', {
+      const response = await axios.post('/api/chat', {
         message: queryText,
         category: selectedCategory
       });

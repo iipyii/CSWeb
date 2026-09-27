@@ -52,7 +52,7 @@ export default function ManageSubjectCourses() {
   // Fetch Academic Years
   const fetchYears = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/courses/years');
+      const res = await axios.get('/api/courses/years');
       setYears(res.data || []);
       if (res.data?.length > 0 && !selectedYear) {
         setSelectedYear(res.data[0]);
@@ -68,7 +68,7 @@ export default function ManageSubjectCourses() {
     if (!selectedYear) return;
     try {
       setLoading(true);
-      const res = await axios.get(`http://localhost:5000/api/courses/${selectedYear.year}/${selectedSemester}`);
+      const res = await axios.get(`/api/courses/${selectedYear.year}/${selectedSemester}`);
       setCourses(res.data || []);
     } catch (error) {
       console.error('Fetch courses error:', error);
@@ -94,7 +94,7 @@ export default function ManageSubjectCourses() {
     if (!newYearInput) return;
     try {
       setSaving(true);
-      const res = await axios.post('http://localhost:5000/api/courses/years', { year: newYearInput }, { withCredentials: true });
+      const res = await axios.post('/api/courses/years', { year: newYearInput }, { withCredentials: true });
       showAlert('success', `เพิ่มปีการศึกษา ${res.data.year} สำเร็จ`);
       setNewYearInput('');
       setYearModalOpen(false);
@@ -112,7 +112,7 @@ export default function ManageSubjectCourses() {
   const handleDeleteYear = async (yearObj) => {
     if (!window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบปีการศึกษา ${yearObj.year}? เอกสารทั้งหมดในปีนี้จะถูกลบไปด้วย`)) return;
     try {
-      await axios.delete(`http://localhost:5000/api/courses/years/${yearObj.id}`, { withCredentials: true });
+      await axios.delete(`/api/courses/years/${yearObj.id}`, { withCredentials: true });
       showAlert('success', `ลบปีการศึกษา ${yearObj.year} สำเร็จ`);
       setSelectedYear(null);
       await fetchYears();
@@ -188,13 +188,13 @@ export default function ManageSubjectCourses() {
     try {
       setSaving(true);
       if (modalMode === 'create') {
-        await axios.post('http://localhost:5000/api/courses/upload', formData, {
+        await axios.post('/api/courses/upload', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
           withCredentials: true
         });
         showAlert('success', 'อัปโหลดเอกสารขบวนวิชาสำเร็จ');
       } else {
-        await axios.put(`http://localhost:5000/api/courses/${docFormData.id}`, formData, {
+        await axios.put(`/api/courses/${docFormData.id}`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
           withCredentials: true
         });
@@ -214,7 +214,7 @@ export default function ManageSubjectCourses() {
   const handleDeleteDoc = async (id) => {
     if (!window.confirm('คุณแน่ใจหรือไม่ว่าต้องการลบเอกสารนี้?')) return;
     try {
-      await axios.delete(`http://localhost:5000/api/courses/${id}`, { withCredentials: true });
+      await axios.delete(`/api/courses/${id}`, { withCredentials: true });
       showAlert('success', 'ลบเอกสารสำเร็จ');
       setCourses(prev => prev.filter(d => d.id !== id));
     } catch (error) {
@@ -428,7 +428,7 @@ export default function ManageSubjectCourses() {
 
                       <div className="flex items-center gap-1 shrink-0">
                         <a
-                          href={`http://localhost:5000/uploads/course/${doc.file_path}`}
+                          href={`/uploads/course/${doc.file_path}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="p-1.5 text-slate-400 hover:text-[#3F51B5] hover:bg-white rounded-lg transition-all"

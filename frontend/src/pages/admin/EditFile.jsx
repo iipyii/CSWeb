@@ -24,7 +24,7 @@ export default function EditFile() {
     const fetchFileData = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(`http://localhost:5000/api/downloads/detail/${id}`);
+        const res = await axios.get(`/api/downloads/detail/${id}`);
         const data = res.data;
         if (data) {
           setFormData({
@@ -76,7 +76,7 @@ export default function EditFile() {
         data.append("file", selectedFile);
       }
 
-      await axios.put(`http://localhost:5000/api/downloads/${id}`, data, {
+      await axios.put(`/api/downloads/${id}`, data, {
         headers: { "Content-Type": "multipart/form-data" }
       });
 

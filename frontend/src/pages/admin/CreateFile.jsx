@@ -38,7 +38,7 @@ export default function CreateFile() {
       formData.append("category", category || "ทั่วไป");
       formData.append("file", selectedFile);
 
-      await axios.post("http://localhost:5000/api/downloads/upload", formData, {
+      await axios.post("/api/downloads/upload", formData, {
         headers: { "Content-Type": "multipart/form-data" }
       });
 

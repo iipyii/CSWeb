@@ -13,13 +13,13 @@ export default function Login() {
 
   const handleSSOLogin = () => {
     // เชื่อมต่อไปยัง Endpoint OAuth2 ของ Backend เพื่อเริ่มกระบวนการ KMUTNB SSO
-    window.location.href = "http://localhost:5000/auth/login";
+    window.location.href = "/auth/login";
   };
 
   const handleLegacyAdminLogin = async () => {
     try {
       setLegacyLoading(true);
-      const res = await axios.post("http://localhost:5000/auth/legacy-admin");
+      const res = await axios.post("/auth/legacy-admin");
       if (res.data?.token) {
         await loginWithToken(res.data.token);
         navigate("/admin");

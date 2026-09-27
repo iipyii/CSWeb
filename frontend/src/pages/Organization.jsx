@@ -60,7 +60,7 @@ export default function Organization() {
   useEffect(() => {
     const fetchOrg = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/about/organization');
+        const res = await axios.get('/api/about/organization');
         if (res.data?.data) {
           setOrgData(res.data.data);
         }
@@ -76,7 +76,7 @@ export default function Organization() {
   const getImageUrl = (img) => {
     if (!img) return '/cis-logo.svg';
     if (img.startsWith('http://') || img.startsWith('https://')) return img;
-    if (img.startsWith('/uploads')) return `http://localhost:5000${img}`;
+    if (img.startsWith('/uploads')) return `${img}`;
     return img;
   };
 

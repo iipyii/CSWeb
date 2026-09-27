@@ -24,7 +24,7 @@ export default function AdminDashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("http://localhost:5000/api/admin/dashboard");
+      const res = await axios.get("/api/admin/dashboard");
       if (res.data.stats) setStats(res.data.stats);
       if (res.data.activities) setActivities(res.data.activities);
       if (res.data.traffic) setTrafficData(res.data.traffic);

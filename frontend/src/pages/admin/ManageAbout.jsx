@@ -49,9 +49,9 @@ export default function ManageAbout() {
     try {
       setLoading(true);
       const [resOrg, resHist, resContact] = await Promise.all([
-        axios.get('http://localhost:5000/api/about/organization'),
-        axios.get('http://localhost:5000/api/about/history'),
-        axios.get('http://localhost:5000/api/about/contact')
+        axios.get('/api/about/organization'),
+        axios.get('/api/about/history'),
+        axios.get('/api/about/contact')
       ]);
 
       if (resOrg.data?.data) setOrgData(resOrg.data.data);
@@ -79,7 +79,7 @@ export default function ManageAbout() {
 
     try {
       showAlert('info', 'กำลังอัปโหลดรูปภาพ...');
-      const res = await axios.post('http://localhost:5000/api/about/upload-image', formData, {
+      const res = await axios.post('/api/about/upload-image', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       if (res.data?.imagePath) {
@@ -96,7 +96,7 @@ export default function ManageAbout() {
   const handleSaveOrganization = async () => {
     try {
       setSaving(true);
-      await axios.post('http://localhost:5000/api/about/organization', { data: orgData });
+      await axios.post('/api/about/organization', { data: orgData });
       showAlert('success', 'บันทึกข้อมูลโครงสร้างองค์กรเรียบร้อยแล้ว');
     } catch (err) {
       console.error('Save organization failed:', err);
@@ -109,7 +109,7 @@ export default function ManageAbout() {
   const handleSaveHistory = async () => {
     try {
       setSaving(true);
-      await axios.post('http://localhost:5000/api/about/history', { data: historyData });
+      await axios.post('/api/about/history', { data: historyData });
       showAlert('success', 'บันทึกข้อมูลประวัติความเป็นมาเรียบร้อยแล้ว');
     } catch (err) {
       console.error('Save history failed:', err);
@@ -122,7 +122,7 @@ export default function ManageAbout() {
   const handleSaveContact = async () => {
     try {
       setSaving(true);
-      await axios.post('http://localhost:5000/api/about/contact', { data: contactData });
+      await axios.post('/api/about/contact', { data: contactData });
       showAlert('success', 'บันทึกข้อมูลการติดต่อเรียบร้อยแล้ว');
     } catch (err) {
       console.error('Save contact failed:', err);
@@ -330,7 +330,7 @@ export default function ManageAbout() {
                     <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-slate-100 shadow-sm bg-slate-50 relative group">
                       {orgData.head?.image ? (
                         <img 
-                          src={orgData.head.image.startsWith('http') || orgData.head.image.startsWith('/uploads') ? `http://localhost:5000${orgData.head.image.replace('http://localhost:5000', '')}` : orgData.head.image} 
+                          src={orgData.head.image.startsWith('http') || orgData.head.image.startsWith('/uploads') ? `${orgData.head.image.replace('', '')}` : orgData.head.image} 
                           alt={orgData.head?.name} 
                           className="w-full h-full object-cover" 
                         />
@@ -403,7 +403,7 @@ export default function ManageAbout() {
                     <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-slate-100 shadow-sm bg-slate-50 relative group">
                       {orgData.deputy?.image ? (
                         <img 
-                          src={orgData.deputy.image.startsWith('http') || orgData.deputy.image.startsWith('/uploads') ? `http://localhost:5000${orgData.deputy.image.replace('http://localhost:5000', '')}` : orgData.deputy.image} 
+                          src={orgData.deputy.image.startsWith('http') || orgData.deputy.image.startsWith('/uploads') ? `${orgData.deputy.image.replace('', '')}` : orgData.deputy.image} 
                           alt={orgData.deputy?.name} 
                           className="w-full h-full object-cover" 
                         />
@@ -500,7 +500,7 @@ export default function ManageAbout() {
                         <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow bg-white shrink-0">
                           {item.image ? (
                             <img 
-                              src={item.image.startsWith('http') || item.image.startsWith('/uploads') ? `http://localhost:5000${item.image.replace('http://localhost:5000', '')}` : item.image} 
+                              src={item.image.startsWith('http') || item.image.startsWith('/uploads') ? `${item.image.replace('', '')}` : item.image} 
                               alt={item.name} 
                               className="w-full h-full object-cover" 
                             />

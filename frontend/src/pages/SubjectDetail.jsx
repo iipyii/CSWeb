@@ -30,12 +30,12 @@ export default function SubjectDetail() {
         clean = "/uploads/course" + clean;
       }
     }
-    return `http://localhost:5000${clean}`;
+    return `${clean}`;
   };
 
   useEffect(() => {
     axios
-      .get(`http://localhost:5000/api/courses/${year}/${term}`)
+      .get(`/api/courses/${year}/${term}`)
       .then(res => {
         setSubjects(res.data);
       });

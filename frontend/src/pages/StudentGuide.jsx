@@ -27,7 +27,7 @@ export default function StudentGuide() {
 
   useEffect(() => {
     axios
-      .get("http://localhost:5000/api/student-guides")
+      .get("/api/student-guides")
       .then((res) => {
         if (res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
           setGuides(res.data.data);
@@ -44,7 +44,7 @@ export default function StudentGuide() {
   const getFullUrl = (url) => {
     if (!url) return "#";
     if (url.startsWith("http://") || url.startsWith("https://")) return url;
-    return `http://localhost:5000${url}`;
+    return `${url}`;
   };
 
   return (

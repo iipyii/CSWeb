@@ -27,7 +27,7 @@ export default function Home() {
   useEffect(() => {
     const fetchNews = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/news");
+        const res = await axios.get("/api/news");
 
         // จัดการ URL รูปภาพ และ Format วันที่
         const formattedNews = res.data
@@ -36,7 +36,7 @@ export default function Home() {
             id: item.id,
             title: item.title,
             isPinned: item.is_urgent, // ใช้สถานะด่วนเป็นตัวปักหมุด
-            image: item.image ? `http://localhost:5000${item.image}` : "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800",
+            image: item.image ? `${item.image}` : "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800",
             date: new Date(item.created_at).toLocaleDateString('th-TH', {
               year: 'numeric', month: 'long', day: 'numeric'
             }),

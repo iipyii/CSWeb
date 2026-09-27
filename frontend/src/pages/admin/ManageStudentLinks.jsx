@@ -75,7 +75,7 @@ export default function ManageStudentLinks() {
   const fetchLinks = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('http://localhost:5000/api/student-links');
+      const res = await axios.get('/api/student-links');
       setLinks(res.data?.data || []);
     } catch (error) {
       console.error('Fetch student links error:', error);
@@ -140,7 +140,7 @@ export default function ManageStudentLinks() {
         updatedList = updatedList.map(l => l.id === formData.id ? newObj : l);
       }
 
-      await axios.post('http://localhost:5000/api/student-links', { data: updatedList }, { withCredentials: true });
+      await axios.post('/api/student-links', { data: updatedList }, { withCredentials: true });
       setLinks(updatedList);
       showAlert('success', 'บันทึกข้อมูลลิงก์สำหรับนักศึกษาสำเร็จ');
       setModalOpen(false);
@@ -157,7 +157,7 @@ export default function ManageStudentLinks() {
     if (!window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบลิงก์ "${title}"?`)) return;
     try {
       const updatedList = links.filter(l => l.id !== id);
-      await axios.post('http://localhost:5000/api/student-links', { data: updatedList }, { withCredentials: true });
+      await axios.post('/api/student-links', { data: updatedList }, { withCredentials: true });
       setLinks(updatedList);
       showAlert('success', 'ลบลิงก์สำเร็จ');
     } catch (error) {
@@ -177,7 +177,7 @@ export default function ManageStudentLinks() {
 
     setLinks(list);
     try {
-      await axios.post('http://localhost:5000/api/student-links', { data: list }, { withCredentials: true });
+      await axios.post('/api/student-links', { data: list }, { withCredentials: true });
     } catch (e) {
       console.error('Sync order error:', e);
     }

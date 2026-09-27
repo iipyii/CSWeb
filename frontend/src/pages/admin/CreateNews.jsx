@@ -69,7 +69,7 @@ export default function CreateNews() {
       });
 
       // 🌟 ส่งแบบ multipart/form-data
-      await axios.post("http://localhost:5000/api/news", formData);
+      await axios.post("/api/news", formData);
 
       alert("สร้างข่าวสำเร็จ");
       navigate('/admin/news');

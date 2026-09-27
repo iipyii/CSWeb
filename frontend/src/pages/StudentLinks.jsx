@@ -71,7 +71,7 @@ export default function StudentLinks() {
 
   useEffect(() => {
     axios
-      .get("http://localhost:5000/api/student-links")
+      .get("/api/student-links")
       .then((res) => {
         if (res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
           setLinks(res.data.data);

@@ -70,7 +70,7 @@ export default function StaffDownloads() {
 
   useEffect(() => {
     axios
-      .get("http://localhost:5000/api/downloads/staff")
+      .get("/api/downloads/staff")
       .then((res) => {
         setDownloads(res.data);
       })
@@ -156,7 +156,7 @@ export default function StaffDownloads() {
                                   <div className="flex justify-center gap-1.5">
 
                                     <a
-                                      href={`http://localhost:5000/api/downloads/download/${item.id}`}
+                                      href={`/api/downloads/download/${item.id}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       download={item.file_name || `${item.title}.${item.file_type || 'pdf'}`}

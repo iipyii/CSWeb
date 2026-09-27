@@ -85,12 +85,12 @@ export default function ConsultStudent() {
     if (!imagePath) return "/img/placeholder-user.png";
     if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) return imagePath;
     const cleanPath = imagePath.replace(/\\/g, '/').replace(/^\//, '');
-    return `http://localhost:5000/${cleanPath}`;
+    return `/${cleanPath}`;
   };
 
   // ดึงสรุปรายชื่ออาจารย์ทั้งหมดในภาควิชา
   useEffect(() => {
-    axios.get("http://localhost:5000/api/consult/advisors-summary")
+    axios.get("/api/consult/advisors-summary")
       .then((res) => {
         if (Array.isArray(res.data)) {
           setAdvisorsList(res.data);
@@ -118,7 +118,7 @@ export default function ConsultStudent() {
 
     setAdvisorLoading(true);
 
-    axios.get(`http://localhost:5000/api/consult/advisor/${selectedAdvisorCode}`)
+    axios.get(`/api/consult/advisor/${selectedAdvisorCode}`)
       .then((res) => {
         setAdvisorData(res.data.advisor);
         setAdvisorStudents(res.data.students || []);
@@ -145,7 +145,7 @@ export default function ConsultStudent() {
 
       setLoading(true);
 
-      axios.get("http://localhost:5000/api/consult/search", {
+      axios.get("/api/consult/search", {
         params: {
           q: q,
           level: levelFilter,

@@ -30,8 +30,8 @@ export default function ManageFiles() {
     try {
       setLoading(true);
       const [filesRes, statsRes] = await Promise.all([
-        axios.get("http://localhost:5000/api/downloads"),
-        axios.get("http://localhost:5000/api/downloads/stats")
+        axios.get("/api/downloads"),
+        axios.get("/api/downloads/stats")
       ]);
       setFiles(filesRes.data || []);
       if (statsRes.data) setStats(statsRes.data);
@@ -49,7 +49,7 @@ export default function ManageFiles() {
   const handleDelete = async (id) => {
     if (window.confirm("คุณต้องการลบเอกสารนี้ใช่หรือไม่?")) {
       try {
-        await axios.delete(`http://localhost:5000/api/downloads/${id}`);
+        await axios.delete(`/api/downloads/${id}`);
         alert("ลบเอกสารสำเร็จ");
         fetchData();
       } catch (error) {
@@ -190,7 +190,7 @@ export default function ManageFiles() {
                     <td className="px-8 py-5 text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         <a 
-                          href={`http://localhost:5000/api/downloads/download/${file.id}`} 
+                          href={`/api/downloads/download/${file.id}`} 
                           target="_blank" 
                           rel="noreferrer"
                           className="p-2.5 text-slate-400 hover:text-[#3F51B5] hover:bg-white hover:shadow-sm rounded-xl transition-all" 

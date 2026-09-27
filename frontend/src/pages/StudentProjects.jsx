@@ -26,7 +26,7 @@ export default function StudentProjects() {
     const fetchProjects = async () => {
       try {
         setLoading(true);
-        const res = await axios.get("http://localhost:5000/api/projects");
+        const res = await axios.get("/api/projects");
         setProjects(res.data || []);
       } catch (error) {
         console.error("Failed to load projects:", error);

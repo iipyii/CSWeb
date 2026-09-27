@@ -105,7 +105,7 @@ export default function ManageSubjects() {
       if (selectedTrack !== 'all') params.track = selectedTrack;
       if (searchTerm.trim()) params.keyword = searchTerm.trim();
 
-      const res = await axios.get("http://localhost:5000/api/subjects", { params });
+      const res = await axios.get("/api/subjects", { params });
       setSubjects(res.data || []);
       setCurrentPage(1);
     } catch (error) {
@@ -177,10 +177,10 @@ export default function ManageSubjects() {
     try {
       setSubmitting(true);
       if (editingSubject) {
-        await axios.put(`http://localhost:5000/api/subjects/${editingSubject.id}`, formData, getAuthHeaders());
+        await axios.put(`/api/subjects/${editingSubject.id}`, formData, getAuthHeaders());
         alert("แก้ไขข้อมูลรายวิชาสำเร็จ");
       } else {
-        await axios.post("http://localhost:5000/api/subjects", formData, getAuthHeaders());
+        await axios.post("/api/subjects", formData, getAuthHeaders());
         alert("เพิ่มข้อมูลรายวิชาสำเร็จ");
       }
       setIsModalOpen(false);
@@ -196,7 +196,7 @@ export default function ManageSubjects() {
   const handleDeleteSubject = async (id, code, title) => {
     if (window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบรายวิชา "${code} ${title}"?`)) {
       try {
-        await axios.delete(`http://localhost:5000/api/subjects/${id}`, getAuthHeaders());
+        await axios.delete(`/api/subjects/${id}`, getAuthHeaders());
         alert("ลบรายวิชาสำเร็จ");
         fetchSubjects();
       } catch (error) {
@@ -224,8 +224,8 @@ export default function ManageSubjects() {
       fd.append("track", importConfig.track);
 
       const endpoint = importTab === 'pdf' 
-        ? "http://localhost:5000/api/subjects/import-pdf"
-        : "http://localhost:5000/api/subjects/import-excel";
+        ? "/api/subjects/import-pdf"
+        : "/api/subjects/import-excel";
 
       const res = await axios.post(endpoint, fd, {
         ...getAuthHeaders(),
@@ -262,8 +262,8 @@ export default function ManageSubjects() {
       fd.append("replace_existing", String(importConfig.replace_existing));
 
       const endpoint = importTab === 'pdf' 
-        ? "http://localhost:5000/api/subjects/import-pdf"
-        : "http://localhost:5000/api/subjects/import-excel";
+        ? "/api/subjects/import-pdf"
+        : "/api/subjects/import-excel";
 
       const res = await axios.post(endpoint, fd, {
         ...getAuthHeaders(),
@@ -645,7 +645,7 @@ export default function ManageSubjects() {
               {importTab === 'excel' && (
                 <div className="mt-4 pt-3 border-t border-slate-100 flex justify-center">
                   <a
-                    href="http://localhost:5000/api/subjects/template"
+                    href="/api/subjects/template"
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center gap-2 text-xs font-bold text-[#3F51B5] hover:underline bg-indigo-50 px-4 py-2 rounded-xl"

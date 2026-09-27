@@ -17,7 +17,7 @@ export default function Administrator() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get("http://localhost:5000/api/lecturers")
+    axios.get("/api/lecturers")
       .then(res => {
         setLecturers(res.data);
         setLoading(false);
@@ -31,7 +31,7 @@ export default function Administrator() {
   const getImageUrl = (imagePath) => {
     if (!imagePath) return "/img/placeholder-user.png";
     if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) return imagePath;
-    return `http://localhost:5000${imagePath.startsWith("/") ? imagePath : "/" + imagePath}`;
+    return `${imagePath.startsWith("/") ? imagePath : "/" + imagePath}`;
   };
 
   if (loading) {

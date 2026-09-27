@@ -8,7 +8,7 @@ import {
   ExternalLink, Layers, ChevronRight
 } from 'lucide-react';
 
-const API_BASE = "http://localhost:5000/api";
+const API_BASE = "/api";
 
 const FAQ_CATEGORIES = [
   { key: "all", label: "ทั้งหมด" },

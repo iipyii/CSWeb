@@ -24,7 +24,7 @@ export default function ManageNews() {
 
   const fetchNews = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/news/all");
+      const res = await axios.get("/api/news/all");
       const getCategoryLabel = (cat) => {
         const labels = {
           'department': 'ข่าวภาควิชาฯ',
@@ -50,7 +50,7 @@ export default function ManageNews() {
           }),
 
           image: item.image 
-            ? `http://localhost:5000${item.image}` 
+            ? `${item.image}` 
             : "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800" 
         }));
 
@@ -71,7 +71,7 @@ export default function ManageNews() {
   const handleArchive = async (id) => {
     if (window.confirm("ต้องการจัดเก็บข่าวนี้ลงคลังใช่หรือไม่?")) {
       try {
-        await axios.put(`http://localhost:5000/api/news/${id}`, { status: 'archived' });
+        await axios.put(`/api/news/${id}`, { status: 'archived' });
         fetchNews(); // โหลดข้อมูลใหม่เพื่อให้ข่าวหายไปจากหน้าจอ
         alert("ย้ายไปคลังข่าวสำเร็จ");
       } catch (error) {
@@ -84,7 +84,7 @@ export default function ManageNews() {
   const handleDelete = async (id) => {
     if (window.confirm("คุณต้องการลบข่าวนี้ทิ้งถาวรใช่หรือไม่? (ไม่สามารถกู้คืนได้)")) {
       try {
-        await axios.delete(`http://localhost:5000/api/news/${id}`);
+        await axios.delete(`/api/news/${id}`);
         fetchNews(); // โหลดข้อมูลใหม่
       } catch (error) {
         alert("เกิดข้อผิดพลาดในการลบ");

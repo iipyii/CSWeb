@@ -24,7 +24,7 @@ export default function News() {
   useEffect(() => {
     const fetchAllNews = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/news");
+        const res = await axios.get("/api/news");
         const formattedNews = res.data
           .filter(item => item.status === 'active')
           .map(item => ({
@@ -33,7 +33,7 @@ export default function News() {
             description: item.summary || (item.content ? item.content.replace(/<[^>]+>/g, '').substring(0, 150) + '...' : ''), // ดึงเนื้อหาย่อ
             isLatest: true,
             isPinned: item.is_urgent,
-            image: item.image ? `http://localhost:5000${item.image}` : "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800",
+            image: item.image ? `${item.image}` : "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800",
             date: new Date(item.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }),
             tag: item.category === 'department' ? 'ข่าวภาควิชาฯ' :
               item.category === 'faculty' ? 'ข่าวคณะและมหาวิทยาลัย' :

@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      const res = await axios.get('http://localhost:5000/auth/me', {
+      const res = await axios.get('/auth/me', {
         headers: { Authorization: `Bearer ${activeToken}` },
         withCredentials: true
       });
@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }) => {
   // ฟังก์ชัน Logout
   const logout = async () => {
     try {
-      await axios.post('http://localhost:5000/auth/logout', {}, { withCredentials: true });
+      await axios.post('/auth/logout', {}, { withCredentials: true });
     } catch (e) {
       // ignore
     } finally {

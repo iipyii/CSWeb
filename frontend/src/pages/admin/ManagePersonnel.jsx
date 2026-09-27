@@ -90,9 +90,9 @@ export default function ManagePersonnel() {
     try {
       setLoading(true);
       const [resLect, resStaff, resLinks] = await Promise.all([
-        axios.get('http://localhost:5000/api/lecturers'),
-        axios.get('http://localhost:5000/api/staff'),
-        axios.get('http://localhost:5000/api/personnel-links')
+        axios.get('/api/lecturers'),
+        axios.get('/api/staff'),
+        axios.get('/api/personnel-links')
       ]);
 
       setLecturers(resLect.data || []);
@@ -115,7 +115,7 @@ export default function ManagePersonnel() {
     if (!img) return null;
     if (img.startsWith('http://') || img.startsWith('https://')) return img;
     const cleanPath = img.replace(/\\/g, '/').replace(/^\//, '');
-    return `http://localhost:5000/${cleanPath}`;
+    return `/${cleanPath}`;
   };
 
   // Image Upload helper
@@ -128,7 +128,7 @@ export default function ManagePersonnel() {
 
     try {
       showAlert('info', 'กำลังอัปโหลดรูปภาพ...');
-      const res = await axios.post(`http://localhost:5000/api/${endpoint}/upload-image`, formData, {
+      const res = await axios.post(`/api/${endpoint}/upload-image`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
         withCredentials: true
       });
@@ -184,11 +184,11 @@ export default function ManagePersonnel() {
     try {
       setSaving(true);
       if (lecturerModal.mode === 'create') {
-        const res = await axios.post('http://localhost:5000/api/lecturers', data, { withCredentials: true });
+        const res = await axios.post('/api/lecturers', data, { withCredentials: true });
         setLecturers(prev => [...prev, res.data.lecturer]);
         showAlert('success', 'เพิ่มข้อมูลอาจารย์สำเร็จ');
       } else {
-        const res = await axios.put(`http://localhost:5000/api/lecturers/${data.id}`, data, { withCredentials: true });
+        const res = await axios.put(`/api/lecturers/${data.id}`, data, { withCredentials: true });
         setLecturers(prev => prev.map(l => l.id === data.id ? res.data.lecturer : l));
         showAlert('success', 'แก้ไขข้อมูลอาจารย์สำเร็จ');
       }
@@ -204,7 +204,7 @@ export default function ManagePersonnel() {
   const handleDeleteLecturer = async (id) => {
     try {
       setSaving(true);
-      await axios.delete(`http://localhost:5000/api/lecturers/${id}`, { withCredentials: true });
+      await axios.delete(`/api/lecturers/${id}`, { withCredentials: true });
       setLecturers(prev => prev.filter(l => l.id !== id));
       showAlert('success', 'ลบข้อมูลอาจารย์เรียบร้อยแล้ว');
       setDeleteConfirm({ open: false, type: '', id: null, name: '' });
@@ -252,11 +252,11 @@ export default function ManagePersonnel() {
     try {
       setSaving(true);
       if (staffModal.mode === 'create') {
-        const res = await axios.post('http://localhost:5000/api/staff', data, { withCredentials: true });
+        const res = await axios.post('/api/staff', data, { withCredentials: true });
         setStaffList(prev => [...prev, res.data.staff]);
         showAlert('success', 'เพิ่มบุคลากรสายสนับสนุนสำเร็จ');
       } else {
-        const res = await axios.put(`http://localhost:5000/api/staff/${data.id}`, data, { withCredentials: true });
+        const res = await axios.put(`/api/staff/${data.id}`, data, { withCredentials: true });
         setStaffList(prev => prev.map(s => s.id === data.id ? res.data.staff : s));
         showAlert('success', 'แก้ไขบุคลากรสายสนับสนุนสำเร็จ');
       }
@@ -272,7 +272,7 @@ export default function ManagePersonnel() {
   const handleDeleteStaff = async (id) => {
     try {
       setSaving(true);
-      await axios.delete(`http://localhost:5000/api/staff/${id}`, { withCredentials: true });
+      await axios.delete(`/api/staff/${id}`, { withCredentials: true });
       setStaffList(prev => prev.filter(s => s.id !== id));
       showAlert('success', 'ลบข้อมูลบุคลากรสายสนับสนุนเรียบร้อยแล้ว');
       setDeleteConfirm({ open: false, type: '', id: null, name: '' });
@@ -326,7 +326,7 @@ export default function ManagePersonnel() {
 
     try {
       setSaving(true);
-      await axios.post('http://localhost:5000/api/personnel-links', { data: updatedLinks }, { withCredentials: true });
+      await axios.post('/api/personnel-links', { data: updatedLinks }, { withCredentials: true });
       setLinksList(updatedLinks);
       showAlert('success', 'บันทึกข้อมูลลิงก์สำเร็จ');
       setLinkModal({ open: false, mode: 'create', index: null, data: null });
@@ -342,7 +342,7 @@ export default function ManagePersonnel() {
     const updatedLinks = linksList.filter((_, idx) => idx !== index);
     try {
       setSaving(true);
-      await axios.post('http://localhost:5000/api/personnel-links', { data: updatedLinks }, { withCredentials: true });
+      await axios.post('/api/personnel-links', { data: updatedLinks }, { withCredentials: true });
       setLinksList(updatedLinks);
       showAlert('success', 'ลบลิงก์เรียบร้อยแล้ว');
       setDeleteConfirm({ open: false, type: '', id: null, name: '' });
@@ -365,7 +365,7 @@ export default function ManagePersonnel() {
 
     setLinksList(updated);
     try {
-      await axios.post('http://localhost:5000/api/personnel-links', { data: updated }, { withCredentials: true });
+      await axios.post('/api/personnel-links', { data: updated }, { withCredentials: true });
       showAlert('success', 'ปรับเปลี่ยนลำดับลิงก์สำเร็จ');
     } catch (err) {
       console.error('Move link error:', err);

@@ -13,11 +13,11 @@ export default function HeroSlider() {
 
   const fetchBanners = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/appearance/banners");
+      const res = await axios.get("/api/appearance/banners");
       const activeBanners = (res.data || []).filter(b => b.is_active !== false);
       if (activeBanners.length > 0) {
         setSlides(activeBanners.map(b => ({
-          url: b.image_path.startsWith('http') ? b.image_path : `http://localhost:5000${b.image_path}`,
+          url: b.image_path.startsWith('http') ? b.image_path : `${b.image_path}`,
           title: b.title || 'Slide'
         })));
       } else {

@@ -127,7 +127,7 @@ export default function EditNews() {
     if (typeof att === 'object' && att !== null) {
       const p = att.path || att.url || "";
       return {
-        url: p.startsWith('http') ? p : `http://localhost:5000${p}`,
+        url: p.startsWith('http') ? p : `${p}`,
         name: att.name || p.split('/').pop() || `เอกสารแนบที่ ${idx + 1}`
       };
     }
@@ -137,13 +137,13 @@ export default function EditNews() {
           const parsed = JSON.parse(att);
           const p = parsed.path || parsed.url || "";
           return {
-            url: p.startsWith('http') ? p : `http://localhost:5000${p}`,
+            url: p.startsWith('http') ? p : `${p}`,
             name: parsed.name || p.split('/').pop() || `เอกสารแนบที่ ${idx + 1}`
           };
         } catch (e) {}
       }
       return {
-        url: att.startsWith('http') ? att : `http://localhost:5000${att}`,
+        url: att.startsWith('http') ? att : `${att}`,
         name: att.split('/').pop() || `เอกสารแนบที่ ${idx + 1}`
       };
     }
@@ -154,7 +154,7 @@ export default function EditNews() {
   useEffect(() => {
     const fetchNewsData = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/news/${id}`);
+        const res = await axios.get(`/api/news/${id}`);
         const data = res.data;
 
         // เอาข้อมูลจาก DB มาใส่ฟอร์ม
@@ -168,14 +168,14 @@ export default function EditNews() {
         if (data.end_date) setEndDate(data.end_date.split('T')[0]);
 
         // ถ้ารูปมีให้เซ็ต URL เพื่อแสดงรูปเก่า
-        if (data.image) setExistingCover(`http://localhost:5000${data.image}`);
+        if (data.image) setExistingCover(`${data.image}`);
 
         // รูปภาพเพิ่มเติม (ต้องแปลงจาก JSON String เป็น Array)
         if (data.additional_images) {
           const parsedImages = typeof data.additional_images === 'string'
             ? JSON.parse(data.additional_images)
             : data.additional_images;
-          setExistingExtraImages(parsedImages.map(img => `http://localhost:5000${img}`));
+          setExistingExtraImages(parsedImages.map(img => `${img}`));
         }
 
         // เอกสารแนบ
@@ -232,7 +232,7 @@ export default function EditNews() {
       });
 
       // 🌟 เปลี่ยนจากการส่ง JSON ธรรมดา เป็นส่ง FormData (อาจจะต้องใช้เมธอด PUT หรือ POST ขึ้นอยู่กับ Backend ของคุณ)
-      await axios.put(`http://localhost:5000/api/news/${id}`, formData, {
+      await axios.put(`/api/news/${id}`, formData, {
         headers: { "Content-Type": "multipart/form-data" }
       });
 

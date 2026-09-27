@@ -11,7 +11,7 @@ export default function ManageRoles() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("http://localhost:5000/api/users");
+      const res = await axios.get("/api/users");
       setUsers(res.data || []);
     } catch (error) {
       console.error("Failed to load users:", error);
@@ -27,7 +27,7 @@ export default function ManageRoles() {
   const handleRoleChange = async (id, newRole) => {
     try {
       setSavingId(id);
-      await axios.put(`http://localhost:5000/api/users/${id}/role`, { role: newRole });
+      await axios.put(`/api/users/${id}/role`, { role: newRole });
       setUsers(users.map(u => u.id === id ? { ...u, role: newRole } : u));
     } catch (error) {
       console.error("Failed to update role:", error);

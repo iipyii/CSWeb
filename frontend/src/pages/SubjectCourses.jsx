@@ -14,7 +14,7 @@ export default function SubjectCourses() {
   useEffect(() => {
 
   axios
-    .get("http://localhost:5000/api/courses/years")
+    .get("/api/courses/years")
     .then(res => {
 
       const years = res.data;

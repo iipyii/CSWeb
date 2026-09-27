@@ -18,7 +18,7 @@ export default function Staff() {
   const [error, setError] = useState(null);
 
   // กำหนด Base URL ของ Backend (ปรับตามจริง)
-  const BASE_URL = "http://localhost:5000";
+  const BASE_URL = "";
 
   const fetchStaff = async () => {
     setLoading(true);

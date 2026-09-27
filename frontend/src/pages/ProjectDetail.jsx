@@ -16,7 +16,7 @@ export default function ProjectDetail() {
     const fetchProject = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(`http://localhost:5000/api/projects/${id}`);
+        const res = await axios.get(`/api/projects/${id}`);
         setProject(res.data);
       } catch (err) {
         console.error("Failed to load project details:", err);

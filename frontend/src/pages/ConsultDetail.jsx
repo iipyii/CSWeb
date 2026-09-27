@@ -31,7 +31,7 @@ export default function ConsultDetail() {
     setLoading(true);
 
     axios
-      .get(`http://localhost:5000/api/consult/year/${level}/${buddhistYear}`)
+      .get(`/api/consult/year/${level}/${buddhistYear}`)
       .then((res) => {
         setAdvisors(res.data || []);
       })
@@ -48,7 +48,7 @@ export default function ConsultDetail() {
     if (!imagePath) return "/img/placeholder-user.png";
     if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) return imagePath;
     const cleanPath = imagePath.replace(/\\/g, '/').replace(/^\//, '');
-    return `http://localhost:5000/${cleanPath}`;
+    return `/${cleanPath}`;
   };
 
   const filteredAdvisorGroups = useMemo(() => {

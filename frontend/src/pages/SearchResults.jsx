@@ -25,7 +25,7 @@ export default function SearchResults() {
     const fetchSearchResults = async () => {
       setIsLoading(true);
       try {
-        const response = await axios.get(`http://localhost:5000/api/search?q=${encodeURIComponent(query)}`);
+        const response = await axios.get(`/api/search?q=${encodeURIComponent(query)}`);
         setResults({
           menus: response.data.menus || [],
           projects: response.data.projects || [],
@@ -337,7 +337,7 @@ export default function SearchResults() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {results.downloads.map(doc => {
-                    const downloadHref = doc.file_url || (doc.file_path ? `http://localhost:5000/uploads/downloads/${doc.file_path}` : `http://localhost:5000/api/downloads/download/${doc.id}`);
+                    const downloadHref = doc.file_url || (doc.file_path ? `/uploads/downloads/${doc.file_path}` : `/api/downloads/download/${doc.id}`);
                     return (
                       <a 
                         href={downloadHref}

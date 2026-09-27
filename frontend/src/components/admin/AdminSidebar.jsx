@@ -56,10 +56,10 @@ export default function AdminSidebar({ onNavigate }) {
   useEffect(() => {
     const fetchLogo = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/appearance/settings");
+        const res = await axios.get("/api/appearance/settings");
         const logo = res.data?.configMap?.site_logo;
         if (logo && logo.trim() !== "") {
-          setLogoUrl(logo.startsWith("http") ? logo : `http://localhost:5000${logo}`);
+          setLogoUrl(logo.startsWith("http") ? logo : `${logo}`);
         } else {
           setLogoUrl(null);
         }
@@ -71,7 +71,7 @@ export default function AdminSidebar({ onNavigate }) {
     const handleUpdate = (e) => {
       if (e.detail?.site_logo !== undefined) {
         const logo = e.detail.site_logo;
-        setLogoUrl(logo && logo.trim() !== "" ? (logo.startsWith("http") ? logo : `http://localhost:5000${logo}`) : null);
+        setLogoUrl(logo && logo.trim() !== "" ? (logo.startsWith("http") ? logo : `${logo}`) : null);
       } else {
         fetchLogo();
       }

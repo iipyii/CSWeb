@@ -43,10 +43,10 @@ export default function Navbar() {
   useEffect(() => {
     const fetchLogo = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/appearance/settings");
+        const res = await axios.get("/api/appearance/settings");
         const logo = res.data?.configMap?.site_logo;
         if (logo && logo.trim() !== "") {
-          setLogoUrl(logo.startsWith("http") ? logo : `http://localhost:5000${logo}`);
+          setLogoUrl(logo.startsWith("http") ? logo : `${logo}`);
         } else {
           setLogoUrl("/cis-logo.svg");
         }
@@ -61,7 +61,7 @@ export default function Navbar() {
       if (e.detail?.site_logo !== undefined) {
         const logo = e.detail.site_logo;
         if (logo && logo.trim() !== "") {
-          setLogoUrl(logo.startsWith("http") ? logo : `http://localhost:5000${logo}`);
+          setLogoUrl(logo.startsWith("http") ? logo : `${logo}`);
         } else {
           setLogoUrl("/cis-logo.svg");
         }

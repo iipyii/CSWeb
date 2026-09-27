@@ -37,7 +37,7 @@ export default function ManageStudentGuide() {
   const fetchGuides = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('http://localhost:5000/api/student-guides');
+      const res = await axios.get('/api/student-guides');
       const list = res.data?.data || [];
       list.sort((a, b) => (a.order || 0) - (b.order || 0));
       setGuides(list);
@@ -102,7 +102,7 @@ export default function ManageStudentGuide() {
       if (sourceType === 'upload' && formData.file) {
         const uploadData = new FormData();
         uploadData.append('file', formData.file);
-        const uploadRes = await axios.post('http://localhost:5000/api/student-guides/upload-file', uploadData, {
+        const uploadRes = await axios.post('/api/student-guides/upload-file', uploadData, {
           headers: { 'Content-Type': 'multipart/form-data' },
           withCredentials: true
         });
@@ -134,7 +134,7 @@ export default function ManageStudentGuide() {
       // Re-index orders
       updatedList.forEach((g, idx) => { g.order = idx + 1; });
 
-      await axios.post('http://localhost:5000/api/student-guides', { data: updatedList }, { withCredentials: true });
+      await axios.post('/api/student-guides', { data: updatedList }, { withCredentials: true });
       setGuides(updatedList);
       showAlert('success', 'บันทึกข้อมูลคู่มือนักศึกษาสำเร็จ');
       setModalOpen(false);
@@ -152,7 +152,7 @@ export default function ManageStudentGuide() {
     try {
       const updatedList = guides.filter(g => g.id !== id);
       updatedList.forEach((g, idx) => { g.order = idx + 1; });
-      await axios.post('http://localhost:5000/api/student-guides', { data: updatedList }, { withCredentials: true });
+      await axios.post('/api/student-guides', { data: updatedList }, { withCredentials: true });
       setGuides(updatedList);
       showAlert('success', 'ลบคู่มือสำเร็จ');
     } catch (error) {
@@ -173,7 +173,7 @@ export default function ManageStudentGuide() {
 
     setGuides(list);
     try {
-      await axios.post('http://localhost:5000/api/student-guides', { data: list }, { withCredentials: true });
+      await axios.post('/api/student-guides', { data: list }, { withCredentials: true });
     } catch (e) {
       console.error('Sync order error:', e);
     }
@@ -182,7 +182,7 @@ export default function ManageStudentGuide() {
   const getFullUrl = (url) => {
     if (!url) return '';
     if (url.startsWith('http://') || url.startsWith('https://')) return url;
-    return `http://localhost:5000${url}`;
+    return `${url}`;
   };
 
   return (

@@ -41,8 +41,8 @@ export default function ManageInternship() {
     try {
       setLoading(true);
       const [itemsRes, configRes] = await Promise.all([
-        axios.get('http://localhost:5000/api/internships'),
-        axios.get('http://localhost:5000/api/internships/config')
+        axios.get('/api/internships'),
+        axios.get('/api/internships/config')
       ]);
 
       setItems(itemsRes.data || []);
@@ -106,11 +106,11 @@ export default function ManageInternship() {
     try {
       setSaving(true);
       if (modalMode === 'create') {
-        const res = await axios.post('http://localhost:5000/api/internships/item', formData, { withCredentials: true });
+        const res = await axios.post('/api/internships/item', formData, { withCredentials: true });
         setItems(prev => [...prev, res.data]);
         showAlert('success', 'เพิ่มข้อมูลสำเร็จ');
       } else {
-        const res = await axios.put(`http://localhost:5000/api/internships/item/${formData.id}`, formData, { withCredentials: true });
+        const res = await axios.put(`/api/internships/item/${formData.id}`, formData, { withCredentials: true });
         setItems(prev => prev.map(item => item.id === formData.id ? res.data : item));
         showAlert('success', 'แก้ไขข้อมูลสำเร็จ');
       }
@@ -127,7 +127,7 @@ export default function ManageInternship() {
   const handleDeleteItem = async (id) => {
     if (!window.confirm('คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?')) return;
     try {
-      await axios.delete(`http://localhost:5000/api/internships/item/${id}`, { withCredentials: true });
+      await axios.delete(`/api/internships/item/${id}`, { withCredentials: true });
       setItems(prev => prev.filter(item => item.id !== id));
       showAlert('success', 'ลบข้อมูลสำเร็จ');
     } catch (error) {
@@ -140,7 +140,7 @@ export default function ManageInternship() {
   const handleSaveLinks = async () => {
     try {
       setSaving(true);
-      await axios.post('http://localhost:5000/api/internships/links', config.links, { withCredentials: true });
+      await axios.post('/api/internships/links', config.links, { withCredentials: true });
       showAlert('success', 'บันทึกลิงก์เอกสารประกอบการฝึกงานสำเร็จ');
     } catch (error) {
       console.error('Save links error:', error);
@@ -154,7 +154,7 @@ export default function ManageInternship() {
   const handleSaveEvaluation = async () => {
     try {
       setSaving(true);
-      await axios.post('http://localhost:5000/api/internships/evaluation', config.evaluation, { withCredentials: true });
+      await axios.post('/api/internships/evaluation', config.evaluation, { withCredentials: true });
       showAlert('success', 'บันทึกเกณฑ์การประเมินคะแนนสำเร็จ');
     } catch (error) {
       console.error('Save evaluation error:', error);

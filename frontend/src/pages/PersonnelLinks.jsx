@@ -67,7 +67,7 @@ export default function PersonnelLinks() {
   useEffect(() => {
     const fetchLinks = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/personnel-links');
+        const res = await axios.get('/api/personnel-links');
         if (res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
           setLinks(res.data.data);
         }

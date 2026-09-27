@@ -115,7 +115,7 @@ export default function CourseDescription() {
         params.category = selectedCategory;
       }
 
-      const res = await axios.get("http://localhost:5000/api/subjects", { params });
+      const res = await axios.get("/api/subjects", { params });
       setSubjects(res.data || []);
     } catch (err) {
       console.error("Fetch subjects error:", err);

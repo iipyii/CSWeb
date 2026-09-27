@@ -109,7 +109,7 @@ const downloadData = [
   useEffect(() => {
 
     axios
-      .get("http://localhost:5000/api/downloads/student")
+      .get("/api/downloads/student")
       .then(res => {
         setDownloads(res.data);
       })
@@ -196,7 +196,7 @@ const downloadData = [
                                   <td className="px-6 py-5 text-center">
                                     <div className="flex justify-center gap-1.5">
                                       <a
-                                        href={`http://localhost:5000/api/downloads/download/${item.id}`}
+                                        href={`/api/downloads/download/${item.id}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         download={item.file_name || `${item.title}.${item.file_type || 'pdf'}`}

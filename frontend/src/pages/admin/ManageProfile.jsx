@@ -31,7 +31,7 @@ export default function ManageProfile() {
     try {
       setLoading(true);
       setErrorMessage("");
-      const res = await axios.get("http://localhost:5000/api/lecturers/profile/me");
+      const res = await axios.get("/api/lecturers/profile/me");
       const data = res.data;
       setProfile(data);
       setFormData({
@@ -64,7 +64,7 @@ export default function ManageProfile() {
       setSuccessMessage("");
       setErrorMessage("");
 
-      const res = await axios.put("http://localhost:5000/api/lecturers/profile/me", formData);
+      const res = await axios.put("/api/lecturers/profile/me", formData);
       setSuccessMessage(res.data?.message || "บันทึกข้อมูลส่วนตัวเรียบร้อยแล้ว");
       fetchProfile();
       setTimeout(() => setSuccessMessage(""), 4000);

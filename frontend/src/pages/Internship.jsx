@@ -37,8 +37,8 @@ export default function Internship() {
 
   useEffect(() => {
     Promise.all([
-      axios.get("http://localhost:5000/api/internships"),
-      axios.get("http://localhost:5000/api/internships/config")
+      axios.get("/api/internships"),
+      axios.get("/api/internships/config")
     ]).then(([itemsRes, configRes]) => {
       if (itemsRes.data) setInternships(itemsRes.data);
       if (configRes.data) {

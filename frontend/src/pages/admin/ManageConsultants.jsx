@@ -102,7 +102,7 @@ export default function ManageConsultants() {
   const fetchStudents = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("http://localhost:5000/api/consult/list");
+      const res = await axios.get("/api/consult/list");
       const list = Array.isArray(res.data) ? res.data : (res.data?.data || []);
       setStudents(list);
       if (res.data?.years && Array.isArray(res.data.years) && res.data.years.length > 0) {
@@ -119,7 +119,7 @@ export default function ManageConsultants() {
 
   const fetchLecturers = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/lecturers");
+      const res = await axios.get("/api/lecturers");
       setLecturers(res.data || []);
     } catch (error) {
       console.error("Failed to load lecturers:", error);
@@ -134,7 +134,7 @@ export default function ManageConsultants() {
   const handleDelete = async (id) => {
     if (window.confirm("คุณต้องการลบข้อมูลนักศึกษารายนี้ใช่หรือไม่?")) {
       try {
-        await axios.delete(`http://localhost:5000/api/consult/students/${id}`);
+        await axios.delete(`/api/consult/students/${id}`);
         alert("ลบข้อมูลนักศึกษาสำเร็จ");
         fetchStudents();
       } catch (error) {
@@ -153,7 +153,7 @@ export default function ManageConsultants() {
 
     try {
       setSubmitting(true);
-      await axios.post("http://localhost:5000/api/consult/students", formData);
+      await axios.post("/api/consult/students", formData);
       alert("เพิ่มข้อมูลนักศึกษาสำเร็จ");
       setIsAddModalOpen(false);
       setFormData({ 
@@ -193,7 +193,7 @@ export default function ManageConsultants() {
 
     try {
       setEditSubmitting(true);
-      await axios.put(`http://localhost:5000/api/consult/students/${editFormData.id}`, editFormData);
+      await axios.put(`/api/consult/students/${editFormData.id}`, editFormData);
       alert("แก้ไขข้อมูลนักศึกษาสำเร็จ");
       setIsEditModalOpen(false);
       fetchStudents();
@@ -232,7 +232,7 @@ export default function ManageConsultants() {
     }, 280);
 
     try {
-      const res = await axios.post("http://localhost:5000/api/consult/import-excel", data, {
+      const res = await axios.post("/api/consult/import-excel", data, {
         headers: { "Content-Type": "multipart/form-data" },
         onUploadProgress: (progressEvent) => {
           if (progressEvent.total) {
@@ -540,7 +540,7 @@ export default function ManageConsultants() {
                     </p>
                   </div>
                   <a 
-                    href="http://localhost:5000/api/consult/template"
+                    href="/api/consult/template"
                     download="student_consultants_template.xlsx"
                     className="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all"
                   >

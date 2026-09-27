@@ -89,7 +89,7 @@ export default function ManageProjects() {
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("http://localhost:5000/api/projects");
+      const res = await axios.get("/api/projects");
       setProjects(res.data || []);
     } catch (error) {
       console.error("Failed to load projects:", error);
@@ -100,7 +100,7 @@ export default function ManageProjects() {
 
   const fetchLecturers = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/lecturers");
+      const res = await axios.get("/api/lecturers");
       setLecturers(res.data || []);
     } catch (error) {
       console.error("Failed to load lecturers:", error);
@@ -189,7 +189,7 @@ export default function ManageProjects() {
   const handleDelete = async (id) => {
     if (window.confirm("คุณต้องการลบโครงงานนี้ใช่หรือไม่?")) {
       try {
-        await axios.delete(`http://localhost:5000/api/projects/${id}`);
+        await axios.delete(`/api/projects/${id}`);
         alert("ลบโครงงานสำเร็จ");
         fetchProjects();
       } catch (error) {
@@ -316,10 +316,10 @@ export default function ManageProjects() {
       };
 
       if (editingProject) {
-        await axios.put(`http://localhost:5000/api/projects/${editingProject.id}`, payload);
+        await axios.put(`/api/projects/${editingProject.id}`, payload);
         alert("แก้ไขโครงงานสำเร็จ");
       } else {
-        await axios.post("http://localhost:5000/api/projects", payload);
+        await axios.post("/api/projects", payload);
         alert("เพิ่มโครงงานสำเร็จ");
       }
 
@@ -389,7 +389,7 @@ export default function ManageProjects() {
       const formDataUpload = new FormData();
       formDataUpload.append("file", importFile);
 
-      const res = await axios.post("http://localhost:5000/api/projects/import-excel", formDataUpload, {
+      const res = await axios.post("/api/projects/import-excel", formDataUpload, {
         headers: { "Content-Type": "multipart/form-data" },
         onUploadProgress: (progressEvent) => {
           if (progressEvent.total) {
@@ -417,7 +417,7 @@ export default function ManageProjects() {
   };
 
   const handleDownloadTemplate = () => {
-    window.open("http://localhost:5000/api/projects/template", "_blank");
+    window.open("/api/projects/template", "_blank");
   };
 
   // Filtered Projects

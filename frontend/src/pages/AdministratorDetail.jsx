@@ -37,7 +37,7 @@ export default function AdministratorDetail() {
 
   useEffect(() => {
     axios
-      .get(`http://localhost:5000/api/lecturers/${code}`)
+      .get(`/api/lecturers/${code}`)
       .then((res) => {
         setProfile(res.data);
         setLoading(false);
@@ -84,7 +84,7 @@ export default function AdministratorDetail() {
             <div className="rounded-[2rem] overflow-hidden shadow-2xl mb-8 border-[10px] border-slate-50 bg-slate-100 aspect-[3/4]">
               <img
                 src={profile.image_path
-                  ? `http://localhost:5000${profile.image_path}`
+                  ? `${profile.image_path}`
                   : "/img/staff/default-avatar.jpg"}
                 alt={profile.fullname_th}
                 className="w-full h-full object-cover"

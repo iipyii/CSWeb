@@ -69,7 +69,7 @@ export default function CourseDetail() {
     setLoading(true);
     setError(false);
 
-    fetch(`http://localhost:5000/api/programs/${data.slug}/${data.year}`)
+    fetch(`/api/programs/${data.slug}/${data.year}`)
       .then((res) => {
         if (!res.ok) throw new Error("Course not found");
         return res.json();

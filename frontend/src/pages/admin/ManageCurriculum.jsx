@@ -32,7 +32,7 @@ const getPdfUrl = (path) => {
   if (!clean.startsWith('/')) clean = '/' + clean;
   if (!clean.startsWith('/uploads/')) clean = '/uploads' + clean;
   clean = clean.replace(/^\/uploads\/uploads\//, '/uploads/');
-  return `http://localhost:5000${clean}`;
+  return `${clean}`;
 };
 
 export default function ManageCurriculum() {
@@ -69,8 +69,8 @@ export default function ManageCurriculum() {
     try {
       setLoading(true);
       const [progRes, degRes] = await Promise.all([
-        axios.get("http://localhost:5000/api/curriculum/programs"),
-        axios.get("http://localhost:5000/api/curriculum/degrees")
+        axios.get("/api/curriculum/programs"),
+        axios.get("/api/curriculum/degrees")
       ]);
       const fetchedPrograms = progRes.data || [];
       setPrograms(fetchedPrograms);
@@ -136,14 +136,14 @@ export default function ManageCurriculum() {
     try {
       setSubmittingProgram(true);
       if (editingProgram) {
-        await axios.put(`http://localhost:5000/api/curriculum/programs/${editingProgram.id}`, {
+        await axios.put(`/api/curriculum/programs/${editingProgram.id}`, {
           name_th: programForm.name_th,
           slug: programForm.slug,
           degreeId: programForm.degreeId
         }, getAuthHeaders());
         alert("แก้ไขข้อมูลหลักสูตรสำเร็จ");
       } else {
-        await axios.post("http://localhost:5000/api/curriculum/programs", programForm, getAuthHeaders());
+        await axios.post("/api/curriculum/programs", programForm, getAuthHeaders());
         alert("เพิ่มหลักสูตรสำเร็จ");
       }
       setIsProgramModalOpen(false);
@@ -159,7 +159,7 @@ export default function ManageCurriculum() {
   const handleDeleteProgram = async (id) => {
     if (window.confirm("คุณต้องการลบหลักสูตรนี้และเวอร์ชันรวมถึงไฟล์ PDF ที่เกี่ยวข้องใช่หรือไม่?")) {
       try {
-        await axios.delete(`http://localhost:5000/api/curriculum/programs/${id}`, getAuthHeaders());
+        await axios.delete(`/api/curriculum/programs/${id}`, getAuthHeaders());
         alert("ลบหลักสูตรสำเร็จ");
         if (selectedProgram?.id === id) {
           setSelectedProgram(null);
@@ -181,7 +181,7 @@ export default function ManageCurriculum() {
 
     try {
       setIsAddingVersion(true);
-      await axios.post("http://localhost:5000/api/curriculum/versions", {
+      await axios.post("/api/curriculum/versions", {
         programId: selectedProgram.id,
         year: parseInt(newVersionYear)
       }, getAuthHeaders());
@@ -200,7 +200,7 @@ export default function ManageCurriculum() {
   const handleDeleteVersion = async (versionId, year) => {
     if (window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบเวอร์ชันปี ${year} และเอกสารหมวดทั้งหมด?`)) {
       try {
-        await axios.delete(`http://localhost:5000/api/curriculum/versions/${versionId}`, getAuthHeaders());
+        await axios.delete(`/api/curriculum/versions/${versionId}`, getAuthHeaders());
         alert(`ลบเวอร์ชันปี ${year} สำเร็จ`);
         await fetchCurriculum();
       } catch (error) {
@@ -233,7 +233,7 @@ export default function ManageCurriculum() {
 
     try {
       setUploadingSection(sectionNo);
-      await axios.post("http://localhost:5000/api/curriculum/sections/upload", formData, {
+      await axios.post("/api/curriculum/sections/upload", formData, {
         ...getAuthHeaders(),
         headers: {
           ...getAuthHeaders().headers,
@@ -253,7 +253,7 @@ export default function ManageCurriculum() {
   const handleDeleteSectionPdf = async (sectionId, sectionNo) => {
     if (window.confirm(`ต้องการลบไฟล์ PDF หมวดที่ ${sectionNo} ใช่หรือไม่?`)) {
       try {
-        await axios.delete(`http://localhost:5000/api/curriculum/sections/${sectionId}/pdf`, getAuthHeaders());
+        await axios.delete(`/api/curriculum/sections/${sectionId}/pdf`, getAuthHeaders());
         alert(`ลบไฟล์ PDF หมวดที่ ${sectionNo} สำเร็จ`);
         await fetchCurriculum();
       } catch (error) {

@@ -32,7 +32,7 @@ export default function Contact() {
   useEffect(() => {
     const fetchContact = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/about/contact');
+        const res = await axios.get('/api/about/contact');
         if (res.data?.data) {
           setContactInfo(prev => ({ ...prev, ...res.data.data }));
         }

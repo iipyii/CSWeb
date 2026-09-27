@@ -32,14 +32,14 @@ const NewsDetail = () => {
   useEffect(() => {
     const fetchSingleNews = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/news/${id}`);
+        const res = await axios.get(`/api/news/${id}`);
         const data = res.data;
 
         setNews({
           ...data,
-          image: data.image ? `http://localhost:5000${data.image}` : "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800",
+          image: data.image ? `${data.image}` : "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800",
           
-          additional_images: safeParseArray(data.additional_images).map(img => `http://localhost:5000${img}`),
+          additional_images: safeParseArray(data.additional_images).map(img => `${img}`),
           
           attachments: safeParseArray(data.attachments),
 
@@ -238,22 +238,22 @@ const NewsDetail = () => {
                     if (typeof attItem === 'object' && attItem !== null) {
                       const p = attItem.path || attItem.url || "";
                       fileName = attItem.name || p.split('/').pop() || fileName;
-                      fileUrl = p.startsWith('http') ? p : `http://localhost:5000${p}`;
-                      downloadUrl = `http://localhost:5000/api/news/attachment/download?path=${encodeURIComponent(p)}&name=${encodeURIComponent(fileName)}`;
+                      fileUrl = p.startsWith('http') ? p : `${p}`;
+                      downloadUrl = `/api/news/attachment/download?path=${encodeURIComponent(p)}&name=${encodeURIComponent(fileName)}`;
                     } else if (typeof attItem === 'string') {
                       if (attItem.trim().startsWith('{')) {
                         try {
                           const obj = JSON.parse(attItem);
                           const p = obj.path || obj.url || "";
                           fileName = obj.name || p.split('/').pop() || fileName;
-                          fileUrl = p.startsWith('http') ? p : `http://localhost:5000${p}`;
-                          downloadUrl = `http://localhost:5000/api/news/attachment/download?path=${encodeURIComponent(p)}&name=${encodeURIComponent(fileName)}`;
+                          fileUrl = p.startsWith('http') ? p : `${p}`;
+                          downloadUrl = `/api/news/attachment/download?path=${encodeURIComponent(p)}&name=${encodeURIComponent(fileName)}`;
                         } catch (e) {}
                       }
                       if (!fileUrl) {
                         fileName = attItem.split('/').pop() || fileName;
-                        fileUrl = attItem.startsWith('http') ? attItem : `http://localhost:5000${attItem}`;
-                        downloadUrl = `http://localhost:5000/api/news/attachment/download?path=${encodeURIComponent(attItem)}&name=${encodeURIComponent(fileName)}`;
+                        fileUrl = attItem.startsWith('http') ? attItem : `${attItem}`;
+                        downloadUrl = `/api/news/attachment/download?path=${encodeURIComponent(attItem)}&name=${encodeURIComponent(fileName)}`;
                       }
                     }
 

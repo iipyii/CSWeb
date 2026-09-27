@@ -68,7 +68,7 @@ export default function History() {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/about/history');
+        const res = await axios.get('/api/about/history');
         if (res.data?.data) {
           const intro = res.data.data.header_text || res.data.data.intro;
           if (intro !== undefined && intro !== null) setHistoryIntro(intro);

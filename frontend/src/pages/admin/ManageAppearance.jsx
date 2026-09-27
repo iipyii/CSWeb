@@ -13,13 +13,13 @@ export default function ManageAppearance() {
     try {
       setLoading(true);
       const [bannersRes, settingsRes] = await Promise.all([
-        axios.get("http://localhost:5000/api/appearance/banners"),
-        axios.get("http://localhost:5000/api/appearance/settings")
+        axios.get("/api/appearance/banners"),
+        axios.get("/api/appearance/settings")
       ]);
       setBanners(bannersRes.data || []);
       const logoUrl = settingsRes.data?.configMap?.site_logo;
       if (logoUrl) {
-        setLogoPreview(logoUrl.startsWith('http') ? logoUrl : `http://localhost:5000${logoUrl}`);
+        setLogoPreview(logoUrl.startsWith('http') ? logoUrl : `${logoUrl}`);
       }
     } catch (error) {
       console.error("Failed to load appearance data:", error);
@@ -51,12 +51,12 @@ export default function ManageAppearance() {
       const formData = new FormData();
       formData.append("logo", file);
 
-      const res = await axios.post("http://localhost:5000/api/appearance/logo", formData, {
+      const res = await axios.post("/api/appearance/logo", formData, {
         headers: { "Content-Type": "multipart/form-data" }
       });
 
       const newPath = res.data.logoPath;
-      setLogoPreview(`http://localhost:5000${newPath}`);
+      setLogoPreview(`${newPath}`);
       window.dispatchEvent(new CustomEvent('site_config_updated', { detail: { site_logo: newPath } }));
       alert("อัปเดตโลโก้เรียบร้อยแล้ว");
     } catch (error) {
@@ -72,7 +72,7 @@ export default function ManageAppearance() {
     if (!window.confirm("ต้องการรีเซ็ตโลโก้กลับเป็นค่าเริ่มต้นของระบบใช่หรือไม่?")) return;
     try {
       setUploadingLogo(true);
-      await axios.post("http://localhost:5000/api/appearance/settings", {
+      await axios.post("/api/appearance/settings", {
         config_key: "site_logo",
         config_value: ""
       });
@@ -108,7 +108,7 @@ export default function ManageAppearance() {
       formData.append("title", `แบนเนอร์ ${banners.length + 1}`);
       formData.append("order_no", banners.length + 1);
 
-      await axios.post("http://localhost:5000/api/appearance/banners", formData, {
+      await axios.post("/api/appearance/banners", formData, {
         headers: { "Content-Type": "multipart/form-data" }
       });
 
@@ -127,7 +127,7 @@ export default function ManageAppearance() {
   const handleDeleteBanner = async (id) => {
     if (window.confirm("ต้องการลบแบนเนอร์นี้ใช่หรือไม่?")) {
       try {
-        await axios.delete(`http://localhost:5000/api/appearance/banners/${id}`);
+        await axios.delete(`/api/appearance/banners/${id}`);
         alert("ลบแบนเนอร์เรียบร้อย");
         fetchData();
         window.dispatchEvent(new CustomEvent('site_config_updated', { detail: { banners: true } }));
@@ -233,7 +233,7 @@ export default function ManageAppearance() {
               banners.map((item, index) => {
                 const imgUrl = item.image_path?.startsWith("http") 
                   ? item.image_path 
-                  : `http://localhost:5000${item.image_path}`;
+                  : `${item.image_path}`;
 
                 return (
                   <div key={item.id} className="flex flex-col md:flex-row gap-6 p-4 border border-slate-100 rounded-2xl bg-slate-50/50 items-center">
