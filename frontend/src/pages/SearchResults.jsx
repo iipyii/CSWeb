@@ -200,7 +200,7 @@ export default function SearchResults() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {results.courses.map(course => (
                     <Link 
-                      to={`/course-description?q=${encodeURIComponent(course.subject_code || course.title_th || course.title || '')}`} 
+                      to={`/course-description?q=${encodeURIComponent(course.subject_code || course.title_th || course.title || '')}&code=${encodeURIComponent(course.curriculum_code || '')}&year=${encodeURIComponent(course.curriculum_year || '')}&degree=${encodeURIComponent(course.degree_level || '')}`} 
                       key={`course-${course.id}`} 
                       className="bg-white p-6 rounded-2xl shadow-xs hover:shadow-md hover:border-indigo-400 border border-slate-100 transition-all group flex flex-col justify-between"
                     >

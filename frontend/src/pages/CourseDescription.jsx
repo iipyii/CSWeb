@@ -24,8 +24,35 @@ export default function CourseDescription() {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const q = params.get('q') || params.get('search') || "";
+    const code = params.get('code') || "";
+    const year = params.get('year') || "";
+    const degree = params.get('degree') || "";
+
     if (q) {
       setSearchTerm(q);
+    }
+
+    if (code) {
+      for (const deg of curriculumOptions) {
+        const foundYear = deg.years.find(y => y.code.toLowerCase() === code.toLowerCase());
+        if (foundYear) {
+          setSelectedDegree(deg.id);
+          setSelectedYear(foundYear.year);
+          return;
+        }
+      }
+    }
+
+    if (degree && year) {
+      const matchDeg = curriculumOptions.find(d => d.degree_level === degree);
+      if (matchDeg) {
+        setSelectedDegree(matchDeg.id);
+        const matchY = matchDeg.years.find(y => y.year === String(year));
+        if (matchY) {
+          setSelectedYear(matchY.year);
+        }
+        return;
+      }
     }
   }, [location.search]);
 
@@ -88,12 +115,15 @@ export default function CourseDescription() {
     { id: "ทั่วไป", label: "วิชาแกน / ทั่วไป" }
   ];
 
-  // เมื่อเปลี่ยนระดับหลักสูตร ให้เลือกปีแรกอัตโนมัติ
+  // เมื่อเปลี่ยนระดับหลักสูตร ให้เลือกปีแรกอัตโนมัติ (เฉพาะเมื่อปีที่เลือกไม่อยู่ใน degree ใหม่)
   const currentDegreeConfig = curriculumOptions.find(c => c.id === selectedDegree) || curriculumOptions[0];
 
   useEffect(() => {
     if (currentDegreeConfig && currentDegreeConfig.years.length > 0) {
-      setSelectedYear(currentDegreeConfig.years[0].year);
+      const hasCurrentYear = currentDegreeConfig.years.some(y => y.year === selectedYear);
+      if (!hasCurrentYear) {
+        setSelectedYear(currentDegreeConfig.years[0].year);
+      }
     }
   }, [selectedDegree]);
 
@@ -116,7 +146,40 @@ export default function CourseDescription() {
       }
 
       const res = await axios.get("/api/subjects", { params });
-      setSubjects(res.data || []);
+      let data = res.data || [];
+
+      // 🌟 Smart Search Fallback:
+      // ถ้าค้นหาด้วยคีย์เวิร์ด (เช่น รหัสวิชา หรือ ชื่อวิชา) แล้วไม่พบในหลักสูตรที่เลือก
+      // ให้ลองค้นหาทุกหลักสูตร และถ้าพบในหลักสูตรอื่น ให้สลับไปที่หลักสูตรที่พบโดยอัตโนมัติ!
+      if (data.length === 0 && searchTerm.trim().length >= 3) {
+        try {
+          const globalRes = await axios.get("/api/subjects", {
+            params: { keyword: searchTerm.trim() }
+          });
+          const allMatches = globalRes.data || [];
+          if (allMatches.length > 0) {
+            const first = allMatches[0];
+            for (const deg of curriculumOptions) {
+              const foundYear = deg.years.find(y => 
+                (first.curriculum_code && y.code.toLowerCase() === first.curriculum_code.toLowerCase()) ||
+                (deg.degree_level === first.degree_level && y.year === String(first.curriculum_year))
+              );
+              if (foundYear) {
+                setSelectedDegree(deg.id);
+                setSelectedYear(foundYear.year);
+                setSubjects(allMatches.filter(s => s.curriculum_code === first.curriculum_code || (s.curriculum_year === foundYear.year && s.degree_level === deg.degree_level)));
+                return;
+              }
+            }
+            setSubjects(allMatches);
+            return;
+          }
+        } catch (e) {
+          console.warn("Global subject search fallback error:", e);
+        }
+      }
+
+      setSubjects(data);
     } catch (err) {
       console.error("Fetch subjects error:", err);
       setSubjects([]);

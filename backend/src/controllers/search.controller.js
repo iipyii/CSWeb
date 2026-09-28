@@ -149,6 +149,7 @@ export const globalSearch = async (req, res) => {
                     title_en: true, 
                     category: true,
                     credit: true,
+                    curriculum_code: true,
                     curriculum_year: true,
                     degree_level: true
                 },
@@ -162,6 +163,7 @@ export const globalSearch = async (req, res) => {
                     title: s.subject_code ? `${s.subject_code} ${s.title_th || s.title_en || ''}`.trim() : (s.title_th || s.title_en),
                     category: s.category,
                     credit: s.credit,
+                    curriculum_code: s.curriculum_code,
                     curriculum_year: s.curriculum_year,
                     degree_level: s.degree_level
                 }));
