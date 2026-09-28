@@ -58,6 +58,25 @@ export default function Internship() {
   const schedule = internships.filter(i => i.section === "schedule");
   const steps = internships.filter(i => i.section === "process");
 
+  // เน้นส่วนวันที่ (เช่น "13 มีนาคม 2569") ในข้อความรายละเอียดกำหนดการให้เป็นตัวหนา
+  const THAI_DATE_REGEX = /\d{1,2}\s*(?:มกราคม|กุมภาพันธ์|มีนาคม|เมษายน|พฤษภาคม|มิถุนายน|กรกฎาคม|สิงหาคม|กันยายน|ตุลาคม|พฤศจิกายน|ธันวาคม)\s*\d{4}/g;
+
+  const renderScheduleContent = (text) => {
+    if (!text) return null;
+    const matches = text.match(THAI_DATE_REGEX) || [];
+    const parts = text.split(THAI_DATE_REGEX);
+    const nodes = [];
+    parts.forEach((part, i) => {
+      if (part) nodes.push(<span key={`t-${i}`}>{part}</span>);
+      if (matches[i]) {
+        nodes.push(
+          <strong key={`d-${i}`} className="font-bold text-[#3F51B5]">{matches[i]}</strong>
+        );
+      }
+    });
+    return nodes;
+  };
+
   return (
     <div className="bg-white min-h-screen flex flex-col text-left">
 
@@ -164,35 +183,61 @@ export default function Internship() {
           <h2 className="flex items-center gap-3 text-2xl font-bold text-slate-800">
             <Calendar className="text-[#3F51B5]" /> กำหนดการประจำปีการศึกษา
           </h2>
-          <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[720px] text-sm text-left">
-                <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+          {/* 🖥️ ตาราง: แสดงตั้งแต่ md (768px) ขึ้นไป */}
+          <div className="hidden md:block border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+            <table className="w-full table-fixed text-sm">
+              <colgroup>
+                <col style={{ width: "30%" }} />
+                <col style={{ width: "70%" }} />
+              </colgroup>
+              <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                <tr>
+                  <th className="px-6 py-4 text-left">กำหนดการ</th>
+                  <th className="px-6 py-4 text-left">รายละเอียดและช่วงเวลา</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {schedule.length === 0 ? (
                   <tr>
-                    <th className="px-6 py-4">กำหนดการ</th>
-                    <th className="px-6 py-4 text-center w-64">รายละเอียดและช่วงเวลา</th>
+                    <td colSpan={2} className="px-6 py-8 text-center text-slate-400 text-xs">
+                      ยังไม่มีข้อมูลกำหนดการ
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {schedule.length === 0 ? (
-                    <tr>
-                      <td colSpan={2} className="px-6 py-8 text-center text-slate-400 text-xs">
-                        ยังไม่มีข้อมูลกำหนดการ
+                ) : (
+                  schedule.map((item, idx) => (
+                    <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="px-6 py-4 align-top font-medium text-slate-700">
+                        {item.title}
+                      </td>
+                      <td className="px-6 py-4 align-top text-left font-normal text-slate-600 leading-relaxed">
+                        {renderScheduleContent(item.content)}
                       </td>
                     </tr>
-                  ) : (
-                    schedule.map((item, idx) => (
-                      <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="px-6 py-4 text-slate-700">{item.title}</td>
-                        <td className="px-6 py-4 text-center text-[#3F51B5] font-semibold">
-                          {item.content}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* 📱 การ์ด: แสดงเมื่อจอเล็กกว่า md (768px) แทนตาราง ไม่มีแถบเลื่อนแนวนอน */}
+          <div className="md:hidden space-y-3">
+            {schedule.length === 0 ? (
+              <div className="border border-slate-200 rounded-2xl p-6 text-center text-slate-400 text-xs bg-white shadow-sm">
+                ยังไม่มีข้อมูลกำหนดการ
+              </div>
+            ) : (
+              schedule.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="border border-slate-200 rounded-2xl p-5 bg-white shadow-sm space-y-1.5"
+                >
+                  <div className="font-medium text-slate-700 text-sm">{item.title}</div>
+                  <div className="font-normal text-slate-600 text-sm leading-relaxed text-left">
+                    {renderScheduleContent(item.content)}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
