@@ -4,6 +4,7 @@ import axios from 'axios';
 import { ArrowRight, Compass, FolderGit2, BookOpen, Users, Newspaper, FileText } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import Footer from '../components/Footer';
+import { cleanThaiDisplay } from '../utils/thaiText';
 
 export default function SearchResults() {
   const query = new URLSearchParams(useLocation().search).get('q') || "";
@@ -216,7 +217,7 @@ export default function SearchResults() {
                           )}
                         </div>
                         <h3 className="text-base font-bold text-gray-800 group-hover:text-indigo-600 transition-colors line-clamp-2">
-                          {course.title_th || course.title || course.title_en}
+                          {cleanThaiDisplay(course.title_th || course.title || course.title_en)}
                         </h3>
                         {course.title_en && course.title_th && (
                           <p className="text-xs text-slate-400 italic mt-1 line-clamp-1">{course.title_en}</p>

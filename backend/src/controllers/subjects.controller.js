@@ -5,47 +5,90 @@ const require = createRequire(import.meta.url);
 const { PDFParse } = require("pdf-parse");
 const XLSX = require("xlsx");
 
-function cleanThaiEncoding(str) {
-  if (!str) return "";
-  return str
+export function normalizeThaiText(text) {
+  if (!text) return "";
+  return text
     .replace(/[\x9B\u009B›]/g, "่")
-    .replace(/[\x9C\u009Cœ]/g, "้")
+    .replace(/[\x9C\u009Cœ\x9A\u009Aš]/g, "้")
     .replace(/[\x9D\u009D\x8E\u008E]/g, "์")
     .replace(/[\x9E\u009Ež]/g, "ั")
     .replace(/[\x9F\u009FŸ]/g, "็")
-    .replace(/[\x9A\u009A]/g, "๊")
     .replace(/[\x85\u0085—]/g, "ึ")
-    .replace(/[\x84\u0084•]/g, "ิ")
-    .replace(/องค[v ]+ประกอบ/g, "องค์ประกอบ")
-    .replace(/องค[v ]+กร/g, "องค์กร")
-    .replace(/อาจารย[v ]+/g, "อาจารย์")
-    .replace(/ซอฟต[v ]*แวร[v ]*/g, "ซอฟต์แวร์")
-    .replace(/คณิตศาสตร[v ]*/g, "คณิตศาสตร์")
-    .replace(/ปัญญาประดิษฐ[v ]*/g, "ปัญญาประดิษฐ์")
-    .replace(/วิเคราะห[v ]*/g, "วิเคราะห์")
-    .replace(/ประยุกต[v ]*/g, "ประยุกต์")
-    .replace(/คอมพิวเตอร[v ]*/g, "คอมพิวเตอร์")
-    .replace(/ศาสตร[v ]*/g, "ศาสตร์")
-    .replace(/การณ[v ]*/g, "การณ์")
-    .replace(/เซ็นเซอร[v ]*/g, "เซ็นเซอร์")
-    .replace(/อินเทอร[v ]*เน็ต/g, "อินเทอร์เน็ต")
-    .replace(/คลาวด[v ]*/g, "คลาวด์")
-    .replace(/เวิลด[v ]*/g, "เวิลด์")
-    .replace(/ไซเบอร[v ]*/g, "ไซเบอร์")
-    .replace(/แพลตฟอร[v ]*ม/g, "แพลตฟอร์ม")
-    .replace(/เซิร[v ]*ฟเวอร[v ]*/g, "เซิร์ฟเวอร์")
-    .replace(/ไดรฟ[v ]*/g, "ไดรฟ์")
-    .replace(/อิเล็กทรอนิกส[v ]*/g, "อิเล็กทรอนิกส์")
-    .replace(/รีจิสเตอร[v ]*/g, "รีจิสเตอร์")
-    .replace(/แดชบอร[v ]*ด/g, "แดชบอร์ด")
-    .replace(/อีเวนท[v ]*/g, "อีเวนต์")
-    .replace(/โมบายล[v ]*/g, "โมบายล์")
-    .replace(/สตาร[v ]*ตอัพ/g, "สตาร์ตอัป")
-    .replace(/สตาร[v ]*ทอัพ/g, "สตาร์ทอัพ")
-    .replace(/([์ิีึืุูั็่้๊๋])\1+/g, "$1") // Remove duplicate tonal marks
+    .replace(/[\x98\u0098˜]/g, "ื")
+    .replace(/[\x84\u0084\x95\u0095•]/g, "ิ")
+    .replace(/\uF701/g, "ิ")
+    .replace(/\uF702/g, "ี")
+    .replace(/\uF703/g, "ึ")
+    .replace(/\uF704/g, "ื")
+    .replace(/\uF705/g, "่")
+    .replace(/\uF706/g, "้")
+    .replace(/\uF709/g, "์")
+    .replace(/\uF70A/g, "่")
+    .replace(/\uF70B/g, "้")
+    .replace(/\uF70C/g, "๊")
+    .replace(/\uF70D/g, "๋")
+    .replace(/\uF70E/g, "์")
+    .replace(/\uF70F/g, "ํ")
+    .replace(/\uF710/g, "ั")
+    .replace(/\uF711/g, "่")
+    .replace(/\uF712/g, "็")
+    .replace(/\uF713/g, "้")
+    .replace(/\uF714/g, "๊")
+    .replace(/\uF715/g, "ั")
+    .replace(/\uF716/g, "็")
+    .replace(/\uF717/g, "์")
+    .replace(/\uF718/g, "ิ")
+    .replace(/\uF719/g, "ี")
+    .replace(/\uF71A/g, "ึ")
+    .replace(/ํ[ ]*า/g, "ำ")
+    .replace(/\u0E4D\u0E32/g, "ำ");
+}
+
+export function fixThaiSpacing(str) {
+  if (!str) return "";
+  let s = str;
+  s = s.replace(/([ก-ฮ])\s+([่้๊๋์ิีึืุูั็])/g, "$1$2");
+  s = s.replace(/([่้๊๋์ิีึืุูั็])\s+([ก-ฮะ-ูเ-ไ])/g, "$1$2");
+  s = s.replace(/([่้๊๋์ิีึืุูั็])\s+([ก-ฮะ-ูเ-ไ])/g, "$1$2");
+  s = s.replace(/([ก-ฮ])\s+า(?![a-zA-Z0-9])/g, "$1ำ");
+  s = s.replace(/([ก-ฮ])([่้๊๋])\s+า(?![a-zA-Z0-9])/g, "$1$2ำ");
+  s = s
+    .replace(/ซอฟต[ ]*แวร[ ]*/g, "ซอฟต์แวร์")
+    .replace(/คอมพิวเตอร[ ]*/g, "คอมพิวเตอร์")
+    .replace(/อินเทอร[ ]*เน็ต/g, "อินเทอร์เน็ต")
+    .replace(/ปัญญาประดิษฐ[ ]*/g, "ปัญญาประดิษฐ์")
+    .replace(/คณิตศาสตร[ ]*/g, "คณิตศาสตร์")
+    .replace(/วิทยาศาสตร[ ]*/g, "วิทยาศาสตร์")
+    .replace(/ศาสตร[ ]*/g, "ศาสตร์")
+    .replace(/ประยุกต[ ]*/g, "ประยุกต์")
+    .replace(/วิเคราะห[ ]*/g, "วิเคราะห์")
+    .replace(/โครงงานพิกษ/g, "โครงงานพิเศษ")
+    .replace(/กราฟ[ •\x95]*กส[ ]*/g, "กราฟิกส์")
+    .replace(/ฟ[ •\x95]*สิกส[ ]*/g, "ฟิสิกส์")
+    .replace(/เวิลด[ ]*/g, "เวิลด์")
+    .replace(/คลาวด[ ]*/g, "คลาวด์")
+    .replace(/ไซเบอร[ ]*/g, "ไซเบอร์")
+    .replace(/แพลตฟอร[ ]*ม/g, "แพลตฟอร์ม")
+    .replace(/เซิร[ ]*ฟเวอร[ ]*/g, "เซิร์ฟเวอร์")
+    .replace(/ไดรฟ[ ]*/g, "ไดรฟ์")
+    .replace(/อิเล็กทรอนิกส[ ]*/g, "อิเล็กทรอนิกส์")
+    .replace(/รีจิสเตอร[ ]*/g, "รีจิสเตอร์")
+    .replace(/แดชบอร[ ]*ด/g, "แดชบอร์ด")
+    .replace(/อีเวนท[ ]*/g, "อีเวนต์")
+    .replace(/โมบายล[ ]*/g, "โมบายล์")
+    .replace(/แอปพลิเคช[ ]*น/g, "แอปพลิเคชัน")
+    .replace(/สตาร[ ]*ตอัพ/g, "สตาร์ตอัป")
+    .replace(/สตาร[ ]*ทอัพ/g, "สตาร์ทอัพ")
+    .replace(/สาหรับการคณนา/g, "สำหรับการคณนา")
+    .replace(/([์ิีึืุูั็่้๊๋])\1+/g, "$1")
     .replace(/\s*\*+\s*/g, " ")
-    .replace(/\s+/g, " ")
+    .replace(/[ \t]+/g, " ")
     .trim();
+  return s;
+}
+
+function cleanThaiEncoding(str) {
+  return fixThaiSpacing(normalizeThaiText(str));
 }
 
 // Helper to parse subject chunks from extracted PDF text

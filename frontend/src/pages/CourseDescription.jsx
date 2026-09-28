@@ -7,6 +7,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import Footer from "../components/Footer";
+import { cleanThaiDisplay } from "../utils/thaiText";
 
 export default function CourseDescription() {
   const location = useLocation();
@@ -146,7 +147,11 @@ export default function CourseDescription() {
       }
 
       const res = await axios.get("/api/subjects", { params });
-      let data = res.data || [];
+      let data = (res.data || []).map(s => ({
+        ...s,
+        title_th: cleanThaiDisplay(s.title_th),
+        description_th: cleanThaiDisplay(s.description_th)
+      }));
 
       // 🌟 Smart Search Fallback:
       // ถ้าค้นหาด้วยคีย์เวิร์ด (เช่น รหัสวิชา หรือ ชื่อวิชา) แล้วไม่พบในหลักสูตรที่เลือก
@@ -156,7 +161,11 @@ export default function CourseDescription() {
           const globalRes = await axios.get("/api/subjects", {
             params: { keyword: searchTerm.trim() }
           });
-          const allMatches = globalRes.data || [];
+          const allMatches = (globalRes.data || []).map(s => ({
+            ...s,
+            title_th: cleanThaiDisplay(s.title_th),
+            description_th: cleanThaiDisplay(s.description_th)
+          }));
           if (allMatches.length > 0) {
             const first = allMatches[0];
             for (const deg of curriculumOptions) {
