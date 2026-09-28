@@ -12,19 +12,40 @@ const ALLOWED_TAGS = [
   'ข่าวรับสมัครงาน-ประชาสัมพันธ์'
 ];
 
+// ฟังก์ชันแปลงค่าหมวดหมู่จาก URL Query Param ให้เป็นชื่อแท็บมาตรฐาน
+const getTabFromParams = (params) => {
+  const raw = params.get('tab') || params.get('category');
+  if (!raw) return 'ล่าสุด';
+  try {
+    const decoded = decodeURIComponent(raw).trim();
+    if (decoded === 'department' || decoded === 'ข่าวภาควิชาฯ') return 'ข่าวภาควิชาฯ';
+    if (decoded === 'faculty' || decoded === 'ข่าวคณะและมหาวิทยาลัย' || decoded === 'ข่าวคณะ/มหาวิทยาลัย') return 'ข่าวคณะและมหาวิทยาลัย';
+    if (decoded === 'scholarship' || decoded === 'ข่าวทุนการศึกษา') return 'ข่าวทุนการศึกษา';
+    if (decoded === 'job' || decoded === 'jobs' || decoded === 'employment' || decoded === 'ข่าวรับสมัครงาน-ประชาสัมพันธ์' || decoded === 'ข่าวรับสมัครงาน/ประชาสัมพันธ์') return 'ข่าวรับสมัครงาน-ประชาสัมพันธ์';
+    if (ALLOWED_TAGS.includes(decoded)) return decoded;
+  } catch (e) {
+    console.error("Error parsing tab param:", e);
+  }
+  return 'ล่าสุด';
+};
+
 export default function News() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [newsData, setNewsData] = useState([]);
 
-  const initialTab = searchParams.get('tab') || 'ล่าสุด';
-  const [activeTab, setActiveTab] = useState(initialTab);
+  const [activeTab, setActiveTab] = useState(() => getTabFromParams(searchParams));
   const navigate = useNavigate();
+
+  // ✨ ซิงค์ activeTab ทันทีเมื่อ URL Query Param มีการเปลี่ยนแปลง (เช่น กดเลือกจากเมนูย่อยของ Navbar)
+  useEffect(() => {
+    setActiveTab(getTabFromParams(searchParams));
+  }, [searchParams]);
 
   useEffect(() => {
     const fetchAllNews = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/news");
+        const res = await axios.get("/api/news");
         const formattedNews = res.data
           .filter(item => item.status === 'active')
           .map(item => ({
@@ -33,7 +54,7 @@ export default function News() {
             description: item.summary || (item.content ? item.content.replace(/<[^>]+>/g, '').substring(0, 150) + '...' : ''), // ดึงเนื้อหาย่อ
             isLatest: true,
             isPinned: item.is_urgent,
-            image: item.image ? `http://localhost:5000${item.image}` : "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800",
+            image: item.image ? (item.image.startsWith('http') ? item.image : item.image) : "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800",
             date: new Date(item.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }),
             tag: item.category === 'department' ? 'ข่าวภาควิชาฯ' :
               item.category === 'faculty' ? 'ข่าวคณะและมหาวิทยาลัย' :
@@ -50,7 +71,11 @@ export default function News() {
   // ✨ ฟังก์ชันเปลี่ยน Tab พร้อมอัปเดต URL
   const handleTabChange = (tabName) => {
     setActiveTab(tabName);
-    setSearchParams({ tab: tabName });
+    if (tabName === 'ล่าสุด') {
+      setSearchParams({});
+    } else {
+      setSearchParams({ tab: tabName });
+    }
   };
 
   // 📝 ข้อมูลข่าวสาร (คงเดิม)
