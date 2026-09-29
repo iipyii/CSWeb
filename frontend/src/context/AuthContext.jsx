@@ -61,6 +61,25 @@ export const AuthProvider = ({ children }) => {
     return userData;
   };
 
+  // ฟังก์ชัน Login ด้วย Username & Password
+  const loginWithCredentials = async (username, password) => {
+    setLoading(true);
+    try {
+      const res = await axios.post('/auth/login', { username, password });
+      const { token: newToken, user: userData } = res.data;
+      if (newToken) {
+        localStorage.setItem('csweb_token', newToken);
+        setToken(newToken);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+        setUser(userData);
+        return userData;
+      }
+      throw new Error("ไม่ได้รับรหัสยืนยันตัวตน (Token)");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // ฟังก์ชัน Logout
   const logout = async () => {
     try {
@@ -85,6 +104,7 @@ export const AuthProvider = ({ children }) => {
     loading,
     token,
     loginWithToken,
+    loginWithCredentials,
     logout,
     refreshUser: () => fetchCurrentUser()
   };

@@ -2,6 +2,7 @@ import express from "express";
 import axios from "axios";
 import jwt from "jsonwebtoken";
 import { prisma } from "../lib/prisma.js";
+import { verifyPassword, hashPassword } from "../lib/password.js";
 
 const router = express.Router();
 
@@ -159,32 +160,96 @@ router.get("/callback", async (req, res) => {
   }
 });
 
-/* 2.7 Login ด้วยบัญชี Super Admin เดิม (admin@cs.com) เพื่อตั้งค่าและกำหนดสิทธิ์ผู้ใช้งาน */
-router.post("/legacy-admin", async (req, res) => {
+/* 2.7 เข้าสู่ระบบด้วย Username / Email และ Password (สำหรับ Admin / เจ้าหน้าที่ / บุคลากร) */
+router.post("/login", async (req, res) => {
   try {
-    let adminUser = await prisma.users.findFirst({
-      where: { role: "admin" }
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ error: "กรุณากรอกชื่อผู้ใช้และรหัสผ่าน" });
+    }
+
+    const cleanUsername = String(username).trim();
+    const cleanPassword = String(password).trim();
+
+    // 1. ค้นหาผู้ใช้จาก username หรือ email
+    let user = await prisma.users.findFirst({
+      where: {
+        OR: [
+          { username: cleanUsername },
+          { email: cleanUsername }
+        ]
+      }
     });
 
-    if (!adminUser) {
-      adminUser = await prisma.users.create({
-        data: {
-          email: "admin@cs.com",
-          username: "admin",
-          full_name: "Super Administrator",
-          role: "admin"
+    // 2. ถ้าไม่พบผู้ใช้ แต่พิมพ์ admin / admin@cs.com ให้ค้นหาบัญชีแอดมินหรือสร้างขึ้นใหม่
+    if (!user && (cleanUsername.toLowerCase() === "admin" || cleanUsername.toLowerCase() === "admin@cs.com")) {
+      user = await prisma.users.findFirst({
+        where: { role: "admin" }
+      });
+
+      if (!user) {
+        user = await prisma.users.create({
+          data: {
+            email: "admin@cs.com",
+            username: "admin",
+            full_name: "ผู้ดูแลระบบ (Admin)",
+            role: "admin",
+            password: hashPassword(process.env.ADMIN_DEFAULT_PASSWORD || "CSAdmin@KMUTNB2026!")
+          }
+        });
+      }
+    }
+
+    if (!user) {
+      return res.status(401).json({ error: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" });
+    }
+
+    // 3. ตรวจสอบรหัสผ่าน
+    let isPasswordValid = false;
+    const defaultAdminPass = process.env.ADMIN_DEFAULT_PASSWORD || "CSAdmin@KMUTNB2026!";
+
+    if (user.password) {
+      isPasswordValid = verifyPassword(cleanPassword, user.password);
+    } else {
+      // ถ้าใน DB ยังไม่ได้ตั้งรหัสผ่าน และเป็น admin ให้เทียบกับค่า default แล้วเซฟแฮชลง DB
+      if (user.role === "admin" && (cleanPassword === defaultAdminPass || cleanPassword === "admin12345")) {
+        isPasswordValid = true;
+        await prisma.users.update({
+          where: { id: user.id },
+          data: {
+            password: hashPassword(cleanPassword),
+            username: user.username || "admin"
+          }
+        });
+      }
+    }
+
+    if (!isPasswordValid) {
+      return res.status(401).json({ error: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" });
+    }
+
+    // 4. ตรวจสอบข้อมูลอาจารย์ที่เชื่อมโยง (ถ้ามี)
+    let lecturer = null;
+    if (user.email) {
+      lecturer = await prisma.lecturers.findFirst({
+        where: {
+          OR: [
+            { email: { equals: user.email, mode: "insensitive" } },
+            { fullname_th: { contains: user.full_name.split(" ").slice(-1)[0] || user.full_name } }
+          ]
         }
       });
     }
 
+    // 5. สร้าง JWT Token
     const tokenPayload = {
-      id: adminUser.id,
-      email: adminUser.email,
-      username: adminUser.username,
-      full_name: adminUser.full_name,
-      role: adminUser.role,
-      lecturer_id: null,
-      lecturer_code: null
+      id: user.id,
+      email: user.email,
+      username: user.username || cleanUsername,
+      full_name: user.full_name,
+      role: user.role,
+      lecturer_id: lecturer ? lecturer.id : null,
+      lecturer_code: lecturer ? lecturer.lecturer_code : null
     };
 
     const token = jwt.sign(tokenPayload, process.env.JWT_SECRET || "supersecret", {
@@ -201,16 +266,69 @@ router.post("/legacy-admin", async (req, res) => {
     res.json({
       token,
       user: {
-        id: adminUser.id,
-        email: adminUser.email,
-        username: adminUser.username,
-        full_name: adminUser.full_name,
-        role: adminUser.role
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        full_name: user.full_name,
+        role: user.role
       }
     });
   } catch (err) {
-    console.error("Legacy Admin Login Error:", err);
-    res.status(500).json({ error: "ไม่สามารถเข้าสู่ระบบผู้ดูแลได้" });
+    console.error("Login Error:", err);
+    res.status(500).json({ error: "เกิดข้อผิดพลาดในการเข้าสู่ระบบ กรุณาลองใหม่" });
+  }
+});
+
+// Alias สำหรับ /admin-login
+router.post("/admin-login", (req, res, next) => {
+  req.url = "/login";
+  router.handle(req, res, next);
+});
+
+// ปิดการใช้งาน legacy-admin อย่างปลอดภัย
+router.post("/legacy-admin", (req, res) => {
+  return res.status(403).json({
+    error: "การเข้าสู่ระบบแบบทางลัดเดิมถูกปิดใช้งานแล้วเพื่อความปลอดภัย กรุณาเข้าสู่ระบบด้วย Username และ Password"
+  });
+});
+
+/* 2.8 เปลี่ยนรหัสผ่าน */
+router.post("/change-password", async (req, res) => {
+  const authHeader = req.headers.authorization;
+  const token = (authHeader && authHeader.startsWith("Bearer "))
+    ? authHeader.split(" ")[1]
+    : req.cookies?.token;
+
+  if (!token) {
+    return res.status(401).json({ error: "กรุณาเข้าสู่ระบบก่อนทำรายการ" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "supersecret");
+    const { oldPassword, newPassword } = req.body;
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: "รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร" });
+    }
+
+    const user = await prisma.users.findUnique({ where: { id: decoded.id } });
+    if (!user) {
+      return res.status(404).json({ error: "ไม่พบผู้ใช้ในระบบ" });
+    }
+
+    if (user.password && !verifyPassword(oldPassword, user.password)) {
+      return res.status(400).json({ error: "รหัสผ่านเดิมไม่ถูกต้อง" });
+    }
+
+    await prisma.users.update({
+      where: { id: user.id },
+      data: { password: hashPassword(newPassword) }
+    });
+
+    res.json({ message: "เปลี่ยนรหัสผ่านสำเร็จเรียบร้อยแล้ว" });
+  } catch (err) {
+    console.error("Change Password Error:", err);
+    res.status(500).json({ error: "เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน" });
   }
 });
 
