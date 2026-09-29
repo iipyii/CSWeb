@@ -153,7 +153,6 @@ export default function Login() {
                     required
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    placeholder="admin หรือ admin@cs.com"
                     className="w-full pl-10 pr-4 py-3 bg-slate-50 hover:bg-slate-100/80 focus:bg-white text-slate-800 rounded-2xl border border-slate-200 focus:border-[#3F51B5] focus:ring-4 focus:ring-indigo-100 text-sm font-medium transition-all outline-none"
                   />
                 </div>

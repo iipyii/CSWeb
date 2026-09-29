@@ -60,7 +60,7 @@ router.get("/callback", async (req, res) => {
       throw new Error("Failed to obtain access token from SSO response");
     }
 
-    /* 2.2 ดึงข้อมูล User Profile จาก SSO */
+    /* 2.2 ดึงข้อมูล User Profile จาก SSO ตามเอกสาร KMUTNB SSO API */
     const userRes = await axios.get(
       process.env.SSO_USERINFO_URL || "https://sso.kmutnb.ac.th/resources/userinfo",
       {
@@ -70,11 +70,22 @@ router.get("/callback", async (req, res) => {
       }
     );
 
-    const profile = userRes.data || {};
-    const email = profile.email || (profile.username ? `${profile.username}@kmutnb.ac.th` : `user_${Date.now()}@kmutnb.ac.th`);
-    const displayName = profile.display_name || profile.name || profile.username || "ผู้ใช้งาน KMUTNB";
-    const username = profile.username || profile.preferred_username || (email ? email.split("@")[0] : null);
-    const accountType = profile.account_type || "";
+    const rawData = userRes.data || {};
+    // KMUTNB SSO ส่งข้อมูล 2 รูปแบบ: 
+    // 1) OAuth 2.0 object: { profile: {...}, personnel_info: {...}, student_info: {...} }
+    // 2) OIDC claims: { sub, name, email, kmutnb_account_type, kmutnb_personnel_info, ... }
+    const profile = rawData.profile || rawData;
+    const personnelInfo = rawData.personnel_info || rawData.kmutnb_personnel_info || {};
+    const studentInfo = rawData.student_info || rawData.kmutnb_student_info || {};
+
+    const username = profile.username || rawData.preferred_username || profile.preferred_username || rawData.sub || null;
+    const email = profile.email || rawData.email || (username ? `${username}@kmutnb.ac.th` : `user_${Date.now()}@kmutnb.ac.th`);
+    const displayName = profile.display_name || rawData.name || profile.name || 
+      (personnelInfo.firstname_th ? `${personnelInfo.firstname_th} ${personnelInfo.lastname_th}` : null) ||
+      (studentInfo.stu_first_name_thai ? `${studentInfo.stu_first_name_thai} ${studentInfo.stu_last_name_thai}` : null) ||
+      username || "ผู้ใช้งาน KMUTNB";
+    const accountType = profile.account_type || rawData.kmutnb_account_type || "";
+    const personKey = profile.person_key || rawData.kmutnb_person_key || personnelInfo.person_key || null;
 
     /* 2.3 ค้นหาผู้ใช้ในฐานข้อมูล users */
     let user = await prisma.users.findFirst({
@@ -93,7 +104,7 @@ router.get("/callback", async (req, res) => {
         data: {
           full_name: displayName || user.full_name,
           username: username || user.username,
-          person_key: profile.person_key || user.person_key
+          person_key: personKey || user.person_key
         }
       });
     } else {
