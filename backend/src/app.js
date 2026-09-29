@@ -40,6 +40,26 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
+// 📝 Safe & Clean HTTP Request Logger
+app.use((req, res, next) => {
+  // ข้ามการ log พวก static files รูปภาพและเอกสาร เพื่อไม่ให้ Log รกตา
+  if (req.path.startsWith("/uploads") || req.path.startsWith("/downloads")) {
+    return next();
+  }
+
+  const start = Date.now();
+  const timeStr = new Date().toLocaleTimeString("th-TH", { timeZone: "Asia/Bangkok", hour12: false });
+
+  res.on("finish", () => {
+    const duration = Date.now() - start;
+    const status = res.statusCode;
+    const icon = status >= 500 ? "❌" : status >= 400 ? "⚠️" : "✅";
+    console.log(`[${timeStr}] ${icon} ${req.method} ${req.originalUrl} -> ${status} (${duration}ms)`);
+  });
+
+  next();
+});
+
 // if (process.env.NODE_ENV === "development") {
 //   app.use((req, res, next) => {
 //     req.user = {

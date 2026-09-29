@@ -57,6 +57,8 @@ docker rm -f csweb_backend 2>/dev/null || true
 echo -e "\n${YELLOW}▶️  [4/5] Starting new 'csweb_backend' container...${NC}"
 docker run -d --name csweb_backend \
   --restart always \
+  --log-opt max-size=20m \
+  --log-opt max-file=3 \
   -p 5000:5000 \
   --env-file .env \
   -v "$BACKEND_DIR/uploads:/app/uploads" \
