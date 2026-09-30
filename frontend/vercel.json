@@ -5,6 +5,10 @@
       "destination": "http://18.141.167.113:5000/api/:path*"
     },
     {
+      "source": "/auth/callback",
+      "destination": "/index.html"
+    },
+    {
       "source": "/auth/:path*",
       "destination": "http://18.141.167.113:5000/auth/:path*"
     },

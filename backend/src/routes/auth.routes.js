@@ -24,11 +24,16 @@ router.get("/login", (req, res) => {
 
 /* 2. CALLBACK FROM KMUTNB SSO */
 router.get("/callback", async (req, res) => {
-  const { code, error, error_description } = req.query;
+  const { code, error, error_description, token } = req.query;
   const rawFrontendUrl = process.env.FRONTEND_URL;
   const frontendUrl = (rawFrontendUrl && rawFrontendUrl !== "*")
     ? rawFrontendUrl
     : "https://cs-web-kappa.vercel.app";
+
+  // ถ้ามี token ส่งเข้ามาอยู่แล้ว ให้ redirect ไปที่หน้า frontend callback ทันที
+  if (token) {
+    return res.redirect(`${frontendUrl}/sso-callback?token=${encodeURIComponent(token)}`);
+  }
 
   if (error) {
     console.error("KMUTNB SSO error:", error, error_description);
@@ -166,7 +171,7 @@ router.get("/callback", async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
-    res.redirect(`${frontendUrl}/auth/callback?token=${encodeURIComponent(token)}`);
+    res.redirect(`${frontendUrl}/sso-callback?token=${encodeURIComponent(token)}`);
   } catch (err) {
     console.error("SSO Callback Error:", err.response?.data || err.message);
     const errorMsg = err.response?.data?.error_description || err.response?.data?.error || err.message || "การเข้าสู่ระบบผ่าน SSO ล้มเหลว";

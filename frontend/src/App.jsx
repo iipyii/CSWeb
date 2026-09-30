@@ -189,6 +189,7 @@ export default function App() {
           {/* 🔐 Admin Login & OAuth SSO Callback */}
           <Route path="/admin/login" element={<Login />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/sso-callback" element={<AuthCallback />} />
 
           {/* 🔐 กลุ่มหน้า Admin (ป้องกันด้วย ProtectedRoute) */}
           <Route 
