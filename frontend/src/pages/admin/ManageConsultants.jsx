@@ -16,19 +16,24 @@ import {
   Calendar, 
   Download, 
   AlertCircle,
-  Pencil
+  Pencil,
+  GraduationCap
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export default function ManageConsultants() {
   const { isAdmin, user } = useAuth();
   const isUserAdmin = isAdmin || user?.role === 'admin';
+  const myLecturerCode = user?.lecturer_code || user?.lecturer?.lecturer_code;
+  const myLecturerId = user?.lecturer_id || user?.lecturer?.id;
+  const myLecturerName = user?.lecturer?.fullname_th || user?.full_name;
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedYear, setSelectedYear] = useState("all");
+  const [selectedAdvisor, setSelectedAdvisor] = useState("all");
   const [availableYears, setAvailableYears] = useState([2570, 2569, 2568, 2567, 2566, 2565, 2564, 2563, 2562, 2561, 2560, 2559, 2558]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -144,6 +149,16 @@ export default function ManageConsultants() {
     }
   };
 
+  const handleOpenAddModal = () => {
+    setFormData({ 
+      student_id: "", 
+      name: "", 
+      year: cohortList[0] || "68", 
+      advisor_id: !isUserAdmin ? (myLecturerId || "") : "" 
+    });
+    setIsAddModalOpen(true);
+  };
+
   const handleAddStudent = async (e) => {
     e.preventDefault();
     if (!formData.student_id.trim() || !formData.name.trim()) {
@@ -153,14 +168,18 @@ export default function ManageConsultants() {
 
     try {
       setSubmitting(true);
-      await axios.post("/api/consult/students", formData);
+      const payload = {
+        ...formData,
+        advisor_id: !isUserAdmin ? (myLecturerId || formData.advisor_id) : formData.advisor_id
+      };
+      await axios.post("/api/consult/students", payload);
       alert("เพิ่มข้อมูลนักศึกษาสำเร็จ");
       setIsAddModalOpen(false);
       setFormData({ 
         student_id: "", 
         name: "", 
         year: cohortList[0] || "68", 
-        advisor_id: "" 
+        advisor_id: !isUserAdmin ? (myLecturerId || "") : "" 
       });
       fetchStudents();
     } catch (error) {
@@ -265,6 +284,25 @@ export default function ManageConsultants() {
   };
 
   const filteredStudents = students.filter(s => {
+    // 1. ถ้าไม่ใช่ Admin (คือสิทธิ์อาจารย์ Lecturer) ให้แสดงเฉพาะนักศึกษาในที่ปรึกษาของตนเองเท่านั้น
+    if (!isUserAdmin) {
+      const matchCode = myLecturerCode && s.advisor_code && s.advisor_code.trim().toUpperCase() === myLecturerCode.trim().toUpperCase();
+      const matchId = myLecturerId && s.advisor_id && String(s.advisor_id) === String(myLecturerId);
+      const lastName = myLecturerName ? myLecturerName.split(" ").slice(-1)[0] : "";
+      const matchName = lastName && s.advisor && s.advisor.includes(lastName);
+
+      if (!matchCode && !matchId && !matchName) {
+        return false;
+      }
+    } else if (selectedAdvisor !== "all") {
+      // ถ้าเป็น Admin และเลือกฟิลเตอร์อาจารย์
+      const matchCode = s.advisor_code && s.advisor_code.trim().toUpperCase() === selectedAdvisor.trim().toUpperCase();
+      const matchId = s.advisor_id && String(s.advisor_id) === String(selectedAdvisor);
+      if (!matchCode && !matchId) {
+        return false;
+      }
+    }
+
     const q = searchTerm.toLowerCase().trim();
     const matchSearch = !q || 
       (s.name || "").toLowerCase().includes(q) || 
@@ -285,7 +323,11 @@ export default function ManageConsultants() {
           <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
             <UserCheck className="text-[#3F51B5]" /> จัดการรายชื่อนักศึกษาในที่ปรึกษา
           </h1>
-          <p className="text-slate-500 text-sm">ตรวจสอบและจัดการข้อมูลนักศึกษาภายใต้การดูแลของอาจารย์</p>
+          <p className="text-slate-500 text-sm">
+            {isUserAdmin 
+              ? "ตรวจสอบและจัดการข้อมูลนักศึกษาภายใต้การดูแลของอาจารย์ทุกคนในระบบ"
+              : `นักศึกษาในความดูแลของ ${myLecturerName || user?.full_name} (${myLecturerCode || 'อาจารย์ที่ปรึกษา'})`}
+          </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
           <button 
@@ -311,7 +353,7 @@ export default function ManageConsultants() {
           )}
 
           <button 
-            onClick={() => setIsAddModalOpen(true)}
+            onClick={handleOpenAddModal}
             className="flex items-center gap-2 bg-[#3F51B5] text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 transition-all text-sm cursor-pointer"
           >
             <UserPlus size={18} /> เพิ่มนักศึกษา
@@ -319,16 +361,51 @@ export default function ManageConsultants() {
         </div>
       </header>
 
+      {/* 🧑‍🏫 การ์ดแจ้งสถานะสำหรับสิทธิ์อาจารย์ (Lecturer Notice) */}
+      {!isUserAdmin && (
+        <div className="bg-gradient-to-r from-indigo-50/80 via-white to-indigo-50/50 border border-indigo-100/90 rounded-[2rem] p-5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-[#3F51B5] text-white flex items-center justify-center font-black text-sm shadow-md shadow-indigo-200">
+              {myLecturerCode || "ADV"}
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-black uppercase tracking-wider text-[#3F51B5] bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-md">
+                  อาจารย์ที่ปรึกษา
+                </span>
+                <span className="text-sm font-bold text-slate-800">
+                  {myLecturerName || user?.full_name}
+                </span>
+                {myLecturerCode && (
+                  <span className="text-xs font-semibold text-slate-500">
+                    ({myLecturerCode})
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                ระบบกรองเฉพาะนักศึกษาที่คุณเป็นที่ปรึกษาให้โดยอัตโนมัติ เพื่อความสะดวกในการดูแลและติดตาม
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+            <span className="text-xs text-slate-500 font-medium">จำนวนในที่ปรึกษา:</span>
+            <span className="text-sm font-black text-[#3F51B5] bg-white px-3 py-1 rounded-xl shadow-sm border border-indigo-100">
+              {filteredStudents.length} คน
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* 🔍 Filter & Search */}
       <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 space-y-4">
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1 flex-wrap">
             {/* ค้นหา */}
-            <div className="relative flex-1 max-w-md">
+            <div className="relative flex-1 min-w-[240px] max-w-md">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input 
                 type="text" 
-                placeholder="ค้นหารหัส หรือ ชื่อนักศึกษา, ชื่ออาจารย์..." 
+                placeholder="ค้นหารหัส หรือ ชื่อนักศึกษา..." 
                 className="w-full pl-10 pr-8 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-sm focus:ring-2 focus:ring-[#3F51B5]/20 focus:border-[#3F51B5] outline-none transition-all"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -343,8 +420,8 @@ export default function ManageConsultants() {
               )}
             </div>
 
-            {/* ฟิลเตอร์เลือก Dropdown */}
-            <div className="relative min-w-[180px]">
+            {/* ฟิลเตอร์เลือกรหัสรุ่น */}
+            <div className="relative min-w-[170px]">
               <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#3F51B5] pointer-events-none">
                 <Calendar size={16} />
               </div>
@@ -364,15 +441,39 @@ export default function ManageConsultants() {
                 ▼
               </div>
             </div>
+
+            {/* ฟิลเตอร์เลือกอาจารย์ที่ปรึกษา (เฉพาะผู้ดูแลระบบ Admin) */}
+            {isUserAdmin && (
+              <div className="relative min-w-[210px]">
+                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#3F51B5] pointer-events-none">
+                  <GraduationCap size={16} />
+                </div>
+                <select
+                  value={selectedAdvisor}
+                  onChange={(e) => setSelectedAdvisor(e.target.value)}
+                  className="w-full pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-[#3F51B5]/20 focus:border-[#3F51B5] transition-all cursor-pointer appearance-none"
+                >
+                  <option value="all">อาจารย์ที่ปรึกษา (ทั้งหมด)</option>
+                  {lecturers.map(l => (
+                    <option key={l.id} value={l.lecturer_code || String(l.id)}>
+                      {l.fullname_th} {l.lecturer_code ? `(${l.lecturer_code})` : ""}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-xs">
+                  ▼
+                </div>
+              </div>
+            )}
           </div>
 
           {/* จำนวนรายการ */}
-          <div className="text-xs text-slate-500 font-medium px-2 flex items-center gap-1.5 self-end md:self-center">
+          <div className="text-xs text-slate-500 font-medium px-2 flex items-center gap-1.5 self-end md:self-center shrink-0">
             <span>แสดง</span>
             <span className="font-bold text-[#3F51B5] bg-indigo-50 px-2 py-0.5 rounded-md">
               {filteredStudents.length}
             </span>
-            <span>คน (จากทั้งหมด {students.length} คน)</span>
+            <span>คน {isUserAdmin ? `(จากทั้งหมด ${students.length} คน)` : `ในที่ปรึกษา`}</span>
           </div>
         </div>
 
@@ -809,20 +910,27 @@ export default function ManageConsultants() {
 
                 <div>
                   <label className="text-xs font-bold text-slate-600 block mb-1">
-                    อาจารย์ที่ปรึกษา (ระบุหรือไม่ระบุก็ได้)
+                    อาจารย์ที่ปรึกษา {!isUserAdmin ? "(บันทึกในกลุ่มของคุณ)" : "(ระบุหรือไม่ระบุก็ได้)"}
                   </label>
-                  <select 
-                    value={formData.advisor_id}
-                    onChange={(e) => setFormData({ ...formData, advisor_id: e.target.value })}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-[#3F51B5] focus:ring-2 focus:ring-[#3F51B5]/20"
-                  >
-                    <option value="">-- ยังไม่ระบุอาจารย์ที่ปรึกษา --</option>
-                    {lecturers.map(l => (
-                      <option key={l.id} value={l.id}>
-                        {l.fullname_th} {l.lecturer_code ? `(${l.lecturer_code})` : ''}
-                      </option>
-                    ))}
-                  </select>
+                  {!isUserAdmin ? (
+                    <div className="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 flex items-center justify-between">
+                      <span>{myLecturerName || user?.full_name} {myLecturerCode ? `(${myLecturerCode})` : ""}</span>
+                      <span className="text-[11px] text-[#3F51B5] bg-indigo-50 px-2.5 py-1 rounded-lg font-semibold">บัญชีของคุณ</span>
+                    </div>
+                  ) : (
+                    <select 
+                      value={formData.advisor_id}
+                      onChange={(e) => setFormData({ ...formData, advisor_id: e.target.value })}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-[#3F51B5] focus:ring-2 focus:ring-[#3F51B5]/20"
+                    >
+                      <option value="">-- ยังไม่ระบุอาจารย์ที่ปรึกษา --</option>
+                      {lecturers.map(l => (
+                        <option key={l.id} value={l.id}>
+                          {l.fullname_th} {l.lecturer_code ? `(${l.lecturer_code})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
 
                 <div className="flex gap-3 pt-4">
@@ -948,18 +1056,25 @@ export default function ManageConsultants() {
                   <label className="text-xs font-bold text-slate-600 block mb-1">
                     อาจารย์ที่ปรึกษา
                   </label>
-                  <select 
-                    value={editFormData.advisor_id}
-                    onChange={(e) => setEditFormData({ ...editFormData, advisor_id: e.target.value })}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 font-medium text-slate-700"
-                  >
-                    <option value="">-- ยังไม่ระบุอาจารย์ที่ปรึกษา --</option>
-                    {lecturers.map(l => (
-                      <option key={l.id} value={l.id}>
-                        {l.fullname_th} {l.lecturer_code ? `(${l.lecturer_code})` : ''}
-                      </option>
-                    ))}
-                  </select>
+                  {!isUserAdmin ? (
+                    <div className="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 flex items-center justify-between">
+                      <span>{myLecturerName || user?.full_name} {myLecturerCode ? `(${myLecturerCode})` : ""}</span>
+                      <span className="text-[11px] text-amber-600 bg-amber-50 px-2.5 py-1 rounded-lg font-semibold">บัญชีของคุณ</span>
+                    </div>
+                  ) : (
+                    <select 
+                      value={editFormData.advisor_id}
+                      onChange={(e) => setEditFormData({ ...editFormData, advisor_id: e.target.value })}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 font-medium text-slate-700"
+                    >
+                      <option value="">-- ยังไม่ระบุอาจารย์ที่ปรึกษา --</option>
+                      {lecturers.map(l => (
+                        <option key={l.id} value={l.id}>
+                          {l.fullname_th} {l.lecturer_code ? `(${l.lecturer_code})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
 
                 <div className="flex gap-3 pt-4 border-t mt-6">
