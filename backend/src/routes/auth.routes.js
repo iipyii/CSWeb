@@ -137,7 +137,17 @@ router.get("/callback", async (req, res) => {
 
     /* 2.4 ตรวจสอบว่าตรงกับอาจารย์ในตาราง lecturers หรือไม่ */
     let lecturer = null;
-    if (email) {
+    if (user && user.person_key) {
+      lecturer = await prisma.lecturers.findFirst({
+        where: {
+          OR: [
+            { lecturer_code: { equals: user.person_key, mode: "insensitive" } },
+            { id: !isNaN(Number(user.person_key)) ? Number(user.person_key) : -1 }
+          ]
+        }
+      });
+    }
+    if (!lecturer && email) {
       lecturer = await prisma.lecturers.findFirst({
         where: {
           OR: [
@@ -374,9 +384,19 @@ router.get("/me", async (req, res) => {
 
     // ดึงข้อมูลอาจารย์ที่เชื่อมโยง
     let lecturer = null;
-    if (decoded.lecturer_id) {
+    if (user.person_key) {
+      lecturer = await prisma.lecturers.findFirst({
+        where: {
+          OR: [
+            { lecturer_code: { equals: user.person_key, mode: "insensitive" } },
+            { id: !isNaN(Number(user.person_key)) ? Number(user.person_key) : -1 }
+          ]
+        }
+      });
+    }
+    if (!lecturer && decoded.lecturer_id) {
       lecturer = await prisma.lecturers.findUnique({ where: { id: decoded.lecturer_id } });
-    } else if (user.email) {
+    } else if (!lecturer && user.email) {
       lecturer = await prisma.lecturers.findFirst({
         where: {
           OR: [
