@@ -87,6 +87,23 @@ export default function CourseSectionContent() {
 
   const pdfUrl = getPdfUrl(section.pdf_path);
 
+  const getCourseSectionSlug = (prog, deg) => {
+    if (prog?.slug === "ComputerScience") return "cs-master";
+    if (prog?.slug === "SoftwareEngineering") return "se-master";
+    if (prog?.slug === "csb") return "cs-english";
+    if (prog?.slug === "computersci") return "doctor";
+    return deg?.slug || "bachelor";
+  };
+
+  const getSectionBadgeLabel = (s) => {
+    if (s.order_index === 88) return "ปรับปรุงแก้ไข";
+    if (s.order_index === 99) return "แผนภูมิ";
+    if (s.order_index === 990) return "ภาคผนวก";
+    if (s.order_index === 999) return "คำอธิบายรายวิชา";
+    if (s.order_index >= 111 && s.order_index <= 900) return `องค์ประกอบ ${Math.floor(s.order_index / 111)}`;
+    return `หมวด ${s.section_no || s.order_index}`;
+  };
+
   return (
     <div className="bg-[#f8fafc] min-h-screen flex flex-col">
       
@@ -101,7 +118,7 @@ export default function CourseSectionContent() {
             </Link>
             <ChevronRight size={14} className="opacity-40" />
             <Link 
-              to={`/course-sections/${degree?.slug || 'bachelor'}`}
+              to={`/course-sections/${getCourseSectionSlug(program, degree)}`}
               className="text-blue-300 hover:text-blue-200 transition-colors"
             >
               หลักสูตร ({degree?.name_th || 'ปริญญาตรี'})
@@ -184,7 +201,7 @@ export default function CourseSectionContent() {
                       : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-100'
                   }`}
                 >
-                  <span>หมวด {s.section_no || s.order_index}</span>
+                  <span>{getSectionBadgeLabel(s)}</span>
                 </button>
               );
             })}

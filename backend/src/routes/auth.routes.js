@@ -25,7 +25,10 @@ router.get("/login", (req, res) => {
 /* 2. CALLBACK FROM KMUTNB SSO */
 router.get("/callback", async (req, res) => {
   const { code, error, error_description } = req.query;
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  const rawFrontendUrl = process.env.FRONTEND_URL;
+  const frontendUrl = (rawFrontendUrl && rawFrontendUrl !== "*")
+    ? rawFrontendUrl
+    : "https://cs-web-kappa.vercel.app";
 
   if (error) {
     console.error("KMUTNB SSO error:", error, error_description);

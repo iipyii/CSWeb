@@ -5,20 +5,41 @@ import { Eye, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import Footer from "../components/Footer";
 
 const idMap = {
-  "cs-normal-2569": { slug: "regular", year: 2569 },
-  "cs-normal-2564": { slug: "regular", year: 2564 },
-  "cs-normal-2559": { slug: "regular", year: 2559 },
-  "cs-old-2554": { slug: "regular", year: 2554 },
+  // 1. Bachelor Normal
+  "cs-normal-2569": { slug: "regular", year: 2569, title: "หลักสูตรวิทยาศาสตรบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์", subtitle: "(หลักสูตรปรับปรุง พ.ศ. 2569)", level: "bachelor" },
+  "cs-normal-2564": { slug: "regular", year: 2564, title: "หลักสูตรวิทยาศาสตรบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์", subtitle: "(หลักสูตรปรับปรุง พ.ศ. 2564)", level: "bachelor" },
+  "cs-normal-2559": { slug: "regular", year: 2559, title: "หลักสูตรวิทยาศาสตรบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์", subtitle: "(หลักสูตรปรับปรุง พ.ศ. 2559)", level: "bachelor" },
+  "cs-old-2554": { slug: "regular", year: 2554, title: "หลักสูตรวิทยาศาสตรบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์", subtitle: "(หลักสูตรปรับปรุง พ.ศ. 2554)", level: "bachelor" },
 
-  "cs-english-2564": { slug: "csb", year: 2564 },
+  // 2. Bachelor Inter (CSB)
+  "cs-english-2564": { slug: "csb", year: 2564, title: "โครงการพิเศษ สองภาษา CSB", subtitle: "พ.ศ. 2564", level: "cs-english" },
 
-  "cs-master-2567": { slug: "ComputerScience", year: 2567 },
-  "cs-master-2562": { slug: "ComputerScience", year: 2562 },
+  // 3. Master CS
+  "cs-master-2567": { slug: "ComputerScience", year: 2567, title: "หลักสูตรวิทยาศาสตรมหาบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์", subtitle: "(หลักสูตรปรับปรุง พ.ศ. 2567)", level: "cs-master" },
+  "cs-master-2562": { slug: "ComputerScience", year: 2562, title: "หลักสูตรวิทยาศาสตรมหาบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์", subtitle: "(หลักสูตรปรับปรุง พ.ศ. 2562)", level: "cs-master", isMain: true },
+  "cs-master-edit-2562": { 
+    slug: "ComputerScience", 
+    year: 2562, 
+    title: "การปรับปรุงแก้ไขหลักสูตร", 
+    subtitle: "(หลักสูตรวิทยาศาสตรมหาบัณฑิตปี 2562)", 
+    level: "cs-master", 
+    isEdit: true 
+  },
 
-  "se-master-2559": { slug: "SoftwareEngineering", year: 2559 },
+  // 4. Master SE
+  "se-master-2559": { slug: "SoftwareEngineering", year: 2559, title: "หลักสูตรวิทยาศาสตรมหาบัณฑิต สาขาวิชาวิศวกรรมซอฟต์แวร์", subtitle: "(หลักสูตรใหม่ พ.ศ. 2559)", level: "se-master", isMain: true },
+  "se-master-edit-2559": { 
+    slug: "SoftwareEngineering", 
+    year: 2559, 
+    title: "การปรับปรุงแก้ไขหลักสูตรวิทยาศาสตรมหาบัณฑิตปี 2559", 
+    subtitle: "", 
+    level: "se-master", 
+    isEdit: true 
+  },
 
-  "cs-phd-2564": { slug: "computersci", year: 2564 },
-  "cs-phd-edit-2559": { slug: "computersci", year: 2559 },
+  // 5. Doctoral Degree (PhD)
+  "cs-phd-2564": { slug: "computersci", year: 2564, title: "หลักสูตรปรัชญาดุษฎีบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์", subtitle: "(หลักสูตรปรับปรุง พ.ศ. 2564)", level: "doctor" },
+  "cs-phd-edit-2559": { slug: "computersci", year: 2559, title: "การปรับปรุงแก้ไขหลักสูตร ปรัชญาดุษฎีบัณฑิตปี 2559", subtitle: "", level: "doctor", isEdit: true },
 };
 
 const sectionTitles = {
@@ -30,6 +51,7 @@ const sectionTitles = {
   6: "หมวดที่ 6 การพัฒนาคณาจารย์",
   7: "หมวดที่ 7 การประกันคุณภาพหลักสูตร",
   8: "หมวดที่ 8 การประเมินและปรับปรุงการดำเนินการของหลักสูตร",
+  9: "หมวดที่ 9 เอกสารแนบ / ภาคผนวก",
   99: "แผนภูมิแสดงความต่อเนื่องของการศึกษาในหลักสูตรวิทยาศาสตรบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์",
   999: "คำอธิบายรายวิชา",
   88: "การปรับปรุงแก้ไขหลักสูตร",
@@ -46,7 +68,7 @@ const sectionTitles = {
   888: "องค์ประกอบที่ 8 การประกันคุณภาพหลักสูตร",
   900: "องค์ประกอบที่ 9 ระบบกลไกในการพัฒนาหลักสูตร",
   990: "ภาคผนวก",
-}
+};
 
 
 export default function CourseDetail() {
@@ -58,9 +80,9 @@ export default function CourseDetail() {
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    const data = idMap[id];
+    const config = idMap[id];
 
-    if (!data) {
+    if (!config) {
       setLoading(false);
       setError(true);
       return;
@@ -69,17 +91,41 @@ export default function CourseDetail() {
     setLoading(true);
     setError(false);
 
-    fetch(`/api/programs/${data.slug}/${data.year}`)
+    fetch(`/api/programs/${config.slug}/${config.year}`)
       .then((res) => {
         if (!res.ok) throw new Error("Course not found");
         return res.json();
       })
-      .then((data) => {
-        if (!data || data.error) {
+      .then((apiData) => {
+        if (!apiData || apiData.error) {
           setError(true);
           setProgram(null);
         } else {
-          setProgram(data);
+          const rawSections = apiData.versions?.[0]?.sections || [];
+          let filteredSections = rawSections;
+
+          if (config.isEdit) {
+            filteredSections = rawSections.filter((s) => s.order_index === 88);
+            if (filteredSections.length === 0) filteredSections = rawSections;
+          } else if (config.isMain) {
+            filteredSections = rawSections.filter((s) => s.order_index !== 88);
+          }
+
+          const processedProgram = {
+            ...apiData,
+            title: config.title || apiData.name_th,
+            subtitle: config.subtitle !== undefined ? config.subtitle : (apiData.subtitle || ""),
+            level: config.level || apiData.level,
+            year: config.year || apiData.versions?.[0]?.year,
+            versions: [
+              {
+                ...(apiData.versions?.[0] || {}),
+                sections: filteredSections,
+              },
+            ],
+          };
+
+          setProgram(processedProgram);
           setError(false);
         }
       })
@@ -201,7 +247,9 @@ export default function CourseDetail() {
                 <div className="flex items-center space-x-6">
                   <div className="w-1.5 h-8 rounded-full bg-[#3F51B5]" />
                   <span className="text-lg font-medium text-slate-700 group-hover:text-[#183153] transition-colors">
-                    {sectionTitles[section.order_index] || section.title}
+                    {section.order_index === 88 && currentData.subtitle
+                      ? `${section.title || sectionTitles[88]} ${currentData.subtitle}`
+                      : (sectionTitles[section.order_index] || section.title)}
                   </span>
                 </div>
 
