@@ -9,6 +9,8 @@ import {
   updateHistory,
   getContact,
   updateContact,
+  getGreenOffice,
+  updateGreenOffice,
   uploadAboutImage
 } from "../controllers/about.controller.js";
 
@@ -56,6 +58,10 @@ router.post("/history", updateHistory);
 // Contact Routes
 router.get("/contact", getContact);
 router.post("/contact", updateContact);
+
+// Green Office Routes
+router.get("/green-office", getGreenOffice);
+router.post("/green-office", updateGreenOffice);
 
 // Upload Image
 router.post("/upload-image", upload.single("image"), uploadAboutImage);

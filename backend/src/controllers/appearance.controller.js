@@ -2,6 +2,21 @@ import { prisma } from "../lib/prisma.js";
 import fs from "fs";
 import path from "path";
 
+export const defaultQuickActions = [
+  { id: 1, label: 'ระบบคำร้องออนไลน์', path: 'https://reg.kmutnb.ac.th/registrar/home', isExternal: true, icon: 'Monitor' },
+  { id: 2, label: 'ปฏิทินการศึกษา', path: 'https://acdserv.kmutnb.ac.th/academic-calendar', isExternal: true, icon: 'Calendar' },
+  { id: 3, label: 'ดาวน์โหลดเอกสาร', path: '/student-downloads', isExternal: false, icon: 'Download' },
+  { id: 4, label: 'ระบบประเมินอาจารย์', path: 'https://reg4.kmutnb.ac.th/registrar/home', isExternal: true, icon: 'ClipboardCheck' }
+];
+
+export const defaultFeaturedCourses = [
+  { id: 'cs-normal', level: 'bachelor', title: 'หลักสูตรวิทยาศาสตรบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์ (ปริญญาตรี ภาคปกติ)', enTitle: 'BACHELOR OF SCIENCE PROGRAM IN COMPUTER SCIENCE', date: 'มีนาคม 2564', image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80' },
+  { id: 'cs-english', level: 'cs-english', title: 'หลักสูตรวิทยาศาสตรบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์ (ปริญญาตรี โครงการพิเศษ สองภาษา)', enTitle: 'BACHELOR OF SCIENCE PROGRAM IN COMPUTER SCIENCE', date: 'มีนาคม 2564', image: 'https://images.unsplash.com/photo-1684503830683-108f3e0fd03f?auto=format&fit=crop&w=800&q=80' },
+  { id: 'cs-master', level: 'cs-master', title: 'หลักสูตรวิทยาศาสตรมหาบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์ (ปริญญาโท)', enTitle: 'MASTER OF SCIENCE PROGRAM IN COMPUTER SCIENCE', date: 'มีนาคม 2564', image: 'https://images.unsplash.com/photo-1644088379091-d574269d422f?auto=format&fit=crop&w=800&q=80' },
+  { id: 'se-master', level: 'se-master', title: 'หลักสูตรวิทยาศาสตรมหาบัณฑิต สาขาวิชาวิศวกรรมซอฟต์แวร์ (ปริญญาโท)', enTitle: 'MASTER OF SCIENCE PROGRAM IN SOFTWARE ENGINEERING', date: 'มีนาคม 2564', image: 'https://images.unsplash.com/photo-1727434032773-af3cd98375ba?auto=format&fit=crop&w=800&q=80' },
+  { id: 'cs-phd', level: 'doctor', title: 'หลักสูตรปรัชญาดุษฎีบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์ (ปริญญาเอก)', enTitle: 'DOCTOR OF PHILOSOPHY PROGRAM IN COMPUTER SCIENCE', date: 'มีนาคม 2564', image: 'https://images.unsplash.com/photo-1677442135703-1787eea5ce01?auto=format&fit=crop&w=800&q=80' }
+];
+
 // === Banners ===
 export const getBanners = async (req, res) => {
   try {
@@ -153,3 +168,118 @@ export const uploadLogo = async (req, res) => {
     res.status(500).json({ error: "Failed to upload logo" });
   }
 };
+
+// === Quick Actions ===
+export const getQuickActions = async (req, res) => {
+  try {
+    const config = await prisma.site_config.findUnique({
+      where: { config_key: "homepage_quick_actions" }
+    });
+
+    if (!config || !config.config_value) {
+      return res.json({ data: defaultQuickActions });
+    }
+
+    try {
+      const parsed = JSON.parse(config.config_value);
+      return res.json({ data: parsed });
+    } catch (e) {
+      return res.json({ data: defaultQuickActions });
+    }
+  } catch (error) {
+    console.error("Fetch quick actions error:", error);
+    res.status(500).json({ error: "Failed to fetch quick actions" });
+  }
+};
+
+export const updateQuickActions = async (req, res) => {
+  try {
+    const { data } = req.body;
+    if (!data || !Array.isArray(data)) {
+      return res.status(400).json({ error: "ข้อมูลปุ่มทางลัดไม่ถูกต้อง" });
+    }
+
+    await prisma.site_config.upsert({
+      where: { config_key: "homepage_quick_actions" },
+      update: {
+        config_value: JSON.stringify(data),
+        description: "Homepage 4 quick action buttons"
+      },
+      create: {
+        config_key: "homepage_quick_actions",
+        config_value: JSON.stringify(data),
+        description: "Homepage 4 quick action buttons"
+      }
+    });
+
+    res.json({ message: "บันทึกปุ่มทางลัดหน้าแรกสำเร็จ", data });
+  } catch (error) {
+    console.error("Update quick actions error:", error);
+    res.status(500).json({ error: "Failed to update quick actions" });
+  }
+};
+
+// === Featured Courses ===
+export const getFeaturedCourses = async (req, res) => {
+  try {
+    const config = await prisma.site_config.findUnique({
+      where: { config_key: "homepage_featured_courses" }
+    });
+
+    if (!config || !config.config_value) {
+      return res.json({ data: defaultFeaturedCourses });
+    }
+
+    try {
+      const parsed = JSON.parse(config.config_value);
+      return res.json({ data: parsed });
+    } catch (e) {
+      return res.json({ data: defaultFeaturedCourses });
+    }
+  } catch (error) {
+    console.error("Fetch featured courses error:", error);
+    res.status(500).json({ error: "Failed to fetch featured courses" });
+  }
+};
+
+export const updateFeaturedCourses = async (req, res) => {
+  try {
+    const { data } = req.body;
+    if (!data || !Array.isArray(data)) {
+      return res.status(400).json({ error: "ข้อมูลหลักสูตรแนะนำไม่ถูกต้อง" });
+    }
+
+    await prisma.site_config.upsert({
+      where: { config_key: "homepage_featured_courses" },
+      update: {
+        config_value: JSON.stringify(data),
+        description: "Homepage featured courses cards"
+      },
+      create: {
+        config_key: "homepage_featured_courses",
+        config_value: JSON.stringify(data),
+        description: "Homepage featured courses cards"
+      }
+    });
+
+    res.json({ message: "บันทึกหลักสูตรแนะนำหน้าแรกสำเร็จ", data });
+  } catch (error) {
+    console.error("Update featured courses error:", error);
+    res.status(500).json({ error: "Failed to update featured courses" });
+  }
+};
+
+// === Upload Appearance Image ===
+export const uploadAppearanceImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "กรุณาเลือกไฟล์รูปภาพ" });
+    }
+
+    const imagePath = `/uploads/appearance/${req.file.filename}`;
+    res.json({ message: "อัปโหลดรูปภาพสำเร็จ", imagePath });
+  } catch (error) {
+    console.error("Upload image error:", error);
+    res.status(500).json({ error: "Failed to upload image" });
+  }
+};

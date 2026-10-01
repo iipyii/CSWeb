@@ -1,23 +1,37 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  ChevronLeft
-} from 'lucide-react';
+import { ChevronLeft, Loader2, FileText } from 'lucide-react';
+import axios from 'axios';
 import Footer from '../components/Footer';
 
 export default function PersonnelRegs() {
   const navigate = useNavigate();
+  const [personnelDocs, setPersonnelDocs] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // 📝 ข้อมูลระเบียบ/ประกาศงานบุคคล
-  const personnelDocs = [
-    { 
-      id: 1, 
-      title: "ระเบียบมหาวิทยาลัย ว่าด้วย สวัสดิการด้านการรักษาพยาบาลสำหรับพนักงานมหาวิทยาลัยและครอบครัว พ.ศ.2567", 
-      file: "hr_01.pdf" 
-    },
-    // สามารถเพิ่มรายการเอกสารอื่นๆ ของงานบุคคลตรงนี้ได้
-  ];
+  useEffect(() => {
+    const fetchDocs = async () => {
+      try {
+        setLoading(true);
+        const res = await axios.get('/api/downloads/regulation?category=personnel');
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          setPersonnelDocs(res.data);
+        }
+      } catch (err) {
+        console.error('Failed to load personnel regulations:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDocs();
+  }, []);
+
+  const getPdfUrl = (doc) => {
+    if (!doc.file_path) return '#';
+    if (doc.file_path.startsWith('http://') || doc.file_path.startsWith('https://')) return doc.file_path;
+    return `/downloads/${doc.file_path}`;
+  };
 
   return (
     <div className="bg-slate-50 min-h-screen flex flex-col text-left">
@@ -86,7 +100,7 @@ export default function PersonnelRegs() {
                 {/* ปุ่มเปิดดู PDF สไตล์ Indigo ยอดนิยมของคุณ */}
                 <div className="col-span-12 md:col-span-2 flex justify-end md:justify-center">
                   <a 
-                    href={`/files/hr/${doc.file}`} 
+                    href={getPdfUrl(doc)} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="w-full md:w-auto flex items-center justify-center gap-2 px-10 py-2.5 bg-[#3F51B5] text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100 active:scale-95 uppercase tracking-wider"
@@ -96,6 +110,13 @@ export default function PersonnelRegs() {
                 </div>
               </motion.div>
             ))}
+
+            {personnelDocs.length === 0 && !loading && (
+              <div className="text-center py-16 text-slate-400">
+                <FileText className="mx-auto mb-2 text-slate-300" size={40} />
+                <p>ยังไม่มีรายการเอกสารในหมวดนี้</p>
+              </div>
+            )}
           </div>
         </div>
       </main>

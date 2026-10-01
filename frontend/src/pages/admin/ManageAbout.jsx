@@ -4,11 +4,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Building2, History, PhoneCall, Plus, Trash2, Save, 
   UploadCloud, ExternalLink, RefreshCw, Loader2, CheckCircle2, 
-  AlertCircle, ArrowUp, ArrowDown, MapPin, Facebook, Clock, User
+  AlertCircle, ArrowUp, ArrowDown, MapPin, Facebook, Clock, User, Leaf, Image as ImageIcon
 } from 'lucide-react';
 
 export default function ManageAbout() {
-  const [activeTab, setActiveTab] = useState('organization'); // 'organization' | 'history' | 'contact'
+  const [activeTab, setActiveTab] = useState('organization'); // 'organization' | 'history' | 'contact' | 'green_office'
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [alertInfo, setAlertInfo] = useState({ show: false, type: '', message: '' });
@@ -38,6 +38,15 @@ export default function ManageAbout() {
     mapUrl: ''
   });
 
+  // Green Office Data State
+  const [greenOfficeData, setGreenOfficeData] = useState({
+    banner_image: '',
+    title: '',
+    content: '',
+    section_title: '',
+    campaign_images: []
+  });
+
   const showAlert = (type, message) => {
     setAlertInfo({ show: true, type, message });
     setTimeout(() => {
@@ -48,15 +57,17 @@ export default function ManageAbout() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [resOrg, resHist, resContact] = await Promise.all([
+      const [resOrg, resHist, resContact, resGreen] = await Promise.all([
         axios.get('/api/about/organization'),
         axios.get('/api/about/history'),
-        axios.get('/api/about/contact')
+        axios.get('/api/about/contact'),
+        axios.get('/api/about/green-office')
       ]);
 
       if (resOrg.data?.data) setOrgData(resOrg.data.data);
       if (resHist.data?.data) setHistoryData(resHist.data.data);
       if (resContact.data?.data) setContactData(resContact.data.data);
+      if (resGreen.data?.data) setGreenOfficeData(resGreen.data.data);
     } catch (err) {
       console.error('Failed to load about data:', err);
       showAlert('error', 'เกิดข้อผิดพลาดในการโหลดข้อมูล');
@@ -130,6 +141,42 @@ export default function ManageAbout() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSaveGreenOffice = async () => {
+    try {
+      setSaving(true);
+      await axios.post('/api/about/green-office', { data: greenOfficeData });
+      showAlert('success', 'บันทึกข้อมูลสำนักงานสีเขียว (Green Office) สำเร็จ');
+    } catch (err) {
+      console.error('Save green office failed:', err);
+      showAlert('error', 'เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAddCampaignImage = () => {
+    setGreenOfficeData(prev => ({
+      ...prev,
+      campaign_images: [
+        ...(prev.campaign_images || []),
+        { title: 'ชื่อกิจกรรมหรือหัวข้อโปสเตอร์', url: 'https://images.unsplash.com/photo-1542601906990-b4d3fb773b09?auto=format&fit=crop&w=600&q=80' }
+      ]
+    }));
+  };
+
+  const handleRemoveCampaignImage = (index) => {
+    setGreenOfficeData(prev => ({
+      ...prev,
+      campaign_images: (prev.campaign_images || []).filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleCampaignImageChange = (index, field, value) => {
+    const updated = [...(greenOfficeData.campaign_images || [])];
+    updated[index] = { ...updated[index], [field]: value };
+    setGreenOfficeData(prev => ({ ...prev, campaign_images: updated }));
   };
 
   // Assistant management
@@ -243,6 +290,16 @@ export default function ManageAbout() {
               <ExternalLink size={14} /> ดูหน้าเว็บจริง
             </a>
           )}
+          {activeTab === 'green_office' && (
+            <a
+              href="/green-office"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-2xl transition-all"
+            >
+              <ExternalLink size={14} /> ดูหน้าเว็บจริง
+            </a>
+          )}
         </div>
       </header>
 
@@ -300,6 +357,17 @@ export default function ManageAbout() {
           }`}
         >
           <PhoneCall size={18} /> ข้อมูลการติดต่อ
+        </button>
+
+        <button
+          onClick={() => setActiveTab('green_office')}
+          className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm transition-all ${
+            activeTab === 'green_office'
+              ? 'bg-[#3F51B5] text-white shadow-md shadow-indigo-100'
+              : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200/60'
+          }`}
+        >
+          <Leaf size={18} /> สำนักงานสีเขียว (Green Office)
         </button>
       </div>
 
@@ -841,6 +909,230 @@ export default function ManageAbout() {
                 >
                   {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
                   บันทึกข้อมูลการติดต่อ
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* 🌿 TAB 4: GREEN OFFICE */}
+          {/* ========================================================================= */}
+          {activeTab === 'green_office' && (
+            <div className="space-y-6">
+              {/* 1. Banner Section */}
+              <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-6">
+                <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+                  <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
+                    <ImageIcon size={20} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-800 text-lg">รูปภาพแบนเนอร์ส่วนหัว (Header Banner)</h3>
+                    <p className="text-slate-400 text-xs">แบนเนอร์หลักด้านบนสุดของหน้า Green Office</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                  <div className="md:col-span-6">
+                    <div className="w-full h-44 rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center relative shadow-inner">
+                      {greenOfficeData.banner_image ? (
+                        <img
+                          src={greenOfficeData.banner_image}
+                          alt="Banner Preview"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.src = "https://images.unsplash.com/photo-1542601906990-b4d3fb773b09?q=80&w=2026&auto=format&fit=crop";
+                          }}
+                        />
+                      ) : (
+                        <div className="text-center text-slate-400">
+                          <ImageIcon size={40} className="mx-auto mb-2 opacity-50" />
+                          <span className="text-xs">ยังไม่มีรูปภาพ</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-6 space-y-4">
+                    <div>
+                      <label className="text-xs font-bold text-slate-500 uppercase block mb-1">
+                        URL รูปภาพแบนเนอร์
+                      </label>
+                      <input
+                        type="text"
+                        value={greenOfficeData.banner_image || ''}
+                        onChange={(e) => setGreenOfficeData(prev => ({ ...prev, banner_image: e.target.value }))}
+                        placeholder="/img/greenoffice/green-office.png หรือ https://..."
+                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-700 outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold text-slate-500 uppercase block mb-1">
+                        หรือ อัปโหลดรูปภาพใหม่จากเครื่อง
+                      </label>
+                      <label className="flex items-center justify-center gap-2 p-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold rounded-xl cursor-pointer transition-colors border border-dashed border-emerald-300 text-xs">
+                        <UploadCloud size={16} />
+                        <span>เลือกไฟล์รูปภาพเพื่ออัปโหลด</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleImageUpload(e, (url) => setGreenOfficeData(prev => ({ ...prev, banner_image: url })))}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. Content & Policies */}
+              <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-6">
+                <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+                  <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
+                    <Leaf size={20} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-800 text-lg">เนื้อหาหลักและนโยบาย</h3>
+                    <p className="text-slate-400 text-xs">ข้อมูลวิสัยทัศน์ นโยบาย 6 หมวด และข้อความรณรงค์</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-xs font-bold text-slate-500 uppercase block mb-1">
+                      หัวข้อหลัก
+                    </label>
+                    <input
+                      type="text"
+                      value={greenOfficeData.title || ''}
+                      onChange={(e) => setGreenOfficeData(prev => ({ ...prev, title: e.target.value }))}
+                      placeholder="CS Green Office :"
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-slate-500 uppercase block mb-1">
+                      เนื้อหาและนโยบาย (เว้นวรรค 2 บรรทัดเพื่อแยกย่อหน้า)
+                    </label>
+                    <textarea
+                      rows={10}
+                      value={greenOfficeData.content || ''}
+                      onChange={(e) => setGreenOfficeData(prev => ({ ...prev, content: e.target.value }))}
+                      placeholder="เนื้อหานโยบายสำนักงานสีเขียว..."
+                      className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm leading-relaxed text-slate-700 outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-slate-500 uppercase block mb-1">
+                      หัวข้อหมวดสื่อประชาสัมพันธ์
+                    </label>
+                    <input
+                      type="text"
+                      value={greenOfficeData.section_title || ''}
+                      onChange={(e) => setGreenOfficeData(prev => ({ ...prev, section_title: e.target.value }))}
+                      placeholder="CS รณรงค์ลดโลกร้อนและรักษาสิ่งแวดล้อม"
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Campaign Posters */}
+              <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
+                      <ImageIcon size={20} />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-slate-800 text-lg">สื่อประชาสัมพันธ์และโปสเตอร์รณรงค์ ({greenOfficeData.campaign_images?.length || 0} รายการ)</h3>
+                      <p className="text-slate-400 text-xs">ภาพโปสเตอร์กิจกรรม กฎระเบียบ และการรณรงค์สิ่งแวดล้อม</p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleAddCampaignImage}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-100 transition-all"
+                  >
+                    <Plus size={16} /> เพิ่มโปสเตอร์ใหม่
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {(greenOfficeData.campaign_images || []).map((img, idx) => (
+                    <div key={idx} className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 relative group">
+                      <div className="aspect-[3/4] w-full rounded-xl overflow-hidden bg-slate-100 border border-slate-200 relative flex items-center justify-center">
+                        <img
+                          src={img.url}
+                          alt={img.title}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.src = "https://images.unsplash.com/photo-1542601906990-b4d3fb773b09?auto=format&fit=crop&w=600&q=80";
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCampaignImage(idx)}
+                          className="absolute top-2 right-2 p-2 bg-rose-500 hover:bg-rose-600 text-white rounded-lg shadow transition-all"
+                          title="ลบโปสเตอร์"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+
+                      <div className="space-y-2">
+                        <input
+                          type="text"
+                          value={img.title || ''}
+                          onChange={(e) => handleCampaignImageChange(idx, 'title', e.target.value)}
+                          placeholder="ชื่อโปสเตอร์..."
+                          className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 outline-none"
+                        />
+
+                        <input
+                          type="text"
+                          value={img.url || ''}
+                          onChange={(e) => handleCampaignImageChange(idx, 'url', e.target.value)}
+                          placeholder="URL รูปภาพ..."
+                          className="w-full p-2 bg-white border border-slate-200 rounded-xl text-[11px] font-mono text-slate-600 outline-none"
+                        />
+
+                        <label className="flex items-center justify-center gap-1.5 p-2 bg-white hover:bg-slate-100 text-slate-700 font-medium rounded-xl cursor-pointer transition-colors border border-slate-200 text-xs">
+                          <UploadCloud size={14} />
+                          <span>อัปโหลดรูปภาพใหม่</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handleImageUpload(e, (url) => handleCampaignImageChange(idx, 'url', url))}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  ))}
+
+                  {(greenOfficeData.campaign_images || []).length === 0 && (
+                    <div className="col-span-full py-12 text-center text-slate-400">
+                      <ImageIcon size={40} className="mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">ยังไม่มีโปสเตอร์รณรงค์ กดปุ่ม "เพิ่มโปสเตอร์ใหม่" ด้านบนเพื่อเพิ่ม</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Save Bar */}
+              <div className="flex justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={handleSaveGreenOffice}
+                  disabled={saving}
+                  className="flex items-center gap-2 px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold shadow-lg shadow-emerald-100 transition-all text-sm disabled:opacity-50"
+                >
+                  {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                  บันทึกข้อมูลสำนักงานสีเขียว
                 </button>
               </div>
             </div>

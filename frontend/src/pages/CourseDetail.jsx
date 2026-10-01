@@ -80,9 +80,7 @@ export default function CourseDetail() {
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    const config = idMap[id];
-
-    if (!config) {
+    if (!id) {
       setLoading(false);
       setError(true);
       return;
@@ -91,48 +89,71 @@ export default function CourseDetail() {
     setLoading(true);
     setError(false);
 
-    fetch(`/api/programs/${config.slug}/${config.year}`)
+    // Try fetching from new dynamic DB detail endpoint
+    fetch(`/api/programs/detail/${encodeURIComponent(id)}`)
       .then((res) => {
-        if (!res.ok) throw new Error("Course not found");
+        if (!res.ok) throw new Error("Not found in detail API");
         return res.json();
       })
-      .then((apiData) => {
-        if (!apiData || apiData.error) {
+      .then((data) => {
+        if (!data || data.error) {
+          throw new Error(data?.error || "Error in data");
+        }
+        setProgram(data);
+        setError(false);
+      })
+      .catch(() => {
+        // Fallback to legacy idMap if exists
+        const config = idMap[id];
+        if (!config) {
           setError(true);
           setProgram(null);
-        } else {
-          const rawSections = apiData.versions?.[0]?.sections || [];
-          let filteredSections = rawSections;
-
-          if (config.isEdit) {
-            filteredSections = rawSections.filter((s) => s.order_index === 88);
-            if (filteredSections.length === 0) filteredSections = rawSections;
-          } else if (config.isMain) {
-            filteredSections = rawSections.filter((s) => s.order_index !== 88);
-          }
-
-          const processedProgram = {
-            ...apiData,
-            title: config.title || apiData.name_th,
-            subtitle: config.subtitle !== undefined ? config.subtitle : (apiData.subtitle || ""),
-            level: config.level || apiData.level,
-            year: config.year || apiData.versions?.[0]?.year,
-            versions: [
-              {
-                ...(apiData.versions?.[0] || {}),
-                sections: filteredSections,
-              },
-            ],
-          };
-
-          setProgram(processedProgram);
-          setError(false);
+          return;
         }
-      })
-      .catch((err) => {
-        console.error("Fetch course detail error:", err);
-        setError(true);
-        setProgram(null);
+
+        fetch(`/api/programs/${config.slug}/${config.year}`)
+          .then((res) => {
+            if (!res.ok) throw new Error("Course not found");
+            return res.json();
+          })
+          .then((apiData) => {
+            if (!apiData || apiData.error) {
+              setError(true);
+              setProgram(null);
+            } else {
+              const rawSections = apiData.versions?.[0]?.sections || [];
+              let filteredSections = rawSections;
+
+              if (config.isEdit) {
+                filteredSections = rawSections.filter((s) => s.order_index === 88);
+                if (filteredSections.length === 0) filteredSections = rawSections;
+              } else if (config.isMain) {
+                filteredSections = rawSections.filter((s) => s.order_index !== 88);
+              }
+
+              const processedProgram = {
+                ...apiData,
+                title: config.title || apiData.name_th,
+                subtitle: config.subtitle !== undefined ? config.subtitle : (apiData.subtitle || ""),
+                level: config.level || apiData.level,
+                year: config.year || apiData.versions?.[0]?.year,
+                versions: [
+                  {
+                    ...(apiData.versions?.[0] || {}),
+                    sections: filteredSections,
+                  },
+                ],
+              };
+
+              setProgram(processedProgram);
+              setError(false);
+            }
+          })
+          .catch((err) => {
+            console.error("Fetch course detail error:", err);
+            setError(true);
+            setProgram(null);
+          });
       })
       .finally(() => {
         setLoading(false);

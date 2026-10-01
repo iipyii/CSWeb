@@ -62,6 +62,7 @@ import EditNews from './pages/admin/EditNews';
 import NewsArchive from './pages/admin/NewsArchive';
 import ManageCurriculum from './pages/admin/ManageCurriculum';
 import ManageFiles from './pages/admin/ManageFiles';
+import ManageRegulations from './pages/admin/ManageRegulations';
 import CreateFile from './pages/admin/CreateFile';
 import EditFile from './pages/admin/EditFile';
 import ManageRoles from './pages/admin/ManageRoles';
@@ -242,6 +243,12 @@ export default function App() {
             <Route path="files/edit/:id" element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <EditFile />
+              </ProtectedRoute>
+            } />
+
+            <Route path="regulations" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <ManageRegulations />
               </ProtectedRoute>
             } />
 

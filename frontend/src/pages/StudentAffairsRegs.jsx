@@ -1,28 +1,37 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  ChevronLeft
-} from 'lucide-react';
+import { ChevronLeft, Loader2, FileText } from 'lucide-react';
+import axios from 'axios';
 import Footer from '../components/Footer';
 
 export default function StudentAffairsRegs() {
   const navigate = useNavigate();
+  const [studentDocs, setStudentDocs] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // 📝 ข้อมูลประกาศ-งานกิจการนักศึกษา
-  const studentDocs = [
-    { id: 1, title: "ประกาศมหาวิทยาลัย เรื่อง การให้ทุนการศึกษาเพื่อศึกษาต่อในระดับบัณฑิตศึกษา คณะวิทยาศาสตร์ประยุกต์", file: "std_01.pdf" },
-    { id: 2, title: "ประกาศมหาวิทยาลัย เรื่อง การให้ทุนสนับสนุนบุคลากรเข้าร่วมแข่งขันสิ่งประดิษฐ์ นวัตกรรม หรือผลงานวิจัย ณ ต่างประเทศ คณะวิทยาศาสตร์ประยุกต์", file: "std_02.pdf" },
-    { id: 3, title: "ประกาศมหาวิทยาลัย เรื่อง การให้ทุนสนับสนุนเพื่อพัฒนาศักยภาพนักศึกษา คณะวิทยาศาสตร์ประยุกต์", file: "std_03.pdf" },
-    { id: 4, title: "ประกาศมหาวิทยาลัย เรื่อง การให้ทุนสนับสนุนเพื่อพัฒนาศักยภาพนักศึกษาระดับปริญญาตรี คณะวิทยาศาสตร์ประยุกต์ (ฉบับที่ 2)", file: "std_04.pdf" },
-    { id: 5, title: "ประกาศมหาวิทยาลัย เรื่อง การให้ทุนสนับสนุนเพื่อพัฒนาศักยภาพนักศึกษาระดับปริญญาตรี คณะวิทยาศาสตร์ประยุกต์", file: "std_05.pdf" },
-    { id: 6, title: "ประกาศมหาวิทยาลัย เรื่อง กำหนดประเภทและลักษณะความผิดวินัยนักศึกษา", file: "std_06.pdf" },
-    { id: 7, title: "ประกาศมหาวิทยาลัย เรื่อง ลักษณะโทษความผิดวินัยนักศึกษากรณีดื่มสุราของมึนเมา หรือมั่วสุมสิ่งเสพติดและสูบบุหรี่ ภายในพื้นที่มหาวิทยาลัย", file: "std_07.pdf" },
-    { id: 8, title: "ประกาศมหาวิทยาลัย เรื่อง สวัสดิการช่วยเหลือสำหรับนักศึกษาและบุคลากร ในช่วงการแพร่ระบาดของโรคติดเชื้อไวรัสโคโรนา 2019 (COVID-19) ต่อ", file: "std_08.pdf" },
-    { id: 9, title: "ประกาศมหาวิทยาลัย เรื่อง หลักเกณฑ์การลงทะเบียนเรียนซ้ำวิชาเรียนในรายวิชาที่สอบตกของนักศึกษาระดับปริญญาตรี", file: "std_09.pdf" },
-    { id: 10, title: "ประกาศมหาวิทยาลัย เรื่อง หลักเกณฑ์และอัตราการจ้างนักศึกษาช่วยงานวิชาการ", file: "std_10.pdf" },
-    { id: 11, title: "เรื่องแต่งตั้งคณะกรรมการบริหารงานกิจการนักศึกษาภาควิชาวิทยาการคอมพิวเตอร์และสารสนเทศ ประจำปีการศึกษา 2568", file: "std_11.pdf" },
-  ];
+  useEffect(() => {
+    const fetchDocs = async () => {
+      try {
+        setLoading(true);
+        const res = await axios.get('/api/downloads/regulation?category=student_affairs');
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          setStudentDocs(res.data);
+        }
+      } catch (err) {
+        console.error('Failed to load student affairs regulations:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDocs();
+  }, []);
+
+  const getPdfUrl = (doc) => {
+    if (!doc.file_path) return '#';
+    if (doc.file_path.startsWith('http://') || doc.file_path.startsWith('https://')) return doc.file_path;
+    return `/downloads/${doc.file_path}`;
+  };
 
   return (
     <div className="bg-slate-50 min-h-screen flex flex-col text-left">
@@ -89,7 +98,7 @@ export default function StudentAffairsRegs() {
                 {/* ปุ่มเปิดดู PDF สไตล์ Indigo */}
                 <div className="col-span-12 md:col-span-2 flex justify-end md:justify-center">
                   <a 
-                    href={`/files/student-affairs/${doc.file}`} 
+                    href={getPdfUrl(doc)} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="w-full md:w-auto flex items-center justify-center gap-2 px-10 py-2.5 bg-[#3F51B5] text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100 active:scale-95 uppercase tracking-wider"
@@ -99,6 +108,13 @@ export default function StudentAffairsRegs() {
                 </div>
               </motion.div>
             ))}
+
+            {studentDocs.length === 0 && !loading && (
+              <div className="text-center py-16 text-slate-400">
+                <FileText className="mx-auto mb-2 text-slate-300" size={40} />
+                <p>ยังไม่มีรายการเอกสารในหมวดนี้</p>
+              </div>
+            )}
           </div>
         </div>
       </main>

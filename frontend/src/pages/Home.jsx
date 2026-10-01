@@ -11,61 +11,105 @@ import {
   ClipboardCheck,
   ArrowRightCircle,
   Clock,
-  AlertCircle
+  AlertCircle,
+  BookOpen,
+  GraduationCap,
+  FileText,
+  Users,
+  ExternalLink,
+  Laptop,
+  HelpCircle
 } from 'lucide-react';
 
 // นำเข้าข้อมูลข่าวสารจากไฟล์ data (ตรวจสอบให้แน่ใจว่า path ถูกต้อง)
 import { newsData } from '../data/newsData';
 
+const defaultActions = [
+  { icon: 'Monitor', label: 'ระบบคำร้องออนไลน์', path: 'https://reg.kmutnb.ac.th/registrar/home', isExternal: true },
+  { icon: 'Calendar', label: 'ปฏิทินการศึกษา', path: 'https://acdserv.kmutnb.ac.th/academic-calendar', isExternal: true },
+  { icon: 'Download', label: 'ดาวน์โหลดเอกสาร', path: '/student-downloads', isExternal: false },
+  { icon: 'ClipboardCheck', label: 'ระบบประเมินอาจารย์', path: 'https://reg4.kmutnb.ac.th/registrar/home', isExternal: true },
+];
+
+const defaultCourses = [
+  { id: 'cs-normal', level: 'bachelor', title: 'หลักสูตรวิทยาศาสตรบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์ (ปริญญาตรี ภาคปกติ)', enTitle: 'BACHELOR OF SCIENCE PROGRAM IN COMPUTER SCIENCE', date: 'มีนาคม 2564', image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80' },
+  { id: 'cs-english', level: 'cs-english', title: 'หลักสูตรวิทยาศาสตรบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์ (ปริญญาตรี โครงการพิเศษ สองภาษา)', enTitle: 'BACHELOR OF SCIENCE PROGRAM IN COMPUTER SCIENCE', date: 'มีนาคม 2564', image: 'https://images.unsplash.com/photo-1684503830683-108f3e0fd03f?auto=format&fit=crop&w=800&q=80' },
+  { id: 'cs-master', level: 'cs-master', title: 'หลักสูตรวิทยาศาสตรมหาบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์ (ปริญญาโท)', enTitle: 'MASTER OF SCIENCE PROGRAM IN COMPUTER SCIENCE', date: 'มีนาคม 2564', image: 'https://images.unsplash.com/photo-1644088379091-d574269d422f?auto=format&fit=crop&w=800&q=80' },
+  { id: 'se-master', level: 'se-master', title: 'หลักสูตรวิทยาศาสตรมหาบัณฑิต สาขาวิชาวิศวกรรมซอฟต์แวร์ (ปริญญาโท)', enTitle: 'MASTER OF SCIENCE PROGRAM IN SOFTWARE ENGINEERING', date: 'มีนาคม 2564', image: 'https://images.unsplash.com/photo-1727434032773-af3cd98375ba?auto=format&fit=crop&w=800&q=80' },
+  { id: 'cs-phd', level: 'doctor', title: 'หลักสูตรปรัชญาดุษฎีบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์ (ปริญญาเอก)', enTitle: 'DOCTOR OF PHILOSOPHY PROGRAM IN COMPUTER SCIENCE', date: 'มีนาคม 2564', image: 'https://images.unsplash.com/photo-1677442135703-1787eea5ce01?auto=format&fit=crop&w=800&q=80' }
+];
+
+const renderActionIcon = (iconName) => {
+  switch (iconName) {
+    case 'Monitor': return <Monitor size={24} />;
+    case 'Calendar': return <Calendar size={24} />;
+    case 'Download': return <Download size={24} />;
+    case 'ClipboardCheck': return <ClipboardCheck size={24} />;
+    case 'BookOpen': return <BookOpen size={24} />;
+    case 'GraduationCap': return <GraduationCap size={24} />;
+    case 'FileText': return <FileText size={24} />;
+    case 'Users': return <Users size={24} />;
+    case 'Laptop': return <Laptop size={24} />;
+    default: return <ExternalLink size={24} />;
+  }
+};
+
 export default function Home() {
   const navigate = useNavigate();
 
-  // 🌟 3. สร้าง State มารับข้อมูลข่าว
   const [newsList, setNewsList] = useState([]);
+  const [actions, setActions] = useState(defaultActions);
+  const [courses, setCourses] = useState(defaultCourses);
 
-  // 🌟 4. ดึงข้อมูลข่าวสารจาก Backend ทันทีที่โหลดหน้าเว็บ
+  // ดึงข้อมูลข่าวสาร, ปุ่มทางลัด, และหลักสูตรแนะนำ
   useEffect(() => {
-    const fetchNews = async () => {
+    const fetchData = async () => {
       try {
-        const res = await axios.get("/api/news");
+        const [newsRes, actionsRes, coursesRes] = await Promise.all([
+          axios.get("/api/news"),
+          axios.get("/api/appearance/quick-actions").catch(() => null),
+          axios.get("/api/appearance/featured-courses").catch(() => null)
+        ]);
 
-        // จัดการ URL รูปภาพ และ Format วันที่
-        const formattedNews = res.data
-          .filter(item => item.status === 'active') // เอาเฉพาะข่าวที่เปิดใช้งาน
-          .map(item => ({
-            id: item.id,
-            title: item.title,
-            isPinned: item.is_urgent, // ใช้สถานะด่วนเป็นตัวปักหมุด
-            image: item.image ? `${item.image}` : "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800",
-            date: new Date(item.created_at).toLocaleDateString('th-TH', {
-              year: 'numeric', month: 'long', day: 'numeric'
-            }),
-            tag: item.category === 'department' ? 'ข่าวภาควิชาฯ' :
-              item.category === 'faculty' ? 'ข่าวคณะฯ' :
-                item.category === 'scholarship' ? 'ข่าวทุนการศึกษา' : 'ข่าวรับสมัครงาน'
-          }))
-          .sort((a, b) => {
-            if (a.isPinned === b.isPinned) return 0;
-            return a.isPinned ? -1 : 1;
-          });
+        // จัดการข่าวสาร
+        if (newsRes?.data) {
+          const formattedNews = newsRes.data
+            .filter(item => item.status === 'active')
+            .map(item => ({
+              id: item.id,
+              title: item.title,
+              isPinned: item.is_urgent,
+              image: item.image ? `${item.image}` : "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800",
+              date: new Date(item.created_at).toLocaleDateString('th-TH', {
+                year: 'numeric', month: 'long', day: 'numeric'
+              }),
+              tag: item.category === 'department' ? 'ข่าวภาควิชาฯ' :
+                item.category === 'faculty' ? 'ข่าวคณะฯ' :
+                  item.category === 'scholarship' ? 'ข่าวทุนการศึกษา' : 'ข่าวรับสมัครงาน'
+            }))
+            .sort((a, b) => {
+              if (a.isPinned === b.isPinned) return 0;
+              return a.isPinned ? -1 : 1;
+            });
+          setNewsList(formattedNews.slice(0, 3));
+        }
 
-        // ดึงมาโชว์หน้าแรกแค่ 3 ข่าว
-        setNewsList(formattedNews.slice(0, 3));
+        // ปุ่มทางลัด
+        if (actionsRes?.data?.data && Array.isArray(actionsRes.data.data) && actionsRes.data.data.length > 0) {
+          setActions(actionsRes.data.data);
+        }
+
+        // หลักสูตรแนะนำ
+        if (coursesRes?.data?.data && Array.isArray(coursesRes.data.data) && coursesRes.data.data.length > 0) {
+          setCourses(coursesRes.data.data);
+        }
       } catch (error) {
-        console.error("Error fetching homepage news:", error);
+        console.error("Error fetching homepage data:", error);
       }
     };
 
-    fetchNews();
+    fetchData();
   }, []);
-
-  // ข้อมูลปุ่มทางลัด (Quick Actions)
-  const actions = [
-    { icon: <Monitor size={24} />, label: 'ระบบคำร้องออนไลน์', path: 'https://reg.kmutnb.ac.th/registrar/home', isExternal: true },
-    { icon: <Calendar size={24} />, label: 'ปฏิทินการศึกษา', path: 'https://acdserv.kmutnb.ac.th/academic-calendar', isExternal: true },
-    { icon: <Download size={24} />, label: 'ดาวน์โหลดเอกสาร', path: '/student-downloads' },
-    { icon: <ClipboardCheck size={24} />, label: 'ระบบประเมินอาจารย์', path: 'https://reg4.kmutnb.ac.th/registrar/home', isExternal: true },
-  ];
 
   // ฟังก์ชันจัดการการคลิกปุ่มทางลัด
   const handleActionClick = (act) => {
@@ -75,16 +119,6 @@ export default function Home() {
       navigate(act.path);
     }
   };
-
-
-  // ข้อมูลหลักสูตรแนะนำ
-  const courses = [
-    { id: 'cs-normal', level: 'bachelor', title: 'หลักสูตรวิทยาศาสตรบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์ (ปริญญาตรี ภาคปกติ)', enTitle: 'BACHELOR OF SCIENCE PROGRAM IN COMPUTER SCIENCE', date: 'มีนาคม 2564', image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80' },
-    { id: 'cs-english', level: 'cs-english', title: 'หลักสูตรวิทยาศาสตรบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์ (ปริญญาตรี โครงการพิเศษ สองภาษา)', enTitle: 'BACHELOR OF SCIENCE PROGRAM IN COMPUTER SCIENCE', date: 'มีนาคม 2564', image: 'https://images.unsplash.com/photo-1684503830683-108f3e0fd03f?auto=format&fit=crop&w=800&q=80' },
-    { id: 'cs-master', level: 'cs-master', title: 'หลักสูตรวิทยาศาสตรมหาบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์ (ปริญญาโท)', enTitle: 'MASTER OF SCIENCE PROGRAM IN COMPUTER SCIENCE', date: 'มีนาคม 2564', image: 'https://images.unsplash.com/photo-1644088379091-d574269d422f?auto=format&fit=crop&w=800&q=80' },
-    { id: 'se-master', level: 'se-master', title: 'หลักสูตรวิทยาศาสตรมหาบัณฑิต สาขาวิชาวิศวกรรมซอฟต์แวร์ (ปริญญาโท)', enTitle: 'MASTER OF SCIENCE PROGRAM IN SOFTWARE ENGINEERING', date: 'มีนาคม 2564', image: 'https://images.unsplash.com/photo-1727434032773-af3cd98375ba?auto=format&fit=crop&w=800&q=80' },
-    { id: 'cs-phd', level: 'doctor', title: 'หลักสูตรปรัชญาดุษฎีบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์ (ปริญญาเอก)', enTitle: 'DOCTOR OF PHILOSOPHY PROGRAM IN COMPUTER SCIENCE', date: 'มีนาคม 2564', image: 'https://images.unsplash.com/photo-1677442135703-1787eea5ce01?auto=format&fit=crop&w=800&q=80' }
-  ];
 
   return (
     <div className="bg-slate-50 text-left">
@@ -97,7 +131,7 @@ export default function Home() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-[60px] mb-24 max-w-[1000px] mx-auto relative z-40">
             {actions.map((act, i) => (
               <motion.div
-                key={i}
+                key={act.id || i}
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.4, delay: i * 0.1 }}
@@ -107,7 +141,7 @@ export default function Home() {
                   className="bg-secondary text-white py-7 px-4 rounded-2xl shadow-xl hover:shadow-indigo-300/40 flex flex-col items-center justify-center cursor-pointer hover:-translate-y-2 hover:bg-secondary-dark transition-all duration-300 group"
                 >
                   <motion.div whileHover={{ rotate: 5, scale: 1.15 }} className="mb-2 opacity-90">
-                    {act.icon}
+                    {renderActionIcon(act.icon)}
                   </motion.div>
                   <span className="text-[14px] font-medium tracking-wide text-center leading-tight">
                     {act.label}
@@ -226,16 +260,18 @@ export default function Home() {
                 />
               ))}
             </div>
-            {/* ปริญญาเอก (จัดกึ่งกลาง) */}
-            <div className="flex justify-center mt-12">
-              <div className="w-full md:w-1/2">
-                <CourseCard
-                  course={courses[4]}
-                  index={4}
-                  onViewDetail={() => navigate(`/course-sections/${courses[4].level}`)}
-                />
+            {/* ปริญญาเอก หรือหลักสูตรลำดับที่ 5 (จัดกึ่งกลาง) */}
+            {courses[4] && (
+              <div className="flex justify-center mt-12">
+                <div className="w-full md:w-1/2">
+                  <CourseCard
+                    course={courses[4]}
+                    index={4}
+                    onViewDetail={() => navigate(`/course-sections/${courses[4].level}`)}
+                  />
+                </div>
               </div>
-            </div>
+            )}
           </section>
         </div>
       </div>

@@ -9,7 +9,12 @@ import {
   deleteBanner, 
   getSiteConfig, 
   updateSiteConfig,
-  uploadLogo
+  uploadLogo,
+  getQuickActions,
+  updateQuickActions,
+  getFeaturedCourses,
+  updateFeaturedCourses,
+  uploadAppearanceImage
 } from "../controllers/appearance.controller.js";
 
 const router = express.Router();
@@ -66,5 +71,12 @@ router.delete("/banners/:id", deleteBanner);
 router.get("/settings", getSiteConfig);
 router.post("/settings", updateSiteConfig);
 router.post("/logo", handleSingleUpload("logo"), uploadLogo);
+
+// Quick Actions & Featured Courses
+router.get("/quick-actions", getQuickActions);
+router.post("/quick-actions", updateQuickActions);
+router.get("/featured-courses", getFeaturedCourses);
+router.post("/featured-courses", updateFeaturedCourses);
+router.post("/upload-image", handleSingleUpload("image"), uploadAppearanceImage);
 
 export default router;

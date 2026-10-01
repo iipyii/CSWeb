@@ -1,28 +1,37 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  ChevronLeft
-} from 'lucide-react';
+import { ChevronLeft, Loader2, FileText } from 'lucide-react';
+import axios from 'axios';
 import Footer from '../components/Footer';
 
 export default function FinanceRegs() {
   const navigate = useNavigate();
+  const [financeDocs, setFinanceDocs] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // ข้อมูลระเบียบ/ประกาศงานการเงิน
-  const financeDocs = [
-    { id: 1, title: "การจัดเก็บค่าธรรมเนียมและเงินอุดหนุนการศึกษาโครงการพิเศษ (สองภาษา) หลักสูตรวิทยาศาสตรบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์ พ.ศ.2557", file: "fin_01.pdf" },
-    { id: 2, title: "ประกาศมหาวิทยาลัย เรื่อง การจ่ายค่าสอนพิเศษและค่าสอนเกินภาระงานสอน (ฉบับที่ 2)", file: "fin_02.pdf" },
-    { id: 3, title: "ประกาศมหาวิทยาลัย เรื่อง การจ่ายค่าสอนพิเศษและค่าสอนเกินภาระงานสอน (ฉบับที่ 3)", file: "fin_03.pdf" },
-    { id: 4, title: "ประกาศมหาวิทยาลัย เรื่อง การจ่ายค่าสอนพิเศษและค่าสอนเกินภาระงานสอน (ฉบับที่ 4)", file: "fin_04.pdf" },
-    { id: 5, title: "ประกาศมหาวิทยาลัย เรื่อง การจ่ายค่าสอนพิเศษและค่าสอนเกินภาระงานสอน (ฉบับที่ 5)", file: "fin_05.pdf" },
-    { id: 6, title: "ประกาศมหาวิทยาลัย เรื่อง หลักเกณฑ์การเบิกจ่ายเงินรายได้สำหรับหลักสูตรพิเศษระดับปริญญาตรี (24 ส.ค. 58)", file: "fin_06.pdf" },
-    { id: 7, title: "ประกาศมหาวิทยาลัย เรื่อง หลักเกณฑ์การเบิกจ่ายเงินรายได้สำหรับหลักสูตรพิเศษระดับปริญญาตรี (ฉบับที่ 2)", file: "fin_07.pdf" },
-    { id: 8, title: "ประกาศมหาวิทยาลัย เรื่อง หลักเกณฑ์การเบิกจ่ายเงินรายได้สำหรับหลักสูตรพิเศษระดับปริญญาตรี (ฉบับที่ 3) 2562", file: "fin_08.pdf" },
-    { id: 9, title: "ประกาศมหาวิทยาลัย เรื่อง หลักเกณฑ์การเบิกจ่ายเงินรายได้สำหรับหลักสูตรพิเศษระดับปริญญาตรี 2561", file: "fin_09.pdf" },
-    { id: 10, title: "ระเบียบมหาวิทยาลัย ว่าด้วย การเบิกจ่ายเงินรายได้ของมหาวิทยาลัย พ.ศ. 2551", file: "fin_10.pdf" },
-    { id: 11, title: "ระเบียบมหาวิทยาลัย ว่าด้วย ค่าธรรมเนียมและเงินอุดหนุนการศึกษาหลักสูตรพิเศษ ระดับปริญญาตรี พ.ศ. 2563", file: "fin_11.pdf" },
-  ];
+  useEffect(() => {
+    const fetchDocs = async () => {
+      try {
+        setLoading(true);
+        const res = await axios.get('/api/downloads/regulation?category=finance');
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          setFinanceDocs(res.data);
+        }
+      } catch (err) {
+        console.error('Failed to load finance regulations:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDocs();
+  }, []);
+
+  const getPdfUrl = (doc) => {
+    if (!doc.file_path) return '#';
+    if (doc.file_path.startsWith('http://') || doc.file_path.startsWith('https://')) return doc.file_path;
+    return `/downloads/${doc.file_path}`;
+  };
 
   return (
     <div className="bg-slate-50 min-h-screen flex flex-col text-left">
@@ -85,7 +94,7 @@ export default function FinanceRegs() {
                 {/* ปุ่มเปิดดู PDF สไตล์พรีเมียม */}
                 <div className="col-span-12 md:col-span-2 flex justify-end md:justify-center">
                   <a 
-                    href={`/files/finance/${doc.file}`} 
+                    href={getPdfUrl(doc)} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="w-full md:w-auto flex items-center justify-center gap-2 px-12 py-3 bg-[#3F51B5] text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100 active:scale-95 uppercase tracking-widest"
@@ -95,6 +104,13 @@ export default function FinanceRegs() {
                 </div>
               </motion.div>
             ))}
+
+            {financeDocs.length === 0 && !loading && (
+              <div className="text-center py-16 text-slate-400">
+                <FileText className="mx-auto mb-2 text-slate-300" size={40} />
+                <p>ยังไม่มีรายการเอกสารในหมวดนี้</p>
+              </div>
+            )}
           </div>
         </div>
       </main>

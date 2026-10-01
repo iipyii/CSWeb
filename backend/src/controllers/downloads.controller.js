@@ -71,12 +71,17 @@ export const getDownloadById = async (req, res) => {
   }
 };
 
-// GET downloads by audience (staff | student)
+// GET downloads by audience (staff | student | regulation)
 export const getDownloadsByAudience = async (req, res) => {
   try {
     const { audience } = req.params;
+    const { category } = req.query;
+    const where = { audience };
+    if (category) {
+      where.category = category;
+    }
     const files = await prisma.downloads.findMany({
-      where: { audience },
+      where,
       orderBy: [
         { category: "asc" },
         { created_at: "desc" }

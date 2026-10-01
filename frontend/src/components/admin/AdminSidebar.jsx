@@ -8,7 +8,7 @@ import {
   BookOpenCheck, Bookmark, Link2, ChevronDown, 
   LayoutDashboard, Newspaper, Archive, GraduationCap, 
   Files, Users, BookOpen, FolderGit2, LogOut, UserCircle,
-  MessageSquare, UserCheck
+  MessageSquare, UserCheck, FileText
 } from 'lucide-react';
 
 export default function AdminSidebar({ onNavigate }) {
@@ -96,6 +96,7 @@ export default function AdminSidebar({ onNavigate }) {
     { isGroup: true, id: 'students' },
 
     { label: 'ไฟล์และเอกสาร', icon: <Files size={22} />, path: '/admin/files', roles: ['admin'] },
+    { label: 'จัดการระเบียบและข้อบังคับ', icon: <FileText size={22} />, path: '/admin/regulations', roles: ['admin'] },
     { label: 'บทบาทและสิทธิ์', icon: <ShieldCheck size={22} />, path: '/admin/roles', roles: ['admin'] },
     { label: 'ข้อมูลรายวิชา', icon: <BookOpen size={22} />, path: '/admin/subjects', roles: ['admin'] },
     { label: 'ระบบ AI Chatbot', icon: <MessageSquare size={22} />, path: '/admin/chatbot', roles: ['admin'] },

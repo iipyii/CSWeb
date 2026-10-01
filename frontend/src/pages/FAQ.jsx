@@ -1,37 +1,73 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ChevronDown, HelpCircle, MessageCircle } from 'lucide-react';
+import { Search, ChevronDown, HelpCircle, MessageCircle, Loader2 } from 'lucide-react';
+import axios from 'axios';
 import Footer from '../components/Footer';
 
 export default function FAQ() {
+  const [faqs, setFaqs] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const [openIndex, setOpenIndex] = useState(null);
 
-  // 📝 ข้อมูลคำถาม-คำตอบ (สามารถแก้ไขหรือเพิ่มได้ที่นี่)
-  const faqData = [
-    {
-      question: "ค่าเทอมต่อภาคการศึกษา เทอมละเท่าไหร่?",
-      answer: "หลักสูตรเน้นการเรียนรู้ด้านการเขียนโปรแกรม, โครงสร้างข้อมูล, ขั้นตอนวิธี (Algorithm), ระบบฐานข้อมูล, การพัฒนาเว็บและโมบายแอปพลิเคชัน, ปัญญาประดิษฐ์ (AI), และความมั่นคงปลอดภัยไซเบอร์ โดยผสมผสานทั้งทฤษฎีและการปฏิบัติ"
-    },
-    {
-      question: "การฝึกงานและสหกิจศึกษาต่างกันอย่างไร?",
-      answer: "การฝึกงานปกติจะใช้เวลาช่วงปิดเทอมประมาณ 2 เดือน ส่วนสหกิจศึกษาจะเป็นการทำงานจริงในสถานประกอบการเป็นเวลา 1 ภาคการศึกษาเต็ม (ประมาณ 4-6 เดือน) ซึ่งนักศึกษาจะได้ประสบการณ์ทำงานที่เข้มข้นกว่าและมีการประเมินผลเป็นรายวิชา"
-    },
-    {
-      question: "นักศึกษาที่จบไปสามารถประกอบอาชีพอะไรได้บ้าง?",
-      answer: "สามารถประกอบอาชีพได้หลากหลาย เช่น Software Developer, Data Scientist, System Analyst, Network Engineer, UX/UI Designer, หรือประกอบธุรกิจส่วนตัวด้านเทคโนโลยี"
-    },
-    {
-      question: "ติดต่อสำนักงานภาควิชาได้ที่ไหน?",
-      answer: "ภาควิชาวิทยาการคอมพิวเตอร์และสารสนเทศ ตั้งอยู่ที่อาคาร 78 ชั้น 2 คณะวิทยาศาสตร์ประยุกต์ มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ หรือติดต่อทางโทรศัพท์ได้ที่ 02-555-2000 ต่อ 4601"
-    }
-  ];
+  useEffect(() => {
+    const fetchFaqs = async () => {
+      try {
+        setLoading(true);
+        const res = await axios.get('/api/faq');
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          setFaqs(res.data);
+        } else {
+          // Fallback หากยังไม่มีข้อมูลใน DB
+          setFaqs([
+            {
+              id: 1,
+              question: "ค่าเทอมต่อภาคการศึกษา เทอมละเท่าไหร่?",
+              answer: "หลักสูตรเน้นการเรียนรู้ด้านการเขียนโปรแกรม, โครงสร้างข้อมูล, ขั้นตอนวิธี (Algorithm), ระบบฐานข้อมูล, การพัฒนาเว็บและโมบายแอปพลิเคชัน, ปัญญาประดิษฐ์ (AI), และความมั่นคงปลอดภัยไซเบอร์ โดยผสมผสานทั้งทฤษฎีและการปฏิบัติ",
+              category: "หลักสูตร"
+            },
+            {
+              id: 2,
+              question: "การฝึกงานและสหกิจศึกษาต่างกันอย่างไร?",
+              answer: "การฝึกงานปกติจะใช้เวลาช่วงปิดเทอมประมาณ 2 เดือน ส่วนสหกิจศึกษาจะเป็นการทำงานจริงในสถานประกอบการเป็นเวลา 1 ภาคการศึกษาเต็ม (ประมาณ 4-6 เดือน) ซึ่งนักศึกษาจะได้ประสบการณ์ทำงานที่เข้มข้นกว่าและมีการประเมินผลเป็นรายวิชา",
+              category: "ฝึกงาน"
+            },
+            {
+              id: 3,
+              question: "นักศึกษาที่จบไปสามารถประกอบอาชีพอะไรได้บ้าง?",
+              answer: "สามารถประกอบอาชีพได้หลากหลาย เช่น Software Developer, Data Scientist, System Analyst, Network Engineer, UX/UI Designer, หรือประกอบธุรกิจส่วนตัวด้านเทคโนโลยี",
+              category: "ทั่วไป"
+            },
+            {
+              id: 4,
+              question: "ติดต่อสำนักงานภาควิชาได้ที่ไหน?",
+              answer: "ภาควิชาวิทยาการคอมพิวเตอร์และสารสนเทศ ตั้งอยู่ที่อาคาร 78 ชั้น 2 คณะวิทยาศาสตร์ประยุกต์ มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ หรือติดต่อทางโทรศัพท์ได้ที่ 02-555-2000 ต่อ 4601",
+              category: "ทั่วไป"
+            }
+          ]);
+        }
+      } catch (err) {
+        console.error("Failed to load FAQ:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // ฟังก์ชันกรองคำถามตามการค้นหา
-  const filteredFaqs = faqData.filter(faq =>
-    faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    faq.answer.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    fetchFaqs();
+  }, []);
+
+  // ดึงหมวดหมู่ทั้งหมดที่มี
+  const categories = ["all", ...Array.from(new Set(faqs.map(f => f.category).filter(Boolean)))];
+
+  // ฟังก์ชันกรองคำถามตามการค้นหาและหมวดหมู่
+  const filteredFaqs = faqs.filter(faq => {
+    const matchCategory = selectedCategory === "all" || faq.category === selectedCategory;
+    const matchSearch =
+      (faq.question || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (faq.answer || "").toLowerCase().includes(searchTerm.toLowerCase());
+    return matchCategory && matchSearch;
+  });
 
   const toggleAccordion = (index) => {
     setOpenIndex(openIndex === index ? null : index);
@@ -61,7 +97,7 @@ export default function FAQ() {
       <main className="max-w-4xl mx-auto w-full px-6 md:px-10 py-16 flex-grow">
         
         {/* 🔍 Search Bar */}
-        <div className="relative mb-12 group">
+        <div className="relative mb-6 group">
           <input
             type="text"
             placeholder="ค้นหาคำถามที่ต้องการทราบ..."
@@ -72,32 +108,64 @@ export default function FAQ() {
           <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#3F51B5] transition-colors" size={24} />
         </div>
 
+        {/* 🏷️ Category Filter Chips */}
+        {categories.length > 1 && (
+          <div className="flex flex-wrap gap-2 mb-10">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-4 py-2 rounded-xl text-xs md:text-sm font-semibold transition-all duration-200 ${
+                  selectedCategory === cat
+                    ? "bg-[#3F51B5] text-white shadow-md shadow-indigo-200"
+                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"
+                }`}
+              >
+                {cat === "all" ? "ทั้งหมด" : cat}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* 📋 FAQ List */}
-        <div className="space-y-4">
-          <AnimatePresence>
-            {filteredFaqs.length > 0 ? (
-              filteredFaqs.map((faq, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden"
-                >
-                  <button
-                    onClick={() => toggleAccordion(index)}
-                    className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-slate-50 transition-colors"
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-3">
+            <Loader2 className="animate-spin text-[#3F51B5]" size={36} />
+            <span>กำลังโหลดข้อมูลคำถาม-คำตอบ...</span>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <AnimatePresence>
+              {filteredFaqs.length > 0 ? (
+                filteredFaqs.map((faq, index) => (
+                  <motion.div
+                    key={faq.id || index}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden"
                   >
-                    <span className="font-bold text-slate-700 md:text-lg pr-4">
-                      {faq.question}
-                    </span>
-                    <motion.div
-                      animate={{ rotate: openIndex === index ? 180 : 0 }}
-                      className="text-[#3F51B5] shrink-0"
+                    <button
+                      onClick={() => toggleAccordion(index)}
+                      className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-slate-50 transition-colors gap-4"
                     >
-                      <ChevronDown size={24} />
-                    </motion.div>
-                  </button>
+                      <div className="flex items-center gap-3 flex-wrap">
+                        {faq.category && (
+                          <span className="px-2.5 py-0.5 text-[11px] font-semibold rounded-full bg-indigo-50 text-[#3F51B5]">
+                            {faq.category}
+                          </span>
+                        )}
+                        <span className="font-bold text-slate-700 md:text-lg">
+                          {faq.question}
+                        </span>
+                      </div>
+                      <motion.div
+                        animate={{ rotate: openIndex === index ? 180 : 0 }}
+                        className="text-[#3F51B5] shrink-0"
+                      >
+                        <ChevronDown size={24} />
+                      </motion.div>
+                    </button>
 
                   <AnimatePresence>
                     {openIndex === index && (
@@ -123,8 +191,7 @@ export default function FAQ() {
             )}
           </AnimatePresence>
         </div>
-
-        
+      )}
       </main>
 
       <Footer />
