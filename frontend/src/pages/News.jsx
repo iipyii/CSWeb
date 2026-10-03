@@ -46,8 +46,15 @@ export default function News() {
     const fetchAllNews = async () => {
       try {
         const res = await axios.get("/api/news");
+        const todayBkk = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(new Date());
+        const endOfTodayBkk = new Date(`${todayBkk}T23:59:59.999+07:00`);
+
         const formattedNews = res.data
-          .filter(item => item.status === 'active')
+          .filter(item => {
+            if (item.status !== 'active') return false;
+            if (item.start_date && new Date(item.start_date) > endOfTodayBkk) return false;
+            return true;
+          })
           .map(item => ({
             id: item.id,
             title: item.title,

@@ -12,12 +12,27 @@ const decodeOriginalName = (orig) => {
   }
 };
 
+// คำนวณขอบเขตวันปัจจุบันตามเวลาประเทศไทย (Asia/Bangkok)
+const getBangkokDateBounds = () => {
+  const bkkDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(new Date());
+  const startOfToday = new Date(`${bkkDate}T00:00:00.000+07:00`);
+  const endOfToday = new Date(`${bkkDate}T23:59:59.999+07:00`);
+  return { bkkDate, startOfToday, endOfToday };
+};
+
+// แปลง Input วันที่ให้อยู่ในโซนเวลาประเทศไทย (เริ่มวัน หรือ สิ้นสุดวัน)
+const parseDateInput = (val, isEnd = false) => {
+  if (!val || val === "null" || val === "undefined") return null;
+  if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(val)) {
+    return new Date(`${val}T${isEnd ? '23:59:59.999' : '00:00:00.000'}+07:00`);
+  }
+  return new Date(val);
+};
+
 // ตรวจสอบและย้ายข่าวที่หมดอายุ (end_date < ปัจจุบัน) ไปยังคลังข่าว (status: 'archived') อัตโนมัติ
 const autoArchiveExpiredNews = async () => {
   try {
-    const now = new Date();
-    // ตั้งเวลาให้สิ้นสุดวันของวันนี้ เพื่อไม่ให้ข่าวที่หมดอายุวันนี้ถูกปิดก่อนหมดวัน
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const { startOfToday } = getBangkokDateBounds();
     await prisma.news.updateMany({
       where: {
         status: "active",
@@ -44,7 +59,7 @@ const sortByEffectiveDate = (list) => {
   });
 };
 
-// ✅ GET active news
+// ✅ GET active news (เฉพาะข่าวที่ถึงกำหนดเผยแพร่ start_date <= วันนี้ และยังไม่หมดอายุ)
 export const getActiveNews = async (req, res) => {
   try {
     await autoArchiveExpiredNews();
@@ -52,15 +67,24 @@ export const getActiveNews = async (req, res) => {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 50;
 
-    const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const { startOfToday, endOfToday } = getBangkokDateBounds();
 
     const news = await prisma.news.findMany({
       where: {
         status: "active",
-        OR: [
-          { end_date: null },
-          { end_date: { gte: startOfToday } }
+        AND: [
+          {
+            OR: [
+              { start_date: null },
+              { start_date: { lte: endOfToday } }
+            ]
+          },
+          {
+            OR: [
+              { end_date: null },
+              { end_date: { gte: startOfToday } }
+            ]
+          }
         ]
       },
       orderBy: {
@@ -109,13 +133,14 @@ export const createNews = async (req, res) => {
       });
     }
 
+    const parsedStartDate = parseDateInput(start_date, false);
+    const parsedEndDate = parseDateInput(end_date, true);
+
     // ตรวจสอบวันสิ้นสุด: ถ้าสิ้นสุดเป็นวันที่ผ่านมาแล้ว ให้ย้ายเข้าคลังข่าว (status: 'archived') ทันที
     let finalStatus = "active";
-    if (end_date) {
-      const parsedEnd = new Date(end_date);
+    if (parsedEndDate) {
       const now = new Date();
-      const endOfDay = new Date(parsedEnd.getFullYear(), parsedEnd.getMonth(), parsedEnd.getDate(), 23, 59, 59, 999);
-      if (endOfDay < now) {
+      if (parsedEndDate < now) {
         finalStatus = "archived";
       }
     }
@@ -130,8 +155,8 @@ export const createNews = async (req, res) => {
         status: finalStatus,
         additional_images: additionalImages,
         attachments: attachments,
-        start_date: start_date ? new Date(start_date) : undefined,
-        end_date: end_date ? new Date(end_date) : undefined,
+        start_date: parsedStartDate || undefined,
+        end_date: parsedEndDate || undefined,
         is_urgent: is_urgent === 'true' || is_urgent === true,
         users: {
           connect: { id: 1 }
@@ -248,12 +273,12 @@ export const updateNews = async (req, res) => {
     // จัดการวันที่ (ถ้าไม่ได้ส่งมา ให้คงของเดิมไว้)
     let finalStartDate = existing.start_date;
     if (start_date !== undefined) {
-      finalStartDate = (start_date && start_date !== "null") ? new Date(start_date) : null;
+      finalStartDate = parseDateInput(start_date, false);
     }
 
     let finalEndDate = existing.end_date;
     if (end_date !== undefined) {
-      finalEndDate = (end_date && end_date !== "null") ? new Date(end_date) : null;
+      finalEndDate = parseDateInput(end_date, true);
     }
 
     // จัดการสถานะและการกู้คืน (Restore)
@@ -262,8 +287,7 @@ export const updateNews = async (req, res) => {
     // ถ้าผู้ใช้ระบุ end_date มา และวันสิ้นสุดเป็นอดีต -> ย้ายเข้า archived
     if (end_date !== undefined && finalEndDate) {
       const now = new Date();
-      const endOfDay = new Date(finalEndDate.getFullYear(), finalEndDate.getMonth(), finalEndDate.getDate(), 23, 59, 59, 999);
-      if (endOfDay < now) {
+      if (finalEndDate < now) {
         finalStatus = "archived";
       }
     }
@@ -273,8 +297,7 @@ export const updateNews = async (req, res) => {
     // เพื่อไม่ให้ autoArchiveExpiredNews ดึงข่าวกลับเข้าคลังทันทีที่รีเฟรชหน้าเว็บ!
     if (status === 'active' && end_date === undefined && finalEndDate) {
       const now = new Date();
-      const endOfDay = new Date(finalEndDate.getFullYear(), finalEndDate.getMonth(), finalEndDate.getDate(), 23, 59, 59, 999);
-      if (endOfDay < now) {
+      if (finalEndDate < now) {
         finalEndDate = null;
       }
     }
@@ -422,15 +445,24 @@ export const getLatestNews = async (req, res) => {
   try {
     await autoArchiveExpiredNews();
 
-    const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const { startOfToday, endOfToday } = getBangkokDateBounds();
 
     const news = await prisma.news.findMany({
       where: { 
         status: "active",
-        OR: [
-          { end_date: null },
-          { end_date: { gte: startOfToday } }
+        AND: [
+          {
+            OR: [
+              { start_date: null },
+              { start_date: { lte: endOfToday } }
+            ]
+          },
+          {
+            OR: [
+              { end_date: null },
+              { end_date: { gte: startOfToday } }
+            ]
+          }
         ]
       },
       orderBy: { created_at: "desc" },
@@ -449,16 +481,25 @@ export const getNewsByCategory = async (req, res) => {
     await autoArchiveExpiredNews();
 
     const { category } = req.params;
-    const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const { startOfToday, endOfToday } = getBangkokDateBounds();
 
     const news = await prisma.news.findMany({
       where: {
         category,
         status: "active",
-        OR: [
-          { end_date: null },
-          { end_date: { gte: startOfToday } }
+        AND: [
+          {
+            OR: [
+              { start_date: null },
+              { start_date: { lte: endOfToday } }
+            ]
+          },
+          {
+            OR: [
+              { end_date: null },
+              { end_date: { gte: startOfToday } }
+            ]
+          }
         ]
       },
       orderBy: {

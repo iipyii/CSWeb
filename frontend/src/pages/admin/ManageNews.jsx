@@ -35,6 +35,9 @@ export default function ManageNews() {
         return labels[cat] || 'ข่าวสารทั่วไป';
       };
 
+      const todayBkk = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(new Date());
+      const endOfTodayBkk = new Date(`${todayBkk}T23:59:59.999+07:00`);
+
       // กรองและแปลงร่างข้อมูล
       const activeNews = res.data
         .filter(item => item.status === 'active') // คัดเฉพาะข่าวที่ Active
@@ -43,7 +46,7 @@ export default function ManageNews() {
           title: item.title,
           category: item.category || 'department',
           categoryLabel: getCategoryLabel(item.category),
-
+          isScheduled: item.start_date ? new Date(item.start_date) > endOfTodayBkk : false,
           rawDate: item.start_date || item.created_at,
           // แปลงวันที่จาก DB ให้เป็นรูปแบบไทย (ใช้วันเริ่มเผยแพร่ที่กำหนดเอง หรือวันสร้าง)
           date: new Date(item.start_date || item.created_at).toLocaleDateString('th-TH', {
@@ -161,10 +164,15 @@ export default function ManageNews() {
           >
             <div className="relative h-60 overflow-hidden">
               <img src={item.image} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-              <div className="absolute top-6 left-6">
+              <div className="absolute top-6 left-6 flex flex-col gap-2 items-start">
                 <span className="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl bg-white/90 backdrop-blur-md text-slate-600">
                   {item.categoryLabel}
                 </span>
+                {item.isScheduled && (
+                  <span className="px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl bg-amber-500 text-white flex items-center gap-1.5">
+                    <Clock size={11} /> ตั้งเวลาล่วงหน้า
+                  </span>
+                )}
               </div>
             </div>
 
