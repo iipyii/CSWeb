@@ -78,7 +78,12 @@ export default function CourseSectionContent() {
   const version = section.version;
   const program = version?.program;
   const degree = program?.degree;
-  const allSections = version?.sections || [];
+  const rawSections = version?.sections || [];
+  // ถ้าเปิดดูหมวดทั่วไป (order_index !== 88) ให้ตัดการปรับปรุงแก้ไข (order_index: 88) ออกจากแถบแท็บ
+  // ถ้าเปิดดูหมวดปรับปรุงแก้ไข (order_index: 88) ให้แสดงเฉพาะหมวดปรับปรุงแก้ไข
+  const allSections = section.order_index === 88
+    ? rawSections.filter(s => s.order_index === 88)
+    : rawSections.filter(s => s.order_index !== 88);
   
   // Find current index and prev/next
   const currentIndex = allSections.findIndex((s) => s.id === section.id);
@@ -98,27 +103,25 @@ export default function CourseSectionContent() {
   const getSectionBadgeLabel = (s) => {
     if (!s) return "";
 
-    // 1. ตรวจจับจากชื่อหมวด (Title) เป็นหลัก เพื่อความถูกต้องและยืดหยุ่นตามที่ตั้งค่า
+    // 1. ตรวจสอบหมวดพิเศษที่ต้องการชื่อเฉพาะเจาะจงก่อน (เช่น ภาคผนวก, แผนภูมิ, คำอธิบายรายวิชา, ปรับปรุงแก้ไข)
+    if (s.order_index === 990 || s.title?.includes("ภาคผนวก")) return "ภาคผนวก";
+    if (s.order_index === 99 || s.title?.includes("แผนภูมิ")) return "แผนภูมิ";
+    if (s.order_index === 999 || s.title?.includes("คำอธิบายรายวิชา")) return "คำอธิบายรายวิชา";
+    if (s.order_index === 88 || s.title?.includes("ปรับปรุงแก้ไข")) return "ปรับปรุงแก้ไข";
+
+    // 2. ตรวจจับองค์ประกอบ (สำหรับ ป.โท/ป.เอก ที่ใช้คำว่าองค์ประกอบ)
     if (s.title) {
       const compMatch = s.title.match(/องค์ประกอบ(?:ที่)?\s*(\d+)/);
       if (compMatch) return `องค์ประกอบ ${compMatch[1]}`;
-
-      const secMatch = s.title.match(/หมวด(?:ที่)?\s*(\d+)/);
-      if (secMatch) return `หมวด ${secMatch[1]}`;
-
-      if (s.title.includes("ภาคผนวก")) return "ภาคผนวก";
-      if (s.title.includes("แผนภูมิ")) return "แผนภูมิ";
-      if (s.title.includes("คำอธิบายรายวิชา")) return "คำอธิบายรายวิชา";
-      if (s.title.includes("ปรับปรุงแก้ไข")) return "ปรับปรุงแก้ไข";
     }
-
-    // 2. ตรวจสอบจาก order_index พิเศษ
-    if (s.order_index === 88) return "ปรับปรุงแก้ไข";
-    if (s.order_index === 99) return "แผนภูมิ";
-    if (s.order_index === 990) return "ภาคผนวก";
-    if (s.order_index === 999) return "คำอธิบายรายวิชา";
     if (s.order_index === 900) return "องค์ประกอบ 9";
     if (s.order_index >= 111 && s.order_index <= 888) return `องค์ประกอบ ${Math.round(s.order_index / 111)}`;
+
+    // 3. ตรวจจับหมวดที่ X
+    if (s.title) {
+      const secMatch = s.title.match(/หมวด(?:ที่)?\s*(\d+)/);
+      if (secMatch) return `หมวด ${secMatch[1]}`;
+    }
 
     return `หมวด ${s.section_no || s.order_index}`;
   };
