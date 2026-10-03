@@ -270,7 +270,7 @@ export default function CourseDetail() {
                   <span className="text-lg font-medium text-slate-700 group-hover:text-[#183153] transition-colors">
                     {section.order_index === 88 && currentData.subtitle
                       ? `${section.title || sectionTitles[88]} ${currentData.subtitle}`
-                      : (sectionTitles[section.order_index] || section.title)}
+                      : (section.title || sectionTitles[section.order_index] || `หมวดที่ ${section.section_no}`)}
                   </span>
                 </div>
 

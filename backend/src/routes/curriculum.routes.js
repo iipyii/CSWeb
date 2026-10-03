@@ -11,6 +11,10 @@ import {
   deleteProgram,
   addProgramVersion,
   deleteProgramVersion,
+  createSection,
+  updateSection,
+  deleteSection,
+  seedStandardSections,
   uploadSectionPdf,
   deleteSectionPdf
 } from "../controllers/curriculum.controller.js";
@@ -61,7 +65,13 @@ router.delete("/programs/:id", verifyToken, checkRole(["admin"]), deleteProgram)
 router.post("/versions", verifyToken, checkRole(["admin"]), addProgramVersion);
 router.delete("/versions/:versionId", verifyToken, checkRole(["admin"]), deleteProgramVersion);
 
-router.post("/sections/upload-pdf", verifyToken, checkRole(["admin"]), upload.single("file"), uploadSectionPdf);
+// Course Sections CRUD & PDF Uploads
+router.post("/sections", verifyToken, checkRole(["admin"]), upload.any(), createSection);
+router.post("/sections/seed-standard", verifyToken, checkRole(["admin"]), seedStandardSections);
+router.put("/sections/:sectionId", verifyToken, checkRole(["admin"]), upload.any(), updateSection);
+router.delete("/sections/:sectionId", verifyToken, checkRole(["admin"]), deleteSection);
+router.post("/sections/upload", verifyToken, checkRole(["admin"]), upload.any(), uploadSectionPdf);
+router.post("/sections/upload-pdf", verifyToken, checkRole(["admin"]), upload.any(), uploadSectionPdf);
 router.delete("/sections/:sectionId/pdf", verifyToken, checkRole(["admin"]), deleteSectionPdf);
 
 export default router;

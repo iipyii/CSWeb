@@ -3,7 +3,7 @@ import axios from 'axios';
 import { 
   Plus, Search, Edit3, Trash2, GraduationCap, 
   BookOpen, ExternalLink, X, Save, RefreshCw, Loader2,
-  FileText, Upload, CheckCircle2, AlertCircle, Eye, Calendar, Layers
+  FileText, Upload, CheckCircle2, AlertCircle, Eye, Calendar, Layers, Sparkles
 } from 'lucide-react';
 
 const levelTabs = [
@@ -59,6 +59,20 @@ export default function ManageCurriculum() {
   const [newVersionYear, setNewVersionYear] = useState('');
   const [isAddingVersion, setIsAddingVersion] = useState(false);
   const [uploadingSection, setUploadingSection] = useState(null);
+
+  // Section Add / Edit Modal State
+  const [isSectionModalOpen, setIsSectionModalOpen] = useState(false);
+  const [sectionModalMode, setSectionModalMode] = useState('create'); // 'create' | 'edit'
+  const [editingSectionId, setEditingSectionId] = useState(null);
+  const [existingPdfPath, setExistingPdfPath] = useState(null);
+  const [sectionForm, setSectionForm] = useState({
+    section_no: '',
+    title: '',
+    order_index: '',
+    file: null
+  });
+  const [submittingSection, setSubmittingSection] = useState(false);
+  const [seedingSections, setSeedingSections] = useState(false);
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
@@ -210,8 +224,126 @@ export default function ManageCurriculum() {
     }
   };
 
-  // Section PDF Upload
-  const handleUploadSectionPdf = async (sectionNo, file) => {
+  const currentActiveVersion = selectedProgram?.versions?.find(v => v.year === activeVersionYear);
+
+  // Open Create Section Modal
+  const openCreateSectionModal = () => {
+    const curSections = currentActiveVersion?.sections || [];
+    const maxSectionNo = curSections.reduce((max, s) => Math.max(max, s.section_no || 0), 0);
+    const nextNo = maxSectionNo > 0 ? maxSectionNo + 1 : 1;
+    setSectionModalMode('create');
+    setEditingSectionId(null);
+    setExistingPdfPath(null);
+    setSectionForm({
+      section_no: nextNo,
+      title: `หมวดที่ ${nextNo} `,
+      order_index: nextNo,
+      file: null
+    });
+    setIsSectionModalOpen(true);
+  };
+
+  // Open Edit Section Modal
+  const openEditSectionModal = (sec) => {
+    setSectionModalMode('edit');
+    setEditingSectionId(sec.id);
+    setExistingPdfPath(sec.pdf_path || null);
+    setSectionForm({
+      section_no: sec.section_no ?? '',
+      title: sec.title || `หมวดที่ ${sec.section_no}`,
+      order_index: sec.order_index ?? sec.section_no ?? '',
+      file: null
+    });
+    setIsSectionModalOpen(true);
+  };
+
+  // Save Section (Create or Update)
+  const handleSaveSection = async (e) => {
+    e.preventDefault();
+    if (!sectionForm.title.trim()) {
+      alert("กรุณากรอกชื่อหมวด");
+      return;
+    }
+    if (!currentActiveVersion) {
+      alert("ไม่พบข้อมูลเวอร์ชันปีหลักสูตร");
+      return;
+    }
+
+    try {
+      setSubmittingSection(true);
+      const formData = new FormData();
+      formData.append("title", sectionForm.title.trim());
+      formData.append("section_no", sectionForm.section_no);
+      formData.append("order_index", sectionForm.order_index || sectionForm.section_no);
+      if (sectionForm.file) {
+        formData.append("pdf", sectionForm.file);
+      }
+
+      if (sectionModalMode === 'create') {
+        formData.append("versionId", currentActiveVersion.id);
+        await axios.post("/api/curriculum/sections", formData, {
+          ...getAuthHeaders(),
+          headers: {
+            ...getAuthHeaders().headers,
+            "Content-Type": "multipart/form-data"
+          }
+        });
+        alert("เพิ่มหมวดหลักสูตรสำเร็จ");
+      } else {
+        await axios.put(`/api/curriculum/sections/${editingSectionId}`, formData, {
+          ...getAuthHeaders(),
+          headers: {
+            ...getAuthHeaders().headers,
+            "Content-Type": "multipart/form-data"
+          }
+        });
+        alert("แก้ไขข้อมูลหมวดสำเร็จ");
+      }
+
+      setIsSectionModalOpen(false);
+      await fetchCurriculum();
+    } catch (error) {
+      console.error("Save section error:", error);
+      alert(error.response?.data?.error || "เกิดข้อผิดพลาดในการบันทึกหมวดหลักสูตร");
+    } finally {
+      setSubmittingSection(false);
+    }
+  };
+
+  // Delete Section
+  const handleDeleteSection = async (sectionId, title) => {
+    if (window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบหมวด "${title || 'หมวดนี้'}" รวมทั้งไฟล์ PDF ทั้งหมดของหมวดนี้ออกจากหลักสูตร?`)) {
+      try {
+        await axios.delete(`/api/curriculum/sections/${sectionId}`, getAuthHeaders());
+        alert("ลบหมวดหลักสูตรสำเร็จ");
+        await fetchCurriculum();
+      } catch (error) {
+        console.error("Delete section error:", error);
+        alert(error.response?.data?.error || "เกิดข้อผิดพลาดในการลบหมวดหลักสูตร");
+      }
+    }
+  };
+
+  // Seed Standard 1 - 9 Sections
+  const handleSeedStandardSections = async () => {
+    if (!currentActiveVersion) return;
+    try {
+      setSeedingSections(true);
+      await axios.post("/api/curriculum/sections/seed-standard", {
+        versionId: currentActiveVersion.id
+      }, getAuthHeaders());
+      alert("สร้างหมวดมาตรฐาน 1 - 9 เรียบร้อยแล้ว");
+      await fetchCurriculum();
+    } catch (error) {
+      console.error("Seed standard error:", error);
+      alert(error.response?.data?.error || "เกิดข้อผิดพลาดในการสร้างหมวดมาตรฐาน");
+    } finally {
+      setSeedingSections(false);
+    }
+  };
+
+  // Section PDF Upload directly from Card
+  const handleUploadSectionPdf = async (sec, file) => {
     if (!file) return;
     if (!file.name.toLowerCase().endsWith('.pdf')) {
       alert("กรุณาเลือกไฟล์เอกสาร PDF เท่านั้น");
@@ -226,13 +358,15 @@ export default function ManageCurriculum() {
 
     const formData = new FormData();
     formData.append("pdf", file);
+    if (sec.id) {
+      formData.append("sectionId", sec.id);
+    }
     formData.append("versionId", currentVersion.id);
-    formData.append("section_no", sectionNo);
-    const secDefault = SECTION_DEFAULTS.find(s => s.no === sectionNo);
-    formData.append("title", secDefault ? secDefault.title : `หมวดที่ ${sectionNo}`);
+    formData.append("section_no", sec.section_no);
+    formData.append("title", sec.title || `หมวดที่ ${sec.section_no}`);
 
     try {
-      setUploadingSection(sectionNo);
+      setUploadingSection(sec.id || sec.section_no);
       await axios.post("/api/curriculum/sections/upload", formData, {
         ...getAuthHeaders(),
         headers: {
@@ -240,7 +374,7 @@ export default function ManageCurriculum() {
           "Content-Type": "multipart/form-data"
         }
       });
-      alert(`อัปโหลดไฟล์ PDF สำหรับหมวดที่ ${sectionNo} สำเร็จ`);
+      alert(`อัปโหลดไฟล์ PDF สำหรับ "${sec.title || `หมวดที่ ${sec.section_no}`}" สำเร็จ`);
       await fetchCurriculum();
     } catch (error) {
       console.error("Upload section PDF error:", error);
@@ -250,11 +384,11 @@ export default function ManageCurriculum() {
     }
   };
 
-  const handleDeleteSectionPdf = async (sectionId, sectionNo) => {
-    if (window.confirm(`ต้องการลบไฟล์ PDF หมวดที่ ${sectionNo} ใช่หรือไม่?`)) {
+  const handleDeleteSectionPdf = async (sectionId, title) => {
+    if (window.confirm(`ต้องการลบไฟล์ PDF ของ "${title || 'หมวดนี้'}" ใช่หรือไม่?`)) {
       try {
         await axios.delete(`/api/curriculum/sections/${sectionId}/pdf`, getAuthHeaders());
-        alert(`ลบไฟล์ PDF หมวดที่ ${sectionNo} สำเร็จ`);
+        alert("ลบไฟล์ PDF สำเร็จ");
         await fetchCurriculum();
       } catch (error) {
         console.error("Delete PDF error:", error);
@@ -274,8 +408,6 @@ export default function ManageCurriculum() {
                           item.slug?.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesLevel && matchesSearch;
   });
-
-  const currentActiveVersion = selectedProgram?.versions?.find(v => v.year === activeVersionYear);
 
   return (
     <div className="space-y-8 pb-20 text-left">
@@ -367,7 +499,7 @@ export default function ManageCurriculum() {
                             <span key={v.id} className="px-2.5 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg border border-slate-200/60 flex items-center gap-1.5">
                               <Calendar size={12} className="text-[#3F51B5]" /> พ.ศ. {v.year}
                               <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${secCount > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                                {secCount}/9 หมวด
+                                {secCount}/{v.sections?.length || 9} หมวด (PDF)
                               </span>
                             </span>
                           );
@@ -385,7 +517,7 @@ export default function ManageCurriculum() {
                     onClick={() => openSectionManager(item)}
                     className="flex-1 md:flex-none px-5 py-2.5 bg-[#3F51B5] text-white rounded-xl text-xs font-bold hover:bg-[#2D3B8E] transition-all flex items-center justify-center gap-2 shadow-md shadow-indigo-100"
                   >
-                    <Layers size={16} /> จัดการหมวด 1-9 & PDF
+                    <Layers size={16} /> จัดการหมวดหลักสูตร & PDF
                   </button>
                   <button 
                     onClick={() => openProgramModal(item)}
@@ -491,112 +623,198 @@ export default function ManageCurriculum() {
               </div>
             </div>
 
-            {/* Sections 1 - 9 Grid */}
+            {/* Sections List */}
             {currentActiveVersion ? (
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-black text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                    <Layers size={18} className="text-[#3F51B5]" /> รายการหมวด มคอ.2 ประจำปี พ.ศ. {activeVersionYear}
-                  </h3>
-                  <span className="text-xs text-slate-400">
-                    อัปโหลดไฟล์ PDF แยกตามแต่ละหมวด
-                  </span>
-                </div>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-black text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                      <Layers size={18} className="text-[#3F51B5]" /> รายการหมวดหลักสูตร ประจำปี พ.ศ. {activeVersionYear}
+                      <span className="text-xs font-bold text-[#3F51B5] bg-indigo-50 px-2 py-0.5 rounded-full lowercase">
+                        {currentActiveVersion.sections?.length || 0} หมวด
+                      </span>
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      สามารถแก้ไขชื่อหมวด เพิ่มหมวดใหม่ หรืออัปโหลดไฟล์ PDF ประจำหมวดได้อิสระ
+                    </p>
+                  </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                  {SECTION_DEFAULTS.map((sec) => {
-                    const existingSec = currentActiveVersion.sections?.find(s => s.section_no === sec.no);
-                    const hasPdf = !!existingSec?.pdf_path;
-                    const isUploading = uploadingSection === sec.no;
-
-                    return (
-                      <div 
-                        key={sec.no}
-                        className={`p-4 rounded-2xl border transition-all flex flex-col justify-between gap-3 ${
-                          hasPdf 
-                            ? 'bg-indigo-50/30 border-indigo-100 hover:border-indigo-200' 
-                            : 'bg-white border-slate-200/80 hover:border-slate-300'
-                        }`}
+                  <div className="flex items-center gap-2">
+                    {(!currentActiveVersion.sections || currentActiveVersion.sections.length < 9) && (
+                      <button
+                        onClick={handleSeedStandardSections}
+                        disabled={seedingSections}
+                        className="px-3.5 py-2 bg-indigo-50 text-[#3F51B5] hover:bg-indigo-100 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border border-indigo-200/60 disabled:opacity-50"
+                        title="สร้างหมวดมาตรฐาน 1 - 9 (มคอ.2) ให้อัตโนมัติ"
                       >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex items-start gap-2.5">
-                            <div className={`p-2 rounded-xl shrink-0 mt-0.5 ${hasPdf ? 'bg-indigo-100 text-[#3F51B5]' : 'bg-slate-100 text-slate-400'}`}>
-                              <FileText size={18} />
-                            </div>
-                            <div>
-                              <span className="text-[11px] font-black text-[#3F51B5] uppercase">หมวดที่ {sec.no}</span>
-                              <h4 className="text-xs font-bold text-slate-800 leading-snug line-clamp-2">{sec.title}</h4>
-                            </div>
-                          </div>
-                          <div>
-                            {hasPdf ? (
-                              <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full whitespace-nowrap">
-                                <CheckCircle2 size={12} /> มีไฟล์ PDF
-                              </span>
-                            ) : (
-                              <span className="flex items-center gap-1 text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full whitespace-nowrap">
-                                <AlertCircle size={12} /> ยังไม่มีไฟล์
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Bottom Actions for each Section */}
-                        <div className="flex items-center justify-between pt-2 border-t border-slate-100/80">
-                          {hasPdf ? (
-                            <a
-                              href={getPdfUrl(existingSec.pdf_path)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[11px] font-bold text-[#3F51B5] hover:underline flex items-center gap-1"
-                            >
-                              <Eye size={14} /> ดูไฟล์ PDF
-                            </a>
-                          ) : (
-                            <span className="text-[11px] text-slate-400 italic">เลือกไฟล์ PDF เพื่ออัปโหลด</span>
-                          )}
-
-                          <div className="flex items-center gap-2">
-                            <label className="cursor-pointer px-3 py-1.5 bg-white border border-slate-200 hover:border-[#3F51B5] text-slate-700 text-[11px] font-bold rounded-xl flex items-center gap-1.5 shadow-sm transition-all hover:text-[#3F51B5]">
-                              {isUploading ? (
-                                <Loader2 size={13} className="animate-spin text-[#3F51B5]" />
-                              ) : (
-                                <Upload size={13} />
-                              )}
-                              <span>{hasPdf ? "เปลี่ยนไฟล์" : "อัปโหลด PDF"}</span>
-                              <input
-                                type="file"
-                                accept=".pdf"
-                                className="hidden"
-                                disabled={isUploading}
-                                onChange={(e) => {
-                                  if (e.target.files?.[0]) {
-                                    handleUploadSectionPdf(sec.no, e.target.files[0]);
-                                    e.target.value = '';
-                                  }
-                                }}
-                              />
-                            </label>
-
-                            {hasPdf && existingSec && (
-                              <button
-                                onClick={() => handleDeleteSectionPdf(existingSec.id, sec.no)}
-                                title="ลบไฟล์ PDF"
-                                className="p-1.5 text-slate-300 hover:text-rose-500 rounded-lg hover:bg-rose-50 transition-colors"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+                        {seedingSections ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                        สร้างหมวดมาตรฐาน 1-9
+                      </button>
+                    )}
+                    <button
+                      onClick={openCreateSectionModal}
+                      className="px-4 py-2 bg-[#3F51B5] text-white hover:bg-[#2D3B8E] rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-md shadow-indigo-100 shrink-0"
+                    >
+                      <Plus size={15} /> เพิ่มหมวดใหม่
+                    </button>
+                  </div>
                 </div>
+
+                {/* Sections cards grid */}
+                {(!currentActiveVersion.sections || currentActiveVersion.sections.length === 0) ? (
+                  <div className="text-center py-12 bg-white rounded-2xl border-2 border-dashed border-slate-200 p-8 space-y-4">
+                    <div className="p-3 bg-indigo-50 rounded-2xl w-fit mx-auto text-[#3F51B5]">
+                      <Layers size={32} />
+                    </div>
+                    <div>
+                      <h4 className="text-base font-bold text-slate-700">ยังไม่มีรายการหมวดในหลักสูตรปี พ.ศ. {activeVersionYear}</h4>
+                      <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+                        คุณสามารถกดสร้างหมวดมาตรฐาน 1 ถึง 9 (มคอ.2) ได้ทันที หรือกดเพิ่มหมวดด้วยตนเอง
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-center gap-3 pt-2">
+                      <button
+                        onClick={handleSeedStandardSections}
+                        disabled={seedingSections}
+                        className="px-5 py-2.5 bg-indigo-50 text-[#3F51B5] hover:bg-indigo-100 border border-indigo-200 rounded-xl text-xs font-bold flex items-center gap-2 transition-all"
+                      >
+                        {seedingSections ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                        สร้างหมวดมาตรฐาน 1 - 9 อัตโนมัติ
+                      </button>
+                      <button
+                        onClick={openCreateSectionModal}
+                        className="px-5 py-2.5 bg-[#3F51B5] text-white hover:bg-[#2D3B8E] rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-md"
+                      >
+                        <Plus size={14} /> เพิ่มหมวดเอง
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                    {[...currentActiveVersion.sections]
+                      .sort((a, b) => (a.order_index ?? a.section_no ?? 0) - (b.order_index ?? b.section_no ?? 0))
+                      .map((sec) => {
+                        const hasPdf = !!sec.pdf_path;
+                        const isUploading = uploadingSection === sec.id;
+
+                        return (
+                          <div 
+                            key={sec.id}
+                            className={`p-4 rounded-2xl border transition-all flex flex-col justify-between gap-3 ${
+                              hasPdf 
+                                ? 'bg-indigo-50/30 border-indigo-100 hover:border-indigo-200' 
+                                : 'bg-white border-slate-200/80 hover:border-slate-300'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex items-start gap-2.5 flex-1 min-w-0">
+                                <div className={`p-2 rounded-xl shrink-0 mt-0.5 ${hasPdf ? 'bg-indigo-100 text-[#3F51B5]' : 'bg-slate-100 text-slate-400'}`}>
+                                  <FileText size={18} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                                    <span className="text-[11px] font-black text-[#3F51B5] uppercase bg-indigo-50 px-2 py-0.5 rounded-md">
+                                      หมวดที่ {sec.section_no}
+                                    </span>
+                                    {sec.order_index !== sec.section_no && (
+                                      <span className="text-[10px] text-slate-400 font-mono">
+                                        (ลำดับ: {sec.order_index})
+                                      </span>
+                                    )}
+                                  </div>
+                                  <h4 className="text-xs font-bold text-slate-800 leading-snug line-clamp-2" title={sec.title}>
+                                    {sec.title || `หมวดที่ ${sec.section_no}`}
+                                  </h4>
+                                </div>
+                              </div>
+                              <div className="shrink-0 flex items-center gap-1.5">
+                                {hasPdf ? (
+                                  <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full whitespace-nowrap">
+                                    <CheckCircle2 size={12} /> มี PDF
+                                  </span>
+                                ) : (
+                                  <span className="flex items-center gap-1 text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full whitespace-nowrap">
+                                    <AlertCircle size={12} /> ยังไม่มีไฟล์
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Bottom Actions for each Section */}
+                            <div className="flex items-center justify-between pt-2 border-t border-slate-100/80 gap-2">
+                              <div className="flex items-center gap-2 min-w-0">
+                                {hasPdf ? (
+                                  <a
+                                    href={getPdfUrl(sec.pdf_path)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-[11px] font-bold text-[#3F51B5] hover:underline flex items-center gap-1 shrink-0"
+                                  >
+                                    <Eye size={14} /> เปิดดู PDF
+                                  </a>
+                                ) : (
+                                  <span className="text-[11px] text-slate-400 italic truncate">ยังไม่มีเอกสาร</span>
+                                )}
+                              </div>
+
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <label className="cursor-pointer px-2.5 py-1.5 bg-white border border-slate-200 hover:border-[#3F51B5] text-slate-700 text-[11px] font-bold rounded-xl flex items-center gap-1 shadow-sm transition-all hover:text-[#3F51B5]">
+                                  {isUploading ? (
+                                    <Loader2 size={13} className="animate-spin text-[#3F51B5]" />
+                                  ) : (
+                                    <Upload size={13} />
+                                  )}
+                                  <span>{hasPdf ? "เปลี่ยน PDF" : "อัปโหลด PDF"}</span>
+                                  <input
+                                    type="file"
+                                    accept=".pdf"
+                                    className="hidden"
+                                    disabled={isUploading}
+                                    onChange={(e) => {
+                                      if (e.target.files?.[0]) {
+                                        handleUploadSectionPdf(sec, e.target.files[0]);
+                                        e.target.value = '';
+                                      }
+                                    }}
+                                  />
+                                </label>
+
+                                {hasPdf && (
+                                  <button
+                                    onClick={() => handleDeleteSectionPdf(sec.id, sec.title)}
+                                    title="ลบเฉพาะไฟล์ PDF"
+                                    className="p-1.5 text-slate-300 hover:text-amber-500 rounded-lg hover:bg-amber-50 transition-colors"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                )}
+
+                                <button
+                                  onClick={() => openEditSectionModal(sec)}
+                                  title="แก้ไขชื่อหมวด / หมายเลขหมวด"
+                                  className="p-1.5 bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-[#3F51B5] rounded-xl transition-colors"
+                                >
+                                  <Edit3 size={14} />
+                                </button>
+
+                                <button
+                                  onClick={() => handleDeleteSection(sec.id, sec.title)}
+                                  title="ลบหมวดนี้ออกจากหลักสูตร"
+                                  className="p-1.5 text-slate-300 hover:text-rose-500 rounded-xl hover:bg-rose-50 transition-colors"
+                                >
+                                  <X size={15} />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
               </div>
             ) : (
               <div className="text-center py-12 bg-slate-50 rounded-2xl">
-                <p className="text-sm font-bold text-slate-400">กรุณาเพิ่มเวอร์ชันปีหลักสูตรเพื่อจัดการหมวด มคอ.2</p>
+                <p className="text-sm font-bold text-slate-400">กรุณาเพิ่มเวอร์ชันปีหลักสูตรเพื่อจัดการหมวด</p>
               </div>
             )}
 
@@ -690,6 +908,125 @@ export default function ManageCurriculum() {
                   className="px-6 py-2.5 bg-[#3F51B5] text-white rounded-xl text-sm font-bold hover:bg-indigo-700 flex items-center gap-2 shadow-md disabled:opacity-50"
                 >
                   {submittingProgram ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                  บันทึก
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 📝 Modal เพิ่ม/แก้ไขหมวดหลักสูตร */}
+      {isSectionModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div>
+                <span className="text-xs font-bold text-[#3F51B5] bg-indigo-50 px-2.5 py-0.5 rounded-md">
+                  ปี พ.ศ. {activeVersionYear}
+                </span>
+                <h2 className="text-xl font-bold text-slate-800 mt-1">
+                  {sectionModalMode === 'create' ? "เพิ่มหมวดหลักสูตรใหม่" : "แก้ไขข้อมูลหมวดหลักสูตร"}
+                </h2>
+              </div>
+              <button 
+                onClick={() => setIsSectionModalOpen(false)} 
+                className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveSection} className="space-y-4 text-left">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-slate-600 block mb-1">
+                    หมายเลขหมวด (section_no) <span className="text-rose-500">*</span>
+                  </label>
+                  <input 
+                    type="number" 
+                    value={sectionForm.section_no}
+                    onChange={(e) => setSectionForm({ ...sectionForm, section_no: e.target.value })}
+                    placeholder="เช่น 1, 2, 99"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-[#3F51B5]"
+                    required
+                  />
+                  <span className="text-[11px] text-slate-400">เลขหมวด เช่น 1-9 หรือ 99</span>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-600 block mb-1">
+                    ลำดับการแสดงผล (order_index)
+                  </label>
+                  <input 
+                    type="number" 
+                    value={sectionForm.order_index}
+                    onChange={(e) => setSectionForm({ ...sectionForm, order_index: e.target.value })}
+                    placeholder="เช่น 1, 2, 99"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-[#3F51B5]"
+                  />
+                  <span className="text-[11px] text-slate-400">เรียงจากน้อยไปมาก</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-600 block mb-1">
+                  ชื่อหมวดหลักสูตร <span className="text-rose-500">*</span>
+                </label>
+                <input 
+                  type="text" 
+                  value={sectionForm.title}
+                  onChange={(e) => setSectionForm({ ...sectionForm, title: e.target.value })}
+                  placeholder="เช่น หมวดที่ 1 ข้อมูลทั่วไป"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-[#3F51B5]"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-600 block mb-1">
+                  ไฟล์เอกสาร PDF ประจำหมวด (ไม่บังคับ)
+                </label>
+                {existingPdfPath && sectionModalMode === 'edit' && (
+                  <div className="mb-2 p-2.5 bg-indigo-50/50 border border-indigo-100 rounded-xl flex items-center justify-between text-xs">
+                    <span className="text-[#3F51B5] font-medium flex items-center gap-1.5">
+                      <FileText size={15} /> มีไฟล์ PDF ปัจจุบันอยู่แล้ว
+                    </span>
+                    <a
+                      href={getPdfUrl(existingPdfPath)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-bold text-[#3F51B5] hover:underline flex items-center gap-1"
+                    >
+                      <Eye size={13} /> ดูไฟล์
+                    </a>
+                  </div>
+                )}
+                <input 
+                  type="file" 
+                  accept=".pdf"
+                  onChange={(e) => setSectionForm({ ...sectionForm, file: e.target.files?.[0] || null })}
+                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#3F51B5] file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-[#3F51B5] file:text-white hover:file:bg-[#2D3B8E]"
+                />
+                <span className="text-[11px] text-slate-400 mt-1 block">
+                  {sectionModalMode === 'edit' ? "เลือกไฟล์ใหม่หากต้องการเปลี่ยนไฟล์ PDF" : "สามารถเลือกไฟล์ PDF เพื่ออัปโหลดพร้อมสร้างหมวดได้"}
+                </span>
+              </div>
+
+              <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
+                <button 
+                  type="button" 
+                  onClick={() => setIsSectionModalOpen(false)}
+                  className="px-5 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-100"
+                >
+                  ยกเลิก
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={submittingSection}
+                  className="px-6 py-2.5 bg-[#3F51B5] text-white rounded-xl text-sm font-bold hover:bg-indigo-700 flex items-center gap-2 shadow-md disabled:opacity-50"
+                >
+                  {submittingSection ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                   บันทึก
                 </button>
               </div>
