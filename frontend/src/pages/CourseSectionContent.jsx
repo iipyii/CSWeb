@@ -96,11 +96,30 @@ export default function CourseSectionContent() {
   };
 
   const getSectionBadgeLabel = (s) => {
+    if (!s) return "";
+
+    // 1. ตรวจจับจากชื่อหมวด (Title) เป็นหลัก เพื่อความถูกต้องและยืดหยุ่นตามที่ตั้งค่า
+    if (s.title) {
+      const compMatch = s.title.match(/องค์ประกอบ(?:ที่)?\s*(\d+)/);
+      if (compMatch) return `องค์ประกอบ ${compMatch[1]}`;
+
+      const secMatch = s.title.match(/หมวด(?:ที่)?\s*(\d+)/);
+      if (secMatch) return `หมวด ${secMatch[1]}`;
+
+      if (s.title.includes("ภาคผนวก")) return "ภาคผนวก";
+      if (s.title.includes("แผนภูมิ")) return "แผนภูมิ";
+      if (s.title.includes("คำอธิบายรายวิชา")) return "คำอธิบายรายวิชา";
+      if (s.title.includes("ปรับปรุงแก้ไข")) return "ปรับปรุงแก้ไข";
+    }
+
+    // 2. ตรวจสอบจาก order_index พิเศษ
     if (s.order_index === 88) return "ปรับปรุงแก้ไข";
     if (s.order_index === 99) return "แผนภูมิ";
     if (s.order_index === 990) return "ภาคผนวก";
     if (s.order_index === 999) return "คำอธิบายรายวิชา";
-    if (s.order_index >= 111 && s.order_index <= 900) return `องค์ประกอบ ${Math.floor(s.order_index / 111)}`;
+    if (s.order_index === 900) return "องค์ประกอบ 9";
+    if (s.order_index >= 111 && s.order_index <= 888) return `องค์ประกอบ ${Math.round(s.order_index / 111)}`;
+
     return `หมวด ${s.section_no || s.order_index}`;
   };
 
