@@ -1,142 +1,155 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, FileText } from 'lucide-react';
+import { ChevronRight, FileText, Loader2 } from 'lucide-react';
 import Footer from '../components/Footer';
 import axios from "axios";
 
-const downloadData = [
-  {
-    category: "โครงงานพิเศษ, ปริญญานิพนธ์",
-    items: [
-      { id: 1, title: "คพ.01 - แบบฟอร์มเสนอหัวข้อโครงงานพิเศษ", formats: ["DOC", "PDF"] },
-      { id: 2, title: "คพ.02 - แบบฟอร์มขอสอบโครงงานพิเศษ 1", formats: ["DOC", "PDF"] },
-      { id: 3, title: "คพ.03 - แบบฟอร์มขอสอบปริญญานิพนธ์", formats: ["DOC", "PDF"] },
-      { id: 4, title: "คพ.04 - หนังสือรับรองการทดสอบโครงงานพิเศษ", formats: ["DOC", "PDF"] },
-      { id: 5, title: "ใบตรวจปริญญานิพนธ์", formats: ["DOC", "PDF"] },
-      { id: 6, title: "สมุดบันทึกการให้คำปรึกษาโครงงานพิเศษ (LogBook)", formats: ["DOC", "PDF"] },
-      { id: 7, title: "สมุดบันทึกการให้คำปรึกษาโครงงานพิเศษ-v0.1", formats: ["DOC", "PDF"] },
-      { id: 8, title: "บันทึกการยืนยันขอบเขตโครงงานกับอาจารย์ที่ปรึกษา", formats: ["DOC", "PDF"] },
-      { id: 9, title: "Template ใบรับรองปริญญานิพนธ์ (กรรมการ 3 ท่าน)", formats: ["DOC"] },
-      { id: 10, title: "Template ใบรับรองปริญญานิพนธ์ (กรรมการ 4 ท่าน)", formats: ["DOC"] },
-      { id: 11, title: "Template ใบรับรองปริญญานิพนธ์ (สหกิจศึกษา) (กรรมการ 3 ท่าน )", formats: ["DOC"] },
-      { id: 12, title: "Template ใบรับรองปริญญานิพนธ์ (สหกิจศึกษา) (กรรมการ 4 ท่าน )", formats: ["DOC"] },
-    ]
-  },
-  {
-    category: "โครงการสองภาษา(CSB)",
-    items: [
-      { id: 13, title: "ใบตรวจปริญญานิพนธ์ CSB", formats: ["DOC", "PDF"] },
-      { id: 14, title: "CSB-A แบบฟอร์มแต่งตั้งอาจารย์ที่ปรึกษา", formats: ["DOC", "PDF"] },
-      { id: 15, title: "CSB-01 แบบฟอร์มเสนอหัวข้อโครงงานพิเศษ", formats: ["PDF"] },
-      { id: 16, title: "CSB-02 แบบฟอร์มขอสอบก้าวหน้า", formats: ["PDF"] },
-      { id: 17, title: "CSB-03 แบบฟอร์มขอสอบป้องกัน", formats: ["DOC", "PDF"] },
-      { id: 18, title: "CSB-04 หนังสือรับรองการทดสอบโครงงานพิเศษ", formats: ["DOC", "PDF"] },
-      { id: 19, title: "CSB-06 รายงานผลการสอบก้าวหน้าปริญญานิพนธ์วิชาโครงงานพิเศษ", formats: ["DOC", "PDF"] },
-      { id: 20, title: "CSB-07 รายงานผลการสอบป้องกันปริญญานิพนธ์วิชาโครงงานพิเศษ", formats: ["DOC", "PDF"] },
-      { id: 21, title: "CSB-08 เอกสารแสดงผลการเรียน", formats: ["PDF"] },
-      { id: 22, title: "CSB-09 แบบฟอร์มคำร้องขอเสนอผลการสอบภาษาอังกฤษ", formats: ["PDF"] },
-      { id: 23, title: "CSB-10 แบบฟอร์มคำร้องขอเสนอผลการวัดระดับภาษาอังกฤษจากสถาบันทดสอบแทนการทดสอบวัดสมิทธิภาพทางภาษาอังกฤษ", formats: ["PDF"] },
-      { id: 24, title: "CSB scorlaship A ทุนเรียนดี/ทุนขาดแคลน", formats: ["DOC", "PDF"] },
-      { id: 25, title: "เอกสารสำคัญการรับเงินด้วยวิธีจ่ายผ่านบัตร", formats: ["PDF"] },
-      { id: 26, title: "Template ใบรับรองปริญญานิพนธ์ (กรรมการ 3 ท่าน)", formats: ["DOC"] },
-      { id: 27, title: "Template ใบรับรองปริญญานิพนธ์ (กรรมการ 4 ท่าน)", formats: ["DOC"] },
-    ]
-  },
-  {
-    category: "การฝึกงาน",
-    items: [
-      { id: 28, title: "คพ.05 - หนังสือขอความอนุเคราะห์รับนักศึกษาฝึกงาน", formats: ["DOC", "PDF"] },
-      { id: 29, title: "แบบประเมินผลฝึกงาน", formats: ["DOC", "PDF"] },
-      { id: 30, title: "ใบลงเวลาฝึกงาน", formats: ["DOC", "PDF"] },
-      { id: 31, title: "สมุดบันทึกการฝึกงาน", formats: ["DOC", "PDF"] },
-      { id: 32, title: "หนังสือรับรองการฝึกงาน", url: "https://zenu7gjyuz3f2z3izcqmzq.on.drv.tw/internship_Certificate/internship_Certificate.html" },
-    ]
-  },
-  {
-    category: "ระดับบัณฑิตศึกษา",
-    items: [
-      { id: 33, title: "บ.001 คำร้องขอเสนอโครงการวิทยานิพนธ์และแต่งตั้งอาจารย์ที่ปรึกษาวิทยานิพนธ์", formats: ["PDF"] },
-      { id: 34, title: "บ.002 คำร้องขออนุมัติเปลี่ยนแปลงอาจารย์ที่ปรึกษาวิทยานิพนธ์-สารนิพนธ์-การค้นคว้าอิสระ", formats: ["PDF"] },
-      { id: 35, title: "บ.003 คำร้องขอสอบหัวข้อ-ความก้าวหน้า", formats: ["PDF"] },
-      { id: 36, title: "บ.004 คำร้องขอสอบป้องกันวิทยานิพนธ์-สารนิพนธ์-การค้นคว้าอิสระ", formats: ["PDF"] },
-      { id: 37, title: "บ.005 คำร้องขอสอบประมวลความรู้-ขอสอบวัดคุณสมบัติ", formats: ["PDF"] },
-      { id: 38, title: "บ.006 คำร้องขอส่งโครงการวิทยานิพนธ์-สารนิพนธ์-การค้นคว้าอิสระ ฉบับแก้ไข", formats: ["PDF"] },
-      { id: 39, title: "บ.007 คำร้องขอหนังสือขยายเวลาเพื่อลาศึกษา-ส่งตัวกลับเข้าปฏิบัติงาน", formats: ["PDF"] },
-      { id: 40, title: "บ.008 คำร้องขอลาพักการศึกษา-ขอกลับเข้าศึกษา", formats: ["PDF"] },
-      { id: 41, title: "บ.009 คำร้องขอส่งผลงานที่ได้นำเสนอ-ตีพิมพ์", formats: ["PDF"] },
-      { id: 42, title: "บ.010 คำร้องขอรับทุนสนับสนุนการเผยแพร่ผลงานทางวิชาการระดับนานาชาติ", formats: ["PDF"] },
-      { id: 43, title: "บ.011 คำร้องขอรับทุนสนับสนุนการเผยแพร่ผลงานทางวิชาการ (แผน ข)", formats: ["PDF"] },
-      { id: 44, title: "บ.013 คำร้องเสนอผลการตรวจสอบการคัดลอกหรือลอกเลียนผลงานทางวิชาการ", formats: ["PDF"] },
-      { id: 45, title: "บ.014 คำร้องขอเสนอผลการสอบภาษาต่างประเทศ", formats: ["PDF"] },
-      { id: 46, title: "บ.015 คำร้องขอลาออก (กรณีไม่สำเร็จการศึกษา)", formats: ["PDF"] },
-      { id: 47, title: "บ.016 คำร้องขอรายงานนักศึกษาเดินทางไปทำกิจกรรมทางวิชาการ ณ ต่างประเทศ", formats: ["PDF"] },
-      { id: 48, title: "บ.101 แบบฟอร์มเสนอโครงการวิทยานิพนธ์-สารนิพนธ์-การค้นคว้าอิสระ", formats: ["PDF"] },
-      { id: 49, title: "บ.102 โครงการย่อ-บทคัดย่อ", formats: ["PDF"] },
-      { id: 50, title: "บ.103 ประวัติอาจารย์บัณฑิตศึกษา", formats: ["PDF"] },
-      { id: 51, title: "บ.201 คำร้องขอผ่อนผันการขึ้นทะเบียนนักศึกษาใหม่", formats: ["PDF"] },
-      { id: 52, title: "บ.202 คำร้องขอหนังสือรับรองผลการสอบคัดเลือกเข้าศึกษาต่อ", formats: ["PDF"] },
-      { id: 53, title: "บ.203 คำร้องขอเป็นนักศึกษาพิเศษ", formats: ["PDF"] },
-      { id: 54, title: "บ.204 คำร้องขออนุมัติผลการสำเร็จการศึกษา", formats: ["PDF"] },
-      { id: 55, title: "บ.205 คำร้องขอเปลี่ยนแผนการศึกษา-สาขาวิชา-แขนงวิชา", formats: ["PDF"] },
-      { id: 56, title: "บ.206 คำร้องขอคืนสภาพการเป็นนักศึกษา", formats: ["PDF"] },
-      { id: 56, title: "บ.207 คำร้องทั่วไป", formats: ["PDF"] },
-    ]
-  },
-  {
-    category: "สำหรับนักศึกษาปัจจุบัน (ยังไม่สำเร็จการศึกษา)",
-    items: [
-      { id: 57, title: "ใบมอบฉันทะการลงทะเบียนวิชาเรียน", formats: ["DOC", "PDF"] },
-      { id: 58, title: "คำร้องขั้นตอนการโอนรายวิชาของนักศึกษาภายในมหาวิทยาลัย ระดับ ปวช. และปริญญาตรี", formats: ["PDF"] },
-      { id: 59, title: "คำร้องขอทำบัตรประจำตัวนักศึกษา(ธ.กรุงเทพ)", formats: ["PDF"] },
-      { id: 60, title: "บัตรถอนวิชาเรียน", formats: ["PDF"] },
-      { id: 61, title: "บัตรเปลี่ยนตอนวิชาเรียน", formats: ["PDF"] },
-    ]
-  },
-  {
-    category: "สำหรับผู้สำเร็จการศึกษา-พ้นสภาพการเป็นนักศึกษา-ลาออกศึกษาต่อที่อื่น",
-    items: [
-      { id: 62, title: "คำร้องขอลาออก", formats: ["PDF"] },
-      { id: 63, title: "คำร้องขอเอกสารการศึกษา", formats: ["PDF"] },
-      { id: 64, title: "คำร้องขอรับเงินประกันทรัพย์สินเสียหาย", formats: ["PDF"] },
-    ]
-  },
+// Map raw categories to user-friendly Thai display titles
+const categoryLabels = {
+  'special-project': 'โครงงานพิเศษ, ปริญญานิพนธ์',
+  'csb': 'โครงการสองภาษา (CSB)',
+  'internship': 'การฝึกงาน',
+  'graduate': 'ระดับบัณฑิตศึกษา',
+  'current-student': 'สำหรับนักศึกษาปัจจุบัน (ยังไม่สำเร็จการศึกษา)',
+  'alumni': 'สำหรับผู้สำเร็จการศึกษา-พ้นสภาพการเป็นนักศึกษา-ลาออกศึกษาต่อที่อื่น',
+  'general': 'ทั่วไป',
+  'finance': 'งานการเงิน',
+  'personnel': 'งานบุคคล',
+  'academic': 'งานวิชาการ',
+  'curriculum': 'งานหลักสูตร',
+};
 
+const getCategoryLabel = (category) => {
+  if (!category) return 'ทั่วไป';
+  return categoryLabels[category] || categoryLabels[category.toLowerCase()] || category;
+};
 
-]; export default function StudentDownloads() {
+// Generates a grouping key for merging identical documents across formats (e.g. PDF and DOCX)
+const getGroupKey = (item) => {
+  if (item.file_name) {
+    const base = item.file_name.replace(/\.[^/.]+$/, '').trim().toLowerCase();
+    if (base) return `base:${base}`;
+  }
+  const cleanTitle = (item.title || '')
+    .replace(/\s*[\(\[](?:pdf|docx?|word|excel|xlsx?)[\)\]]\s*$/i, '')
+    .replace(/\s+(?:pdf|docx?|word|excel|xlsx?)$/i, '')
+    .replace(/\s+[12]$/i, '')
+    .replace(/-v0\.[12]$/i, '')
+    .trim()
+    .toLowerCase();
+  return `title:${cleanTitle}`;
+};
+
+// Cleans display title so that differences like " 1", " 2", or "-v0.2" are unified
+const getCleanTitle = (title = '') => {
+  return title
+    .replace(/\s*[\(\[](?:pdf|docx?|word|excel|xlsx?)[\)\]]\s*$/i, '')
+    .replace(/\s+(?:pdf|docx?|word|excel|xlsx?)$/i, '')
+    .replace(/\s+[12]$/i, '')
+    .replace(/-v0\.2$/i, '-v0.1')
+    .trim();
+};
+
+// Subtitle under the title showing filename details
+const getFileSubtitle = (files) => {
+  if (!files || files.length === 0) return '';
+  if (files.length === 1) return files[0].file_name || '';
+
+  const getBase = (fn) => (fn || '').replace(/\.[^/.]+$/, '');
+  const base0 = getBase(files[0].file_name);
+  const allSameBase = files.every((f) => getBase(f.file_name) === base0);
+
+  if (allSameBase && base0) {
+    const exts = files
+      .map((f) => (f.file_type ? `.${f.file_type.toLowerCase()}` : ''))
+      .filter(Boolean)
+      .join(', ');
+    return base0 + (exts ? ` (${exts})` : '');
+  }
+  return files.map((f) => f.file_name).filter(Boolean).join(' • ');
+};
+
+const formatOrder = { pdf: 1, docx: 2, doc: 3, xlsx: 4, xls: 5 };
+
+export default function StudentDownloads() {
   const [openSections, setOpenSections] = useState([0]);
   const [downloads, setDownloads] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-
+    setLoading(true);
     axios
       .get("/api/downloads/student")
-      .then(res => {
-        setDownloads(res.data);
+      .then((res) => {
+        setDownloads(res.data || []);
       })
-      .catch(err => {
-        console.error(err);
+      .catch((err) => {
+        console.error("Fetch student downloads error:", err);
+      })
+      .finally(() => {
+        setLoading(false);
       });
-
   }, []);
+
   const toggleSection = (index) => {
     if (openSections.includes(index)) {
-      setOpenSections(openSections.filter(i => i !== index));
+      setOpenSections(openSections.filter((i) => i !== index));
     } else {
       setOpenSections([...openSections, index]);
     }
   };
 
-  const grouped = downloads.reduce((acc, item) => {
+  const grouped = useMemo(() => {
+    const categoryMap = {};
+    downloads.forEach((item) => {
+      const cat = item.category || 'ทั่วไป';
+      if (!categoryMap[cat]) categoryMap[cat] = [];
+      categoryMap[cat].push(item);
+    });
 
-    if (!acc[item.category]) {
-      acc[item.category] = [];
-    }
+    const result = {};
+    Object.entries(categoryMap).forEach(([cat, rawItems]) => {
+      const topicMap = new Map();
 
-    acc[item.category].push(item);
+      rawItems.forEach((item) => {
+        const key = getGroupKey(item);
+        if (!topicMap.has(key)) {
+          topicMap.set(key, {
+            id: item.id,
+            title: getCleanTitle(item.title),
+            category: item.category,
+            files: [],
+          });
+        }
+        const topic = topicMap.get(key);
+        if (!topic.files.some((f) => f.id === item.id)) {
+          topic.files.push({
+            id: item.id,
+            file_name: item.file_name,
+            file_type: item.file_type || (item.file_name ? item.file_name.split('.').pop() : 'file'),
+            file_path: item.file_path,
+            created_at: item.created_at,
+          });
+        }
+      });
 
-    return acc;
+      const topicList = Array.from(topicMap.values()).map((topic) => {
+        topic.files.sort((a, b) => {
+          const orderA = formatOrder[a.file_type?.toLowerCase()] || 99;
+          const orderB = formatOrder[b.file_type?.toLowerCase()] || 99;
+          return orderA - orderB;
+        });
+        return topic;
+      });
 
-  }, {});
+      // Sort topics naturally by Thai title
+      topicList.sort((a, b) => a.title.localeCompare(b.title, 'th', { numeric: true }));
+
+      result[cat] = topicList;
+    });
+
+    return result;
+  }, [downloads]);
 
   return (
     <div className="bg-slate-50 min-h-screen flex flex-col">
@@ -154,20 +167,46 @@ const downloadData = [
       </section>
 
       <main className="max-w-5xl mx-auto w-full px-6 py-12 flex-grow">
-        {Object.entries(grouped).map(([category, items], sIdx) => {
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-3">
+            <Loader2 size={32} className="animate-spin text-[#3F51B5]" />
+            <p className="text-sm">กำลังโหลดเอกสารดาวน์โหลด...</p>
+          </div>
+        ) : Object.keys(grouped).length === 0 ? (
+          <div className="bg-white rounded-2xl p-12 text-center border border-slate-100 shadow-sm text-slate-500">
+            <FileText size={40} className="mx-auto mb-3 text-slate-300" />
+            <p className="font-semibold text-lg">ยังไม่มีรายการเอกสารสำหรับนักศึกษา</p>
+          </div>
+        ) : (
+          Object.entries(grouped).map(([category, items], sIdx) => {
             const isOpen = openSections.includes(sIdx);
+            const categoryTitle = getCategoryLabel(category);
             return (
               <div key={sIdx} className="mb-6">
-                <button onClick={() => toggleSection(sIdx)} className="w-full flex items-center gap-2 mb-2 pb-3 border-b-2 border-[#3F51B5]/10 group transition-all text-left">
+                <button
+                  onClick={() => toggleSection(sIdx)}
+                  className="w-full flex items-center gap-2 mb-2 pb-3 border-b-2 border-[#3F51B5]/10 group transition-all text-left"
+                >
                   <motion.div animate={{ rotate: isOpen ? 90 : 0 }} transition={{ duration: 0.2 }}>
                     <ChevronRight size={22} className="text-[#3F51B5]" />
                   </motion.div>
-                  <h2 className="text-xl font-bold text-slate-800 group-hover:text-[#3F51B5] transition-colors">{category}</h2>
+                  <h2 className="text-xl font-bold text-slate-800 group-hover:text-[#3F51B5] transition-colors">
+                    {categoryTitle}
+                  </h2>
+                  <span className="ml-auto text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
+                    {items.length} รายการ
+                  </span>
                 </button>
 
                 <AnimatePresence>
                   {isOpen && (
-                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3, ease: "easeInOut" }} className="overflow-hidden">
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                      className="overflow-hidden"
+                    >
                       <div className="bg-white rounded-[1.5rem] shadow-sm border border-slate-100 overflow-hidden mb-8 mt-2">
                         <div className="overflow-x-auto">
                           <table className="w-full min-w-[640px] text-left">
@@ -175,7 +214,7 @@ const downloadData = [
                               <tr>
                                 <th className="px-6 py-4 text-xs font-bold w-16 text-center uppercase tracking-wider">ลำดับ</th>
                                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">ชื่อรายการเอกสาร</th>
-                                <th className="px-6 py-4 text-xs font-bold text-center w-40 uppercase tracking-wider">ไฟล์</th>
+                                <th className="px-6 py-4 text-xs font-bold text-center w-48 uppercase tracking-wider">ไฟล์</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
@@ -184,32 +223,61 @@ const downloadData = [
                                   <td className="px-6 py-5 text-center text-slate-400 text-sm">{iIdx + 1}</td>
                                   <td className="px-6 py-5 text-slate-700 text-[15px] group-hover:text-[#3F51B5] transition-colors">
                                     <div>
-                                      <p className="font-medium">{item.title}</p>
-                                      {item.file_name && (
-                                        <p className="text-xs text-slate-400 font-normal mt-0.5 flex items-center gap-1.5">
+                                      <p className="font-medium text-slate-800 group-hover:text-[#3F51B5] transition-colors">
+                                        {item.title}
+                                      </p>
+                                      {item.files?.length > 0 && (
+                                        <p className="text-xs text-slate-400 font-normal mt-0.5 flex items-center gap-1.5 flex-wrap">
                                           <FileText size={13} className="text-slate-400 shrink-0" />
-                                          <span className="truncate max-w-md">{item.file_name}</span>
+                                          <span className="truncate max-w-lg">{getFileSubtitle(item.files)}</span>
                                         </p>
                                       )}
                                     </div>
                                   </td>
                                   <td className="px-6 py-5 text-center">
-                                    <div className="flex justify-center gap-1.5">
-                                      <a
-                                        href={`/api/downloads/download/${item.id}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        download={item.file_name || `${item.title}.${item.file_type || 'pdf'}`}
-                                        className={`px-4 py-1.5 rounded-lg text-[11px] font-bold border transition-all active:scale-95
-                                          ${item.file_type?.toLowerCase() === 'pdf'
-                                            ? 'text-rose-600 border-rose-100 bg-rose-50 hover:bg-rose-600 hover:text-white'
-                                            : item.file_type?.toLowerCase() === 'docx' || item.file_type?.toLowerCase() === 'doc'
-                                              ? 'text-blue-600 border-blue-100 bg-blue-50 hover:bg-blue-600 hover:text-white'
-                                              : 'text-emerald-600 border-emerald-100 bg-emerald-50 hover:bg-emerald-600 hover:text-white'
-                                          }`}
-                                      >
-                                        {item.file_type?.toUpperCase()}
-                                      </a>
+                                    <div className="flex justify-center items-center gap-2 flex-wrap">
+                                      {item.files.map((file) => {
+                                        const fType = file.file_type?.toLowerCase();
+                                        const isPdf = fType === 'pdf';
+                                        const isDoc = fType === 'docx' || fType === 'doc' || fType === 'word';
+                                        const isXls = fType === 'xlsx' || fType === 'xls';
+
+                                        const badgeStyle = isPdf
+                                          ? 'text-rose-600 border-rose-200 bg-rose-50 hover:bg-rose-600 hover:text-white'
+                                          : isDoc
+                                            ? 'text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-600 hover:text-white'
+                                            : isXls
+                                              ? 'text-emerald-600 border-emerald-200 bg-emerald-50 hover:bg-emerald-600 hover:text-white'
+                                              : 'text-slate-600 border-slate-200 bg-slate-50 hover:bg-slate-600 hover:text-white';
+
+                                        if (file.url) {
+                                          return (
+                                            <a
+                                              key={file.id}
+                                              href={file.url}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="px-3 py-1.5 rounded-lg text-[11px] font-bold border text-indigo-600 border-indigo-200 bg-indigo-50 hover:bg-indigo-600 hover:text-white transition-all active:scale-95 shadow-xs"
+                                            >
+                                              LINK
+                                            </a>
+                                          );
+                                        }
+
+                                        return (
+                                          <a
+                                            key={file.id}
+                                            href={`/api/downloads/download/${file.id}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            download={file.file_name || `${item.title}.${file.file_type || 'pdf'}`}
+                                            className={`px-3.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all active:scale-95 inline-flex items-center gap-1 shadow-xs ${badgeStyle}`}
+                                            title={`ดาวน์โหลด ${file.file_name || file.file_type?.toUpperCase()}`}
+                                          >
+                                            {file.file_type?.toUpperCase() || 'FILE'}
+                                          </a>
+                                        );
+                                      })}
                                     </div>
                                   </td>
                                 </tr>
@@ -224,7 +292,7 @@ const downloadData = [
               </div>
             );
           })
-        }
+        )}
       </main>
       <Footer />
     </div>
