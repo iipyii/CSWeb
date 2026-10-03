@@ -55,7 +55,8 @@ export default function News() {
             isLatest: true,
             isPinned: item.is_urgent,
             image: item.image ? (item.image.startsWith('http') ? item.image : item.image) : "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800",
-            date: new Date(item.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }),
+            rawDate: item.start_date || item.created_at,
+            date: new Date(item.start_date || item.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Bangkok' }),
             tag: item.category === 'department' ? 'ข่าวภาควิชาฯ' :
               item.category === 'faculty' ? 'ข่าวคณะและมหาวิทยาลัย' :
                 item.category === 'scholarship' ? 'ข่าวทุนการศึกษา' : 'ข่าวรับสมัครงาน-ประชาสัมพันธ์'
@@ -135,10 +136,14 @@ export default function News() {
       return matchesTab && matchesSearch;
     });
 
-    // ✨ เรียงลำดับ: ข่าวปักหมุดขึ้นก่อน
+    // ✨ เรียงลำดับ: ข่าวปักหมุดขึ้นก่อน ตามด้วยวันที่เผยแพร่ล่าสุด (start_date หรือ created_at)
     return [...filtered].sort((a, b) => {
-      if (a.isPinned === b.isPinned) return 0;
-      return a.isPinned ? -1 : 1;
+      if (a.isPinned !== b.isPinned) {
+        return a.isPinned ? -1 : 1;
+      }
+      const timeA = a.rawDate ? new Date(a.rawDate).getTime() : 0;
+      const timeB = b.rawDate ? new Date(b.rawDate).getTime() : 0;
+      return timeB - timeA;
     });
   }, [activeTab, searchQuery, newsData]);
 

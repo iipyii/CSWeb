@@ -43,7 +43,7 @@ const NewsDetail = () => {
           
           attachments: safeParseArray(data.attachments),
 
-          date: new Date(data.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }),
+          date: new Date(data.start_date || data.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Bangkok' }),
           tag: data.category === 'department' ? 'ข่าวภาควิชาฯ' : 'ข่าวสาร',
           author: 'ผู้ดูแลระบบ', 
         });

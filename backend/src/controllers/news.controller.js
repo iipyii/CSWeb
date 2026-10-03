@@ -34,6 +34,16 @@ const autoArchiveExpiredNews = async () => {
   }
 };
 
+// จัดเรียงข่าวสารตามวันเผยแพร่ที่กำหนดเอง (start_date) หรือวันสร้างจริง (created_at) จากใหม่ไปเก่า
+const sortByEffectiveDate = (list) => {
+  if (!Array.isArray(list)) return list;
+  return list.sort((a, b) => {
+    const timeA = new Date(a.start_date || a.created_at).getTime();
+    const timeB = new Date(b.start_date || b.created_at).getTime();
+    return timeB - timeA;
+  });
+};
+
 // ✅ GET active news
 export const getActiveNews = async (req, res) => {
   try {
@@ -60,6 +70,7 @@ export const getActiveNews = async (req, res) => {
       take: limit,
     });
 
+    sortByEffectiveDate(news);
     res.json(news);
   } catch (error) {
     console.error(error);
@@ -145,6 +156,7 @@ export const getAllNews = async (req, res) => {
         created_at: "desc",
       },
     });
+    sortByEffectiveDate(news);
     res.json(news);
   } catch (error) {
     console.error(error);
@@ -398,6 +410,7 @@ export const getArchivedNews = async (req, res) => {
       },
     });
 
+    sortByEffectiveDate(news);
     res.json(news);
   } catch (error) {
     console.error(error);
@@ -421,10 +434,11 @@ export const getLatestNews = async (req, res) => {
         ]
       },
       orderBy: { created_at: "desc" },
-      take: 5,
+      take: 10,
     });
 
-    res.json(news);
+    sortByEffectiveDate(news);
+    res.json(news.slice(0, 5));
   } catch (error) {
     res.status(500).json({ error: "Server error" });
   }
@@ -452,6 +466,7 @@ export const getNewsByCategory = async (req, res) => {
       },
     });
 
+    sortByEffectiveDate(news);
     res.json(news);
   } catch (error) {
     res.status(500).json({ error: "Server error" });

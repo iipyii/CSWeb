@@ -16,8 +16,8 @@ export default function NewsArchive() {
         .filter(item => item.status === 'archived')
         .map(item => ({
           ...item,
-          date: item.created_at
-            ? new Date(item.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })
+          date: (item.start_date || item.created_at)
+            ? new Date(item.start_date || item.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Bangkok' })
             : '-'
         }));
       setArchivedData(archived);

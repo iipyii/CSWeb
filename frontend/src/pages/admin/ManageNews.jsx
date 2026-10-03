@@ -44,15 +44,21 @@ export default function ManageNews() {
           category: item.category || 'department',
           categoryLabel: getCategoryLabel(item.category),
 
-          // แปลงวันที่จาก DB ให้เป็นรูปแบบไทย (เช่น 2 พฤษภาคม 2569)
-          date: new Date(item.created_at).toLocaleDateString('th-TH', {
-            year: 'numeric', month: 'long', day: 'numeric'
+          rawDate: item.start_date || item.created_at,
+          // แปลงวันที่จาก DB ให้เป็นรูปแบบไทย (ใช้วันเริ่มเผยแพร่ที่กำหนดเอง หรือวันสร้าง)
+          date: new Date(item.start_date || item.created_at).toLocaleDateString('th-TH', {
+            year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Bangkok'
           }),
 
           image: item.image 
             ? `${item.image}` 
             : "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800" 
-        }));
+        }))
+        .sort((a, b) => {
+          const timeA = a.rawDate ? new Date(a.rawDate).getTime() : 0;
+          const timeB = b.rawDate ? new Date(b.rawDate).getTime() : 0;
+          return timeB - timeA;
+        });
 
       // เอาข้อมูลที่สวยงามแล้วไปเก็บใน State เพื่อให้หน้าเว็บแสดงผล
       setNewsList(activeNews);
