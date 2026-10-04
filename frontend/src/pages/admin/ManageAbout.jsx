@@ -1063,12 +1063,12 @@ export default function ManageAbout() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {(greenOfficeData.campaign_images || []).map((img, idx) => (
-                    <div key={idx} className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 relative group">
-                      <div className="aspect-[3/4] w-full rounded-xl overflow-hidden bg-slate-100 border border-slate-200 relative flex items-center justify-center">
+                    <div key={idx} className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 relative group overflow-hidden">
+                      <div className="aspect-[3/4] w-full rounded-xl overflow-hidden bg-white border border-slate-200 relative flex items-center justify-center p-1.5">
                         <img
                           src={img.url}
                           alt={img.title}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-contain max-w-full max-h-full block"
                           onError={(e) => {
                             e.target.src = "https://images.unsplash.com/photo-1542601906990-b4d3fb773b09?auto=format&fit=crop&w=600&q=80";
                           }}

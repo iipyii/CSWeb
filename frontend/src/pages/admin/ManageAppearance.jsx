@@ -217,13 +217,27 @@ export default function ManageAppearance() {
   };
 
   const handleSaveQuickActions = async () => {
+    // 1. ตรวจสอบข้อมูลก่อนบันทึก: ป้องกันไม่ให้มีปุ่มที่ชื่อหรือลิงก์ว่าง
+    for (let i = 0; i < quickActions.length; i++) {
+      const btn = quickActions[i];
+      if (!btn.label || !btn.label.trim()) {
+        showAlert('error', `กรุณากรอกข้อความบนปุ่ม (Label) ให้ครบถ้วน (ปุ่มที่ ${i + 1} ว่างอยู่)`);
+        return;
+      }
+      if (!btn.path || !btn.path.trim()) {
+        showAlert('error', `กรุณากรอกลิงก์ปลายทาง (URL) ให้ครบถ้วน (ปุ่มที่ ${i + 1} ว่างอยู่)`);
+        return;
+      }
+    }
+
     try {
       setSaving(true);
       await axios.post("/api/appearance/quick-actions", { data: quickActions });
       showAlert('success', "บันทึกปุ่มทางลัดหน้าแรกเรียบร้อยแล้ว");
     } catch (error) {
       console.error("Save quick actions error:", error);
-      showAlert('error', "เกิดข้อผิดพลาดในการบันทึกปุ่มทางลัด");
+      const errMsg = error.response?.data?.error || "เกิดข้อผิดพลาดในการบันทึกปุ่มทางลัด";
+      showAlert('error', errMsg);
     } finally {
       setSaving(false);
     }

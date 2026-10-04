@@ -97,7 +97,7 @@ export default function GreenOffice() {
              <div className="h-px flex-1 bg-slate-200"></div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {campaignImages.map((img, idx) => (
               <motion.div 
                 key={idx} 
@@ -106,27 +106,29 @@ export default function GreenOffice() {
                 viewport={{ once: true }} 
                 variants={fadeInUp} 
                 transition={{ delay: idx * 0.1 }}
-                className="flex flex-col items-center"
+                className="w-full bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col group"
               >
-                <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl shadow-md border border-slate-100 mb-4 bg-slate-100 flex items-center justify-center">
-                    <img 
-                      src={img.url} 
-                      className="w-full h-full object-cover" 
-                      alt={img.title} 
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        if (e.target.nextSibling) {
-                          e.target.nextSibling.style.display = 'block';
-                        }
-                      }}
-                    />
-                    <div className="hidden text-slate-400 italic text-xs p-4 text-center">
-                      {img.title}
-                    </div>
+                <div className="relative aspect-[3/4] w-full overflow-hidden bg-slate-50 flex items-center justify-center p-3">
+                  <img 
+                    src={img.url} 
+                    className="w-full h-full object-contain max-w-full max-h-full block transition-transform duration-300 group-hover:scale-105" 
+                    alt={img.title} 
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      if (e.target.nextSibling) {
+                        e.target.nextSibling.style.display = 'block';
+                      }
+                    }}
+                  />
+                  <div className="hidden text-slate-400 italic text-xs p-4 text-center">
+                    {img.title}
+                  </div>
                 </div>
-                <p className="text-center text-[13px] font-bold text-slate-500 uppercase tracking-tighter line-clamp-2 px-2 leading-relaxed">
-                  {img.title}
-                </p>
+                <div className="p-4 border-t border-slate-100 bg-white flex-1 flex items-center justify-center">
+                  <p className="text-center text-sm font-bold text-slate-700 leading-snug line-clamp-2 px-1">
+                    {img.title}
+                  </p>
+                </div>
               </motion.div>
             ))}
           </div>

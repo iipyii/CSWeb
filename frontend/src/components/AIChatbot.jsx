@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, X, Send, Bot, User, Loader2, Sparkles, ChevronRight, HelpCircle } from 'lucide-react';
+import { MessageCircle, X, Send, Bot, User, Loader2, Sparkles, ChevronRight, ChevronLeft, HelpCircle } from 'lucide-react';
 import axios from 'axios';
 
 export default function AIChatbot() {
@@ -17,6 +17,14 @@ export default function AIChatbot() {
   const [selectedCategory, setSelectedCategory] = useState("handbook");
   const [showSuggestions, setShowSuggestions] = useState(true);
   const scrollRef = useRef(null);
+  const tabScrollRef = useRef(null);
+
+  const scrollTabs = (direction) => {
+    if (tabScrollRef.current) {
+      const scrollAmount = direction === 'left' ? -130 : 130;
+      tabScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
 
   // ชุดคำถามที่เกี่ยวข้องกับนักศึกษาแยกตามหมวดหมู่ (อาจารย์เสนอให้มีกรองคำถามแยกหมวดหมู่)
   const questionCategories = [
@@ -161,21 +169,54 @@ export default function AIChatbot() {
             </div>
 
             {/* 🎛️ Category Tabs (ตัวกรองหมวดหมู่คำถาม) */}
-            <div className="bg-slate-50 border-b border-slate-100 p-2 overflow-x-auto no-scrollbar flex gap-1.5">
-              {questionCategories.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all ${
-                    selectedCategory === cat.id
-                      ? "bg-[#3F51B5] text-white shadow-sm"
-                      : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/60"
-                  }`}
-                >
-                  <span>{cat.icon}</span>
-                  <span>{cat.label}</span>
-                </button>
-              ))}
+            <div className="relative bg-slate-50 border-b border-slate-100 flex items-center px-1">
+              <button 
+                type="button"
+                onClick={() => scrollTabs('left')}
+                title="เลื่อนแท็บไปทางซ้าย"
+                aria-label="เลื่อนแท็บไปทางซ้าย"
+                className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-200/70 rounded-full transition-colors shrink-0 z-10"
+              >
+                <ChevronLeft size={16} />
+              </button>
+
+              <div 
+                ref={tabScrollRef}
+                onWheel={(e) => {
+                  if (e.deltaY !== 0 && tabScrollRef.current) {
+                    tabScrollRef.current.scrollLeft += e.deltaY;
+                  }
+                }}
+                className="overflow-x-auto no-scrollbar flex gap-1.5 py-2 px-1 scroll-smooth flex-1"
+              >
+                {questionCategories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={(e) => {
+                      setSelectedCategory(cat.id);
+                      e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                    }}
+                    className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all shrink-0 ${
+                      selectedCategory === cat.id
+                        ? "bg-[#3F51B5] text-white shadow-sm"
+                        : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/60"
+                    }`}
+                  >
+                    <span>{cat.icon}</span>
+                    <span>{cat.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              <button 
+                type="button"
+                onClick={() => scrollTabs('right')}
+                title="เลื่อนแท็บไปทางขวา"
+                aria-label="เลื่อนแท็บไปทางขวา"
+                className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-200/70 rounded-full transition-colors shrink-0 z-10"
+              >
+                <ChevronRight size={16} />
+              </button>
             </div>
 
             {/* 💡 Suggested Questions Box (เมื่อเปิดใช้งาน) */}

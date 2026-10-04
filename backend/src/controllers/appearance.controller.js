@@ -199,6 +199,17 @@ export const updateQuickActions = async (req, res) => {
       return res.status(400).json({ error: "ข้อมูลปุ่มทางลัดไม่ถูกต้อง" });
     }
 
+    // ตรวจสอบว่าทุกปุ่มมีชื่อและลิงก์ครบถ้วน
+    for (let i = 0; i < data.length; i++) {
+      const btn = data[i];
+      if (!btn.label || !btn.label.trim()) {
+        return res.status(400).json({ error: `กรุณากรอกข้อความบนปุ่ม (Label) สำหรับปุ่มที่ ${i + 1}` });
+      }
+      if (!btn.path || !btn.path.trim()) {
+        return res.status(400).json({ error: `กรุณากรอกลิงก์ปลายทาง (URL) สำหรับปุ่มที่ ${i + 1}` });
+      }
+    }
+
     await prisma.site_config.upsert({
       where: { config_key: "homepage_quick_actions" },
       update: {

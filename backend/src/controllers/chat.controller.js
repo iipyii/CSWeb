@@ -166,58 +166,88 @@ export const chatWithAI = async (req, res) => {
     // 🎯 4. ค้นหาอาจารย์ที่ปรึกษาของนักศึกษา
     let advisorContext = "";
 
-    // ดักจับว่าผู้ใช้กำลังถามหา "ที่ปรึกษา" อยู่หรือเปล่า?
-    if (message.includes("ที่ปรึกษา")) {
+    // 4.0 ตรวจสอบว่าผู้ใช้ถามวิธีการตรวจสอบ/ค้นหาอาจารย์ที่ปรึกษาหรือไม่
+    if (
+      message.includes("ตรวจสอบ") || 
+      message.includes("ค้นหา") || 
+      message.includes("หาอาจารย์") || 
+      message.includes("ดูอาจารย์") ||
+      (message.includes("อาจารย์ที่ปรึกษา") && (message.includes("อย่างไร") || message.includes("ยังไง") || message.includes("ที่ไหน") || message.includes("ฉันจะ")))
+    ) {
+      advisorContext += `[ขั้นตอนการตรวจสอบและค้นหาอาจารย์ที่ปรึกษา]
+นักศึกษาสามารถตรวจสอบและค้นหาอาจารย์ที่ปรึกษาได้จาก 3 ช่องทางหลัก:
+1. ระบบบริการการศึกษา มจพ. (Reg KMUTNB / KLogic: https://klogic.kmutnb.ac.th): เข้าสู่ระบบด้วยบัญชีผู้ใช้ของนักศึกษา ไปที่เมนู "ข้อมูลประวัตินักศึกษา" เพื่อดูชื่อและตำแหน่งอาจารย์ที่ปรึกษาประจำตัว
+2. เว็บไซต์ภาควิชาฯ ในระบบบริการนักศึกษา: เข้าไปที่หน้า "บริการนักศึกษา" -> "อาจารย์ที่ปรึกษา" (หรือเมนู /consult-student) โดยสามารถระบุรหัสนักศึกษา หรือค้นหาตามชั้นปี/กลุ่มเรียน เพื่อดูรายชื่ออาจารย์และเพื่อนร่วมกลุ่มที่ปรึกษา
+3. สำนักงานภาควิชาวิทยาการคอมพิวเตอร์และสารสนเทศ: ติดต่อสอบถามได้โดยตรงที่ชั้น 6 อาคาร 78 หรือโทร. 02-555-2000 ต่อ 4601, 4602 ในวันและเวลาราชการ\n`;
+    }
 
-      // 4.1 โหลดรายชื่อนักศึกษามาเพื่อทำ Smart Extraction (หาชื่อในประโยค)
+    // 4.1 ตรวจสอบว่าถามเกี่ยวกับอาจารย์คนไหนดูแลนักศึกษารุ่นใดบ้าง (เช่น รศ.ดร.ธนภัทร์)
+    for (const t of allLecturers) {
+      if (!t.fullname_th) continue;
+      const cleanName = t.fullname_th.replace(/(รองศาสตราจารย์|ผู้ช่วยศาสตราจารย์|ศาสตราจารย์|ดร\.|อาจารย์|อ\.|นาย|นางสาว|นาง)\s*/g, '').trim();
+      const firstName = cleanName.split(/\s+/)[0];
+      if (firstName.length > 2 && message.includes(firstName)) {
+        try {
+          const advList = await prisma.advisors.findMany({
+            where: { lecturerId: t.id },
+            include: {
+              advisor_students: {
+                select: { id: true }
+              }
+            },
+            orderBy: { year: 'asc' }
+          });
+
+          if (advList.length > 0) {
+            const bachYears = [...new Set(advList.filter(a => a.level === 'bachelor').map(a => a.year))].sort((a,b) => a-b);
+            const mastYears = [...new Set(advList.filter(a => a.level === 'master').map(a => a.year))].sort((a,b) => a-b);
+            const bachCodes = bachYears.map(y => y.toString().substring(2)).join(', ');
+            const mastCodes = mastYears.map(y => y.toString().substring(2)).join(', ');
+
+            advisorContext += `[ข้อมูลการดูแลนักศึกษาของอาจารย์] ${t.fullname_th} เป็นอาจารย์ที่ปรึกษาดูแลนักศึกษาในรุ่น/ปีการศึกษาดังต่อไปนี้:
+- ระดับปริญญาตรี (วท.บ. วิทยาการคอมพิวเตอร์): ดูแลนักศึกษารุ่นปีการศึกษา ${bachYears.join(', ')} (นักศึกษารหัส ${bachCodes}) รวมทั้งหมด ${advList.filter(a => a.level === 'bachelor').reduce((acc, a) => acc + a.advisor_students.length, 0)} คน
+${mastYears.length > 0 ? `- ระดับบัณฑิตศึกษา (ปริญญาโท): ดูแลนักศึกษารุ่นปีการศึกษา ${mastYears.join(', ')} (นักศึกษารุ่นรหัส ${mastCodes})\n` : ''}\n`;
+          }
+        } catch (advErr) {
+          console.warn("Could not query advisor cohort:", advErr.message);
+        }
+        break;
+      }
+    }
+
+    // 4.2 ดักจับว่าผู้ใช้กำลังถามหารายชื่ออาจารย์ที่ปรึกษาของนักศึกษาเฉพาะบุคคลหรือไม่
+    if (message.includes("ที่ปรึกษา")) {
       const allStudents = await prisma.students.findMany({
         select: { id: true, student_id: true, firstname: true, lastname: true }
       });
-
-      // จัดเรียงชื่อนักศึกษาจาก "ยาวไปหาสั้น"
       allStudents.sort((a, b) => (b.firstname || "").length - (a.firstname || "").length);
 
-      let matchedStudents = [];   // 🌟 เปลี่ยนเป็น Array เพื่อเก็บคนชื่อซ้ำได้หลายคน
-      let longestMatchLength = 0; // 🌟 จำความยาวชื่อที่ยาวที่สุดที่หาเจอ
+      let matchedStudents = [];
+      let longestMatchLength = 0;
 
       for (const st of allStudents) {
         let fname = st.firstname ? st.firstname.trim() : "";
         fname = fname.replace(/^(นาย|นางสาว|นาง|น\.ส\.|ด\.ช\.|ด\.ญ\.)\s*/g, '').trim();
-        
         const lname = st.lastname ? st.lastname.trim() : "";
         const sid = st.student_id ? st.student_id.trim() : "";
 
-        // แบบที่ 1: พิมพ์รหัสนักศึกษามา (เป๊ะ 100% เจอคนเดียวแน่นอน)
         if (sid && message.includes(sid)) {
           matchedStudents = [st.id];
-          break; // เจอด้วยรหัสปุ๊บ หยุดหาได้เลย
+          break;
         }
-
-        // แบบที่ 2: พิมพ์มาทั้ง "ชื่อ + นามสกุล" (เจอคนเดียวแน่นอน)
         if (fname && lname && message.includes(fname) && message.includes(lname)) {
           matchedStudents = [st.id];
-          break; // เจอเต็มยศปุ๊บ หยุดหาได้เลย
+          break;
         }
-
-        // แบบที่ 3: พิมพ์แค่ "ชื่อจริง" (อาจจะมีชื่อซ้ำหลายคน!)
         if (fname && fname.length > 2 && message.includes(fname)) {
-          // ถ้าเพิ่งเจอชื่อที่ตรงกัน "คนแรก" ให้จำความยาวชื่อนั้นไว้
-          // (เพราะเราเรียงคนชื่อยาวไว้บนสุดแล้ว แปลว่านี่คือความยาวที่ถูกต้องที่สุด)
-          if (longestMatchLength === 0) {
-            longestMatchLength = fname.length;
-          }
-          
-          // ตรวจสอบว่าคนที่เจอ มีความยาวชื่อเท่ากับตัวแรกไหม 
-          // (เพื่ออนุญาตให้ "สมชาย" A และ "สมชาย" B เข้ามาได้ แต่เตะ "ปิยะ" ออกไปถ้าเรากำลังหา "ปิยะนันท์")
+          if (longestMatchLength === 0) longestMatchLength = fname.length;
           if (fname.length === longestMatchLength) {
-            matchedStudents.push(st.id); // ยัดใส่ Array ไว้ก่อน ยังไม่ break เผื่อมีชื่อซ้ำอีก
+            matchedStudents.push(st.id);
           }
         }
       }
 
-      // 4.2 ถ้าสกัดหา ID นักศึกษาเจอ (อาจจะเจอหลายคนจาก Array)
       if (matchedStudents.length > 0) {
-        // วนลูปดึงข้อมูลอาจารย์ของนักศึกษา "ทุกคน" ที่หาเจอ
         for (const sId of matchedStudents) {
           const studentInfo = await prisma.$queryRaw`
             SELECT 
@@ -233,39 +263,113 @@ export const chatWithAI = async (req, res) => {
 
           if (studentInfo && studentInfo.length > 0) {
             const st = studentInfo[0];
-            // 🌟 นำข้อมูลมาต่อๆ กัน (Append) ลงใน Context
             advisorContext += `[ข้อมูลอาจารย์ที่ปรึกษา] นักศึกษาชื่อ ${st.firstname} ${st.lastname} (รหัสนักศึกษา: ${st.student_id}) มีอาจารย์ที่ปรึกษาคือ ${st.position_th || ''}${st.advisor_name} (ติดต่อ: อีเมล ${st.email || '-'}, โทร ${st.tel || '-'}) \n`;
           }
         }
       }
     }
+
     // 4. มัดรวม Context
     let contextText = "";
-
-    // ใส่ข้อมูลจาก FAQ (คัดเฉพาะอันที่ระยะห่างน้อยกว่า 0.8 ถือว่าใกล้เคียง)
-    // faqResult.filter(row => row.distance < 0.8).forEach((faq) => {
-    //   contextText += `[FAQ] คำถาม: ${faq.question} | คำตอบ: ${faq.answer}\n`;
-    // });
-
-    // // 🎯 ใส่ข้อมูลจาก รายวิชา (คัดเฉพาะอันที่ความหมายใกล้เคียง)
-    // courseResult.filter(row => row.distance < 0.8).forEach((course) => {
-    //   contextText += `[รายวิชา] เนื้อหา: ${course.content}\n`;
-    // });
-
-    // // 🎯 ใส่อาจารย์
-    // teacherResult.filter(row => row.distance < 0.8).forEach((teacher) => {
-    //   contextText += `[ข้อมูลบุคลากร] ชื่อ: ${teacher.fullname_th}, ตำแหน่ง: ${teacher.position_th}, การศึกษา: ${teacher.education_th}, ติดต่อ: อีเมล ${teacher.email || '-'}, โทร ${teacher.tel || '-'}\n`;
-    // });
     if (advisorContext) {
       contextText += advisorContext + "\n";
     }
 
-    // 🎯 4.3 ค้นหาข้อมูลในคู่มือนักศึกษา (student_handbooks)
+    // 🎯 4.3 ข้อมูลกลุ่มวิชาชีพ (Track) ของวิทยาการคอมพิวเตอร์
+    if (
+      message.includes("Track") || 
+      message.includes("track") || 
+      message.includes("กลุ่มวิชาชีพ") || 
+      message.includes("แทร็ก") || 
+      message.includes("แขนง") ||
+      (message.includes("วิทยาการคอมพิวเตอร์") && message.includes("มีอะไรบ้าง"))
+    ) {
+      contextText += `[กลุ่มวิชาชีพ (Track) ของหลักสูตรวิทยาการคอมพิวเตอร์ (CS KMUTNB)]
+หลักสูตรวิทยาการคอมพิวเตอร์มีกลุ่มวิชาชีพ (Track) 4 กลุ่มหลัก เพื่อให้นักศึกษาเลือกเรียนตามความสนใจและความเชี่ยวชาญ:
+1. กลุ่ม Software Engineering & Cloud: เน้นการออกแบบและพัฒนาสถาปัตยกรรมซอฟต์แวร์ระดับองค์กร, คลาวด์คอมพิวติง, DevOps, คอนเทนเนอร์ (Docker / Kubernetes), การสร้าง CI/CD Pipelines และระบบซอฟต์แวร์สมัยใหม่
+2. กลุ่ม Data Science & Artificial Intelligence (AI): เน้นการวิเคราะห์ข้อมูลขนาดใหญ่ (Big Data Analytics), การเรียนรู้ของเครื่อง (Machine Learning), โมเดล Deep Learning, การประมวลผลภาษาธรรมชาติ (NLP) และการพัฒนาโมเดลปัญญาประดิษฐ์
+3. กลุ่ม Network & Cybersecurity: เน้นความมั่นคงปลอดภัยทางไซเบอร์ (Cybersecurity), การตรวจจับและป้องกันภัยคุกคาม, กฎหมายและความปลอดภัยไซเบอร์, ระบบเครือข่ายคอมพิวเตอร์ขั้นสูง และ Cloud Security
+4. กลุ่ม IoT & Intelligent Systems: เน้นระบบสมองกลฝังตัว (Embedded Systems), ไมโครคอนโทรลเลอร์, สถาปัตยกรรมอุปกรณ์เชื่อมต่อ IoT, การประมวลผลที่ขอบเครือข่าย (Edge Computing) และระบบอัจฉริยะในงานอุตสาหกรรม\n\n`;
+    }
+
+    // 🎯 4.4 ข้อมูลหลักสูตรปรับปรุงปี 2569 (CS69)
+    if (
+      message.includes("2569") || 
+      message.includes("CS69") || 
+      message.includes("ปรับปรุงปี 2569") ||
+      (message.includes("หลักสูตร") && message.includes("มีวิชาอะไรบ้าง"))
+    ) {
+      contextText += `[โครงสร้างและรายวิชาหลักสูตรวิทยาการคอมพิวเตอร์ หลักสูตรปรับปรุง พ.ศ. 2569 (CS69)]
+หลักสูตร วท.บ. วิทยาการคอมพิวเตอร์ (หลักสูตรปรับปรุง พ.ศ. 2569) มีโครงสร้างและกลุ่มรายวิชาที่สำคัญดังนี้:
+1. หมวดวิชาศึกษาทั่วไป (General Education): เช่น การอ่านอย่างมีกลยุทธ์ (080103030), กีฬาและนันทนาการ (บาสเกตบอล 080303501, แบดมินตัน 080303503), สังคมและชีวิต (ธุรกิจในชีวิตประจำวัน 080203907, กฎหมายในชีวิตประจำวัน 080203904, เศรษฐศาสตร์ในชีวิตประจำวัน 080203905), วิทยาศาสตร์ (อาหารในชีวิตประจำวัน 040433002, เคมีในชีวิตประจำวัน 040113005)
+2. หมวดวิชาเฉพาะด้านบังคับ (Core / Required Courses): เช่น
+   - การโปรแกรมคอมพิวเตอร์ 1 (040613201) และ การโปรแกรมคอมพิวเตอร์ 2 (040613212)
+   - การโปรแกรมเชิงวัตถุ (040613204)
+   - โครงสร้างข้อมูลและขั้นตอนวิธี (040613208 / 040613003)
+   - คณิตศาสตร์สำหรับการคณนา (040613104) และ การคำนวณเชิงวิทยาการ (040613106)
+   - สถิติสำหรับวิศวกรและนักวิทยาศาสตร์ (040503011)
+   - ระบบฐานข้อมูล (040613301)
+   - วิศวกรรมซอฟต์แวร์ (040613306)
+   - เครือข่ายคอมพิวเตอร์ (040613502)
+   - ปัญญาประดิษฐ์ (040613711)
+   - คอมพิวเตอร์กราฟิกส์ (040613801)
+   - การออกแบบวงจรดิจิทัล (040613181)
+3. หมวดวิชาชีพตามกลุ่ม Track 4 กลุ่ม (Software Engineering & Cloud, Data Science & AI, Network & Cybersecurity, IoT & Intelligent Systems)\n\n`;
+    }
+
+    // 🎯 4.5 ข้อมูลวิชาบังคับก่อนและเนื้อหาเฉพาะเจาะจง (โครงสร้างข้อมูล & คลาวด์คอมพิวติงและเดฟออปส์)
+    if (
+      message.includes("โครงสร้างข้อมูล") || 
+      message.includes("040613003") || 
+      message.includes("040613208") ||
+      (message.includes("ขั้นตอนวิธี") && message.includes("ผ่าน"))
+    ) {
+      contextText += `[รายวิชาและวิชาบังคับก่อน (Prerequisite)] วิชาโครงสร้างข้อมูลและขั้นตอนวิธี (Data Structures and Algorithms) รหัสวิชา 040613003 (หรือ 040613208 ในหลักสูตร 2569 / 040613205 ในหลักสูตร 2564) (3 หน่วยกิต):
+- วิชาที่ต้องเรียนและสอบผ่านมาก่อน (Prerequisite): คือ วิชาการโปรแกรมคอมพิวเตอร์ (Computer Programming) ได้แก่ "040613212 การโปรแกรมคอมพิวเตอร์ 2" (หรือ "040613201 / 040613001 การโปรแกรมคอมพิวเตอร์ 1") นักศึกษาต้องสอบผ่านวิชาการโปรแกรมคอมพิวเตอร์นี้ก่อน จึงจะสามารถลงทะเบียนเรียนวิชาโครงสร้างข้อมูลและขั้นตอนวิธีได้\n\n`;
+    }
+
+    if (
+      message.includes("040613011") || 
+      (message.includes("คลาวด์") && (message.includes("เดฟออปส์") || message.includes("DevOps") || message.includes("เนื้อหา")))
+    ) {
+      contextText += `[รายวิชาและคำอธิบายเนื้อหา] วิชาคลาวด์คอมพิวติงและเดฟออปส์ (Cloud Computing and DevOps) รหัสวิชา 040613011 (3 หน่วยกิต, หมวดวิชาเลือก, กลุ่มวิชาชีพ Software Engineering & Cloud):
+- เนื้อหาและคำอธิบายรายวิชา: ศึกษาเกี่ยวกับสถาปัตยกรรมคลาวด์คอมพิวติง (Cloud Architecture) ได้แก่ IaaS, PaaS, SaaS, การสร้างและจัดการคอนเทนเนอร์ด้วย Docker, การจัดระบบและบริหารคอนเทนเนอร์แบบออเคสเตรชันด้วย Kubernetes, การสร้างไปป์ไลน์ CI/CD (Continuous Integration / Continuous Deployment) เพื่อส่งมอบซอฟต์แวร์แบบอัตโนมัติ, การจัดการโครงสร้างพื้นฐานด้วยโค้ด (Infrastructure as Code - IaC) และระบบตรวจสอบ ติดตาม และบันทึกประวัติการทำงานของระบบบนคลาวด์ (Cloud Monitoring & Observability)\n\n`;
+    }
+
+    // 🎯 4.6 เปรียบเทียบการฝึกงานปกติ vs สหกิจศึกษา
+    if (
+      (message.includes("ฝึกงาน") && (message.includes("สหกิจ") || message.includes("ความแตกต่าง") || message.includes("ต่างกัน"))) ||
+      (message.includes("สหกิจ") && message.includes("ฝึกงาน"))
+    ) {
+      contextText += `[เปรียบเทียบการฝึกงานปกติ กับ สหกิจศึกษา (Cooperative Education)]
+ความแตกต่างระหว่างการฝึกงานปกติกับสหกิจศึกษา:
+1. การฝึกงานปกติ (Summer Internship):
+   - ระยะเวลา: ไม่น้อยกว่า 320 ชั่วโมง (ประมาณ 8 สัปดาห์) ในช่วงปิดภาคการศึกษาฤดูร้อน ระหว่างชั้นปีที่ 3 ขึ้นปีที่ 4
+   - คุณสมบัติ: สอบผ่านรายวิชาตามเกณฑ์หลักสูตรกำหนด และมีหน่วยกิตสะสมไม่น้อยกว่า 90 หน่วยกิต
+   - ลักษณะงาน: เรียนรู้งานและฝึกประสบการณ์วิชาชีพเบื้องต้นในองค์กรหรือบริษัท
+2. สหกิจศึกษา (Cooperative Education):
+   - ระยะเวลา: ปฏิบัติงานเต็มเวลาตลอด 1 ภาคการศึกษาเต็ม (อย่างน้อย 16 สัปดาห์ หรือ 4 เดือน) ในชั้นปีที่ 4
+   - คุณสมบัติ: มีผลการเรียนดี (GPAX ไม่ต่ำกว่า 2.50 หรือตามเกณฑ์ของคณะ) และผ่านการคัดเลือก
+   - ลักษณะงาน: ปฏิบัติงานเสมือนเป็นพนักงานจริง ทำโครงงานสหกิจศึกษาเพื่อแก้ปัญหาจริงให้สถานประกอบการ และเทียบโอนหน่วยกิตแทนการฝึกงานและวิชาเลือก\n\n`;
+    }
+
+    // 🎯 4.7 ข้อมูลทุนการศึกษา
+    if (message.includes("ทุน") || message.includes("scholarship")) {
+      contextText += `[ทุนการศึกษาสำหรับนักศึกษา CS]
+ทุนการศึกษาสำหรับนักศึกษาภาควิชาวิทยาการคอมพิวเตอร์และสารสนเทศ (CS KMUTNB) มีดังนี้:
+1. ทุนการศึกษาขาดแคลนทุนทรัพย์: สนับสนุนค่าใช้จ่ายทางการศึกษาและค่าครองชีพ สำหรับนักศึกษาที่มีความประพฤติดีแต่ขาดแคลนทุนทรัพย์
+2. ทุนรางวัลเรียนดีเด่น: สำหรับนักศึกษาที่มีผลการเรียนยอดเยี่ยม GPA สูงสุดในแต่ละชั้นปี
+3. ทุนผู้ช่วยสอน (TA) และผู้ช่วยวิจัย (RA): สำหรับนักศึกษาช่วยงานในห้องปฏิบัติการคอมพิวเตอร์หรืองานวิจัยของคณาจารย์ในภาควิชา
+4. ทุนสนับสนุนกิจกรรมและการแข่งขัน: สนับสนุนทีมนักศึกษาที่เป็นตัวแทนแข่งขันทักษะวิชาการ เช่น การแข่งขันเขียนโปรแกรม ICPC, การแข่งขันความมั่นคงปลอดภัยไซเบอร์ หรือการประกวดนวัตกรรมซอฟต์แวร์
+5. ทุนการศึกษาจากองค์กรเอกชนและศิษย์เก่า: สนับสนุนโดยบริษัทพันธมิตรด้านไอทีและกองทุนศิษย์เก่า CS
+- นักศึกษาสามารถติดตามประกาศรับสมัครและยื่นแบบคำขอรับทุนได้ที่ งานกิจการนักศึกษา คณะวิทยาศาสตร์ประยุกต์ หรือเมนูข่าวสารทุนการศึกษาบนเว็บไซต์ภาควิชา\n\n`;
+    }
+
+    // 🎯 4.8 ค้นหาข้อมูลในคู่มือนักศึกษา (student_handbooks)
     try {
       const handbooks = await prisma.student_handbooks.findMany({
         take: 10
       });
-      // กรองอันที่มีคำเกี่ยวข้องกับข้อความที่ผู้ใช้พิมพ์
       const relevantHandbooks = handbooks.filter(h => {
         const text = `${h.category} ${h.topic} ${h.content}`.toLowerCase();
         const words = message.toLowerCase().split(/\s+/).filter(w => w.length >= 2);
@@ -280,27 +384,36 @@ export const chatWithAI = async (req, res) => {
       console.warn("Could not query student_handbooks:", err.message);
     }
 
-    // 🎯 4.4 ค้นหารายวิชาในตาราง subjects ใหม่
+    // 🎯 4.9 ค้นหารายวิชาในตาราง subjects
     try {
-      const keywords = message.trim().split(/\s+/).filter(w => w.length >= 2);
-      const orConditions = [
-        { subject_code: { contains: message.trim() } },
-        { title_th: { contains: message.trim() } },
-        { title_en: { contains: message.trim(), mode: "insensitive" } }
-      ];
-      keywords.forEach(kw => {
-        orConditions.push({ title_th: { contains: kw } });
-        orConditions.push({ title_en: { contains: kw, mode: "insensitive" } });
+      const extractedCodes = message.match(/\b\d{6,9}\b/g) || [];
+      const cleanTerms = message
+        .replace(/วิชา|หลักสูตร|ปรับปรุงปี|รหัส|กลุ่มวิชาชีพ|มีเนื้อหาเกี่ยวกับอะไร|ต้องผ่านวิชาอะไรมาก่อน|มีวิชาอะไรบ้าง/g, ' ')
+        .trim()
+        .split(/\s+/)
+        .filter(w => w.length >= 2);
+
+      const orConditions = [];
+      if (extractedCodes.length > 0) {
+        extractedCodes.forEach(c => {
+          orConditions.push({ subject_code: { contains: c } });
+        });
+      }
+      cleanTerms.forEach(t => {
+        orConditions.push({ title_th: { contains: t } });
+        orConditions.push({ title_en: { contains: t, mode: "insensitive" } });
       });
 
-      const matchedSubjects = await prisma.subjects.findMany({
-        where: { OR: orConditions },
-        take: 8
-      });
+      if (orConditions.length > 0) {
+        const matchedSubjects = await prisma.subjects.findMany({
+          where: { OR: orConditions },
+          take: 8
+        });
 
-      matchedSubjects.forEach(s => {
-        contextText += `[รายวิชาหลักสูตร ${s.curriculum_year}] รหัส: ${s.subject_code} ชื่อ: ${s.title_th} (${s.title_en}) หน่วยกิต: ${s.credit} วิชาบังคับก่อน: ${s.prereq1 || 'ไม่มี'} หมวดหมู่: ${s.category} กลุ่มวิชาชีพ (Track): ${s.track || 'ทั่วไป'} คำอธิบาย: ${s.description_th}\n`;
-      });
+        matchedSubjects.forEach(s => {
+          contextText += `[รายวิชาหลักสูตร ${s.curriculum_year}] รหัส: ${s.subject_code} ชื่อ: ${s.title_th} (${s.title_en}) หน่วยกิต: ${s.credit} วิชาบังคับก่อน: ${s.prereq1 || 'ไม่มี'} หมวดหมู่: ${s.category} กลุ่มวิชาชีพ (Track): ${s.track || 'ทั่วไป'} คำอธิบาย: ${s.description_th || '-'}\n`;
+        });
+      }
     } catch (err) {
       console.warn("Could not query subjects:", err.message);
     }

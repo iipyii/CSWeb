@@ -16,9 +16,31 @@ const CATEGORIES = [
   { key: 'scholarship', label: 'งานทุนการศึกษา', icon: Landmark, publicPath: '/scholarship-regulations' },
 ];
 
+export const GRADUATE_SUBCATEGORIES = [
+  'ข้อบังคับ-ประกาศ-หลักเกณฑ์',
+  'ชี้แจงกฎระเบียบ-ข้อบังคับฯ',
+  'ระเบียบ-ประกาศ (การเงิน)'
+];
+
+export const getDocSubcategory = (doc) => {
+  if (!doc?.category || !doc.category.startsWith('graduate')) return null;
+  if (doc.category.includes(':')) {
+    return doc.category.split(':')[1];
+  }
+  const t = doc.title || '';
+  if (t.includes('ชี้แจง') || t.includes('ขั้นตอน') || t.includes('ขอแจ้งมติ')) {
+    return 'ชี้แจงกฎระเบียบ-ข้อบังคับฯ';
+  }
+  if (t.includes('การเงิน') || t.includes('ค่าธรรมเนียม') || t.includes('เบิกจ่าย')) {
+    return 'ระเบียบ-ประกาศ (การเงิน)';
+  }
+  return 'ข้อบังคับ-ประกาศ-หลักเกณฑ์';
+};
+
 export default function ManageRegulations() {
   const [activeTab, setActiveTab] = useState('finance');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedSubcategory, setSelectedSubcategory] = useState('all');
   const [loading, setLoading] = useState(true);
   const [docs, setDocs] = useState([]);
 
@@ -28,6 +50,7 @@ export default function ManageRegulations() {
   const [formData, setFormData] = useState({
     title: '',
     category: 'finance',
+    subcategory: 'ข้อบังคับ-ประกาศ-หลักเกณฑ์',
     file: null
   });
   const [submitting, setSubmitting] = useState(false);
@@ -51,9 +74,18 @@ export default function ManageRegulations() {
   const currentCategory = CATEGORIES.find(c => c.key === activeTab);
 
   const filteredDocs = docs.filter(doc => {
-    const matchCategory = doc.category === activeTab;
+    const isGraduate = activeTab === 'graduate';
+    const matchCategory = isGraduate 
+      ? (doc.category || '').startsWith('graduate')
+      : doc.category === activeTab;
     const matchSearch = (doc.title || '').toLowerCase().includes(searchTerm.toLowerCase());
-    return matchCategory && matchSearch;
+    if (!matchCategory || !matchSearch) return false;
+
+    if (isGraduate && selectedSubcategory !== 'all') {
+      const sub = getDocSubcategory(doc);
+      return sub === selectedSubcategory;
+    }
+    return true;
   });
 
   const handleOpenAdd = () => {
@@ -61,6 +93,7 @@ export default function ManageRegulations() {
     setFormData({
       title: '',
       category: activeTab,
+      subcategory: 'ข้อบังคับ-ประกาศ-หลักเกณฑ์',
       file: null
     });
     setIsModalOpen(true);
@@ -68,9 +101,16 @@ export default function ManageRegulations() {
 
   const handleOpenEdit = (doc) => {
     setEditingDoc(doc);
+    let cat = doc.category || activeTab;
+    let sub = 'ข้อบังคับ-ประกาศ-หลักเกณฑ์';
+    if (cat.startsWith('graduate')) {
+      sub = getDocSubcategory(doc) || 'ข้อบังคับ-ประกาศ-หลักเกณฑ์';
+      cat = 'graduate';
+    }
     setFormData({
       title: doc.title,
-      category: doc.category || activeTab,
+      category: cat,
+      subcategory: sub,
       file: null
     });
     setIsModalOpen(true);
@@ -105,7 +145,12 @@ export default function ManageRegulations() {
       const data = new FormData();
       data.append('title', formData.title.trim());
       data.append('audience', 'regulation');
-      data.append('category', formData.category);
+      
+      const finalCategory = formData.category === 'graduate'
+        ? `graduate:${formData.subcategory}`
+        : formData.category;
+      data.append('category', finalCategory);
+
       if (formData.file) {
         data.append('file', formData.file);
       }
@@ -234,6 +279,38 @@ export default function ManageRegulations() {
         </button>
       </div>
 
+      {/* 🏷️ Graduate Subcategory Tabs (if graduate tab is active) */}
+      {activeTab === 'graduate' && (
+        <div className="flex flex-wrap gap-2 items-center bg-white p-3 rounded-2xl border border-slate-100 shadow-2xs">
+          <span className="text-xs font-bold text-slate-400 mr-2">หัวข้อย่อย:</span>
+          <button
+            type="button"
+            onClick={() => setSelectedSubcategory('all')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              selectedSubcategory === 'all'
+                ? 'bg-[#3F51B5] text-white shadow-sm'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
+            }`}
+          >
+            ทั้งหมด
+          </button>
+          {GRADUATE_SUBCATEGORIES.map((sub, idx) => (
+            <button
+              key={sub}
+              type="button"
+              onClick={() => setSelectedSubcategory(sub)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                selectedSubcategory === sub
+                  ? 'bg-[#3F51B5] text-white shadow-sm'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
+              }`}
+            >
+              {idx + 1}. {sub}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* 📋 Table of Documents */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         {loading ? (
@@ -278,6 +355,11 @@ export default function ManageRegulations() {
                       <span className="font-semibold text-slate-800 leading-relaxed block">
                         {doc.title}
                       </span>
+                      {activeTab === 'graduate' && (
+                        <span className="inline-block mt-1 px-2.5 py-0.5 rounded-md bg-indigo-50 text-[#3F51B5] text-[11px] font-bold">
+                          {getDocSubcategory(doc)}
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span className="px-2.5 py-1 bg-rose-50 text-rose-600 rounded-lg text-xs font-bold uppercase">
@@ -349,13 +431,31 @@ export default function ManageRegulations() {
                 <select
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:ring-2 focus:ring-[#3F51B5] outline-none"
+                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:ring-2 focus:ring-[#3F51B5] outline-none font-medium text-slate-700"
                 >
                   {CATEGORIES.map(c => (
                     <option key={c.key} value={c.key}>{c.label}</option>
                   ))}
                 </select>
               </div>
+
+              {/* Subcategory for Graduate */}
+              {formData.category === 'graduate' && (
+                <div>
+                  <label className="block text-xs font-bold uppercase text-slate-500 mb-2">
+                    หัวข้อย่อย (งานบัณฑิตศึกษา) <span className="text-rose-500">*</span>
+                  </label>
+                  <select
+                    value={formData.subcategory}
+                    onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:ring-2 focus:ring-[#3F51B5] outline-none font-semibold text-slate-700"
+                  >
+                    {GRADUATE_SUBCATEGORIES.map((s, idx) => (
+                      <option key={s} value={s}>{idx + 1}. {s}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {/* Title */}
               <div>

@@ -78,7 +78,11 @@ export const getDownloadsByAudience = async (req, res) => {
     const { category } = req.query;
     const where = { audience };
     if (category) {
-      where.category = category;
+      if (category === 'graduate') {
+        where.category = { startsWith: 'graduate' };
+      } else {
+        where.category = category;
+      }
     }
     const files = await prisma.downloads.findMany({
       where,
