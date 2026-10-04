@@ -10,7 +10,9 @@ import {
   Edit3, 
   ExternalLink,
   Files,
-  RefreshCw
+  RefreshCw,
+  Globe,
+  Link2
 } from 'lucide-react';
 
 export default function ManageFiles() {
@@ -150,72 +152,89 @@ export default function ManageFiles() {
             </thead>
             <tbody className="divide-y divide-slate-50">
               {filteredFiles.length > 0 ? (
-                filteredFiles.map((file) => (
-                  <tr key={file.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="px-8 py-5">
-                      <div className="flex items-center gap-4">
-                        <div className="w-11 h-11 bg-indigo-50 rounded-2xl flex items-center justify-center text-[#3F51B5] group-hover:scale-110 transition-transform">
-                          <FileText size={22} />
-                        </div>
-                        <div>
-                          <p className="text-[15px] font-bold text-slate-700 leading-snug">{file.title}</p>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            {file.file_name && (
-                              <span className="text-[12px] text-indigo-600 font-medium">
-                                {file.file_name}
-                              </span>
-                            )}
-                            <p className="text-[12px] text-slate-400">
-                              {file.created_at ? new Date(file.created_at).toLocaleDateString('th-TH') : ''}
-                            </p>
+                filteredFiles.map((file) => {
+                  const isLink = 
+                    file.file_path?.startsWith('http://') || 
+                    file.file_path?.startsWith('https://') || 
+                    file.file_type === 'LINK' || 
+                    file.file_type === 'URL';
+
+                  return (
+                    <tr key={file.id} className="hover:bg-slate-50/50 transition-colors group">
+                      <td className="px-8 py-5">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-11 h-11 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform ${
+                            isLink ? 'bg-purple-50 text-purple-600' : 'bg-indigo-50 text-[#3F51B5]'
+                          }`}>
+                            {isLink ? <Globe size={22} /> : <FileText size={22} />}
+                          </div>
+                          <div>
+                            <p className="text-[15px] font-bold text-slate-700 leading-snug">{file.title}</p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              {file.file_name && (
+                                <span className={`text-[12px] font-medium truncate max-w-sm flex items-center gap-1 ${
+                                  isLink ? 'text-purple-600 font-mono' : 'text-indigo-600'
+                                }`}>
+                                  {isLink && <Link2 size={12} className="shrink-0" />}
+                                  {file.file_name}
+                                </span>
+                              )}
+                              <p className="text-[12px] text-slate-400">
+                                {file.created_at ? new Date(file.created_at).toLocaleDateString('th-TH') : ''}
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <span className={`px-3 py-1.5 rounded-lg text-[11px] font-bold ${
-                        file.audience === 'student' ? 'bg-indigo-50 text-[#3F51B5]' : 'bg-emerald-50 text-emerald-600'
-                      }`}>
-                        {file.audience === 'student' ? 'นักศึกษา' : 'บุคลากร'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-5 text-center text-[13px] font-medium text-slate-500">
-                      <span className="uppercase px-2.5 py-1 bg-slate-100 rounded-md text-xs font-semibold text-slate-600">
-                        {file.file_type || 'PDF'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-5 text-center text-[13px] text-slate-500 font-medium">
-                      {file.category || '-'}
-                    </td>
-                    <td className="px-8 py-5 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <a 
-                          href={`/api/downloads/download/${file.id}`} 
-                          target="_blank" 
-                          rel="noreferrer"
-                          className="p-2.5 text-slate-400 hover:text-[#3F51B5] hover:bg-white hover:shadow-sm rounded-xl transition-all" 
-                          title="ดาวน์โหลด / ดูไฟล์"
-                        >
-                          <ExternalLink size={18} />
-                        </a>
-                        <button 
-                          onClick={() => navigate(`/admin/files/edit/${file.id}`)}
-                          className="p-2.5 text-slate-400 hover:text-emerald-500 hover:bg-white hover:shadow-sm rounded-xl transition-all" 
-                          title="แก้ไข"
-                        >
-                          <Edit3 size={18} />
-                        </button>
-                        <button 
-                          onClick={() => handleDelete(file.id)}
-                          className="p-2.5 text-slate-400 hover:text-rose-500 hover:bg-white hover:shadow-sm rounded-xl transition-all" 
-                          title="ลบ"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className="px-6 py-5">
+                        <span className={`px-3 py-1.5 rounded-lg text-[11px] font-bold ${
+                          file.audience === 'student' ? 'bg-indigo-50 text-[#3F51B5]' : 'bg-emerald-50 text-emerald-600'
+                        }`}>
+                          {file.audience === 'student' ? 'นักศึกษา' : 'บุคลากร'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-5 text-center text-[13px] font-medium text-slate-500">
+                        <span className={`uppercase px-2.5 py-1 rounded-md text-xs font-semibold ${
+                          isLink 
+                            ? 'bg-purple-50 text-purple-700 border border-purple-200' 
+                            : 'bg-slate-100 text-slate-600'
+                        }`}>
+                          {file.file_type || (isLink ? 'LINK' : 'PDF')}
+                        </span>
+                      </td>
+                      <td className="px-6 py-5 text-center text-[13px] text-slate-500 font-medium">
+                        {file.category || '-'}
+                      </td>
+                      <td className="px-8 py-5 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <a 
+                            href={isLink ? file.file_path : `/api/downloads/download/${file.id}`} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="p-2.5 text-slate-400 hover:text-[#3F51B5] hover:bg-white hover:shadow-sm rounded-xl transition-all" 
+                            title={isLink ? "เปิดลิงก์ปลายทาง" : "ดาวน์โหลด / ดูไฟล์"}
+                          >
+                            <ExternalLink size={18} />
+                          </a>
+                          <button 
+                            onClick={() => navigate(`/admin/files/edit/${file.id}`)}
+                            className="p-2.5 text-slate-400 hover:text-emerald-500 hover:bg-white hover:shadow-sm rounded-xl transition-all" 
+                            title="แก้ไข"
+                          >
+                            <Edit3 size={18} />
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(file.id)}
+                            className="p-2.5 text-slate-400 hover:text-rose-500 hover:bg-white hover:shadow-sm rounded-xl transition-all" 
+                            title="ลบ"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan="5" className="text-center py-10 text-slate-400 text-sm">

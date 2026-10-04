@@ -109,6 +109,11 @@ export const downloadFile = async (req, res) => {
       return res.status(404).json({ error: "File not found" });
     }
 
+    // ถ้าเป็น URL ภายนอก ให้ redirect ไปยัง URL ปลายทางทันที
+    if (file.file_path.startsWith('http://') || file.file_path.startsWith('https://')) {
+      return res.redirect(file.file_path);
+    }
+
     // ป้องกัน Path Traversal และ normalize path
     const relPath = file.file_path.replace(/^\/?downloads\/?/, '').replace(/^\/+/, '');
     const absolutePath = path.join(process.cwd(), "uploads/downloads", relPath);
@@ -128,18 +133,40 @@ export const downloadFile = async (req, res) => {
 // POST create download
 export const createDownload = async (req, res) => {
   try {
-    const { title, category, audience, file_type } = req.body;
-    if (!req.file) {
-      return res.status(400).json({ error: "File is required" });
+    const { title, category, audience, file_type, url, link_url } = req.body;
+    const directUrl = (url || link_url || req.body.file_url || "").trim();
+
+    if (!title || !title.trim()) {
+      return res.status(400).json({ error: "กรุณาระบุชื่อเอกสาร" });
     }
 
+    if (!req.file && !directUrl) {
+      return res.status(400).json({ error: "กรุณาอัปโหลดไฟล์หรือระบุลิงก์ (URL)" });
+    }
+
+    // กรณีระบุลิงก์ภายนอก (URL)
+    if (directUrl) {
+      const file = await prisma.downloads.create({
+        data: {
+          title: title.trim(),
+          category: category?.trim() || "ทั่วไป",
+          audience: audience?.trim() || "student",
+          file_type: (file_type || "LINK").toUpperCase(),
+          file_path: directUrl,
+          file_name: directUrl
+        }
+      });
+      return res.status(201).json(file);
+    }
+
+    // กรณีอัปโหลดไฟล์จริง
     const originalName = decodeOriginalName(req.file.originalname);
     const ext = path.extname(originalName).replace(".", "").toUpperCase();
     const file = await prisma.downloads.create({
       data: {
-        title,
-        category: category || "ทั่วไป",
-        audience: audience || "student",
+        title: title.trim(),
+        category: category?.trim() || "ทั่วไป",
+        audience: audience?.trim() || "student",
         file_type: file_type || ext || "PDF",
         file_path: req.file.filename,
         file_name: originalName || req.file.filename
@@ -157,7 +184,8 @@ export const createDownload = async (req, res) => {
 export const updateDownload = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, category, audience, file_type } = req.body;
+    const { title, category, audience, file_type, url, link_url } = req.body;
+    const directUrl = (url || link_url || req.body.file_url || "").trim();
 
     const existing = await prisma.downloads.findUnique({
       where: { id: parseInt(id) }
@@ -167,20 +195,37 @@ export const updateDownload = async (req, res) => {
     }
 
     const data = {
-      title: title || existing.title,
-      category: category || existing.category,
-      audience: audience || existing.audience,
+      title: title ? title.trim() : existing.title,
+      category: category ? category.trim() : existing.category,
+      audience: audience ? audience.trim() : existing.audience,
       file_type: file_type || existing.file_type
     };
 
-    if (req.file) {
+    if (directUrl) {
+      data.file_path = directUrl;
+      data.file_name = directUrl;
+      data.file_type = (file_type || "LINK").toUpperCase();
+
+      // ลบไฟล์เดิมบนดิสก์ถ้าเปลี่ยนจากไฟล์จริงเป็น URL
+      if (existing.file_path && !existing.file_path.startsWith('http://') && !existing.file_path.startsWith('https://')) {
+        const oldClean = existing.file_path.replace(/^\/?downloads\/?/, '').replace(/^\/+/, '');
+        const oldFilePath = path.join(process.cwd(), "uploads/downloads", oldClean);
+        if (fs.existsSync(oldFilePath)) {
+          try {
+            fs.unlinkSync(oldFilePath);
+          } catch (e) {
+            console.error("Failed to delete old file:", e);
+          }
+        }
+      }
+    } else if (req.file) {
       const originalName = decodeOriginalName(req.file.originalname);
       data.file_path = req.file.filename;
       data.file_name = originalName || req.file.filename;
       data.file_type = path.extname(originalName).replace(".", "").toUpperCase();
 
-      // Delete old file if present
-      if (existing.file_path) {
+      // ลบไฟล์เดิมบนดิสก์
+      if (existing.file_path && !existing.file_path.startsWith('http://') && !existing.file_path.startsWith('https://')) {
         const oldClean = existing.file_path.replace(/^\/?downloads\/?/, '').replace(/^\/+/, '');
         const oldFilePath = path.join(process.cwd(), "uploads/downloads", oldClean);
         if (fs.existsSync(oldFilePath)) {
@@ -216,7 +261,8 @@ export const deleteDownload = async (req, res) => {
       return res.status(404).json({ error: "File not found" });
     }
 
-    if (existing.file_path) {
+    // ลบไฟล์บนดิสก์เฉพาะกรณีไม่ใช่ URL ภายนอก
+    if (existing.file_path && !existing.file_path.startsWith('http://') && !existing.file_path.startsWith('https://')) {
       const relPath = existing.file_path.replace(/^\/?downloads\/?/, '').replace(/^\/+/, '');
       const filePath = path.join(process.cwd(), "uploads/downloads", relPath);
       if (fs.existsSync(filePath)) {

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, FileText, Loader2 } from 'lucide-react';
+import { ChevronRight, FileText, Loader2, ExternalLink } from 'lucide-react';
 import Footer from '../components/Footer';
 import axios from "axios";
 
@@ -52,7 +52,13 @@ const getCleanTitle = (title = '') => {
 // Subtitle under the title showing filename details
 const getFileSubtitle = (files) => {
   if (!files || files.length === 0) return '';
-  if (files.length === 1) return files[0].file_name || '';
+  if (files.length === 1) {
+    const f = files[0];
+    if (f.file_path?.startsWith('http://') || f.file_path?.startsWith('https://')) {
+      return f.file_path;
+    }
+    return f.file_name || '';
+  }
 
   const getBase = (fn) => (fn || '').replace(/\.[^/.]+$/, '');
   const base0 = getBase(files[0].file_name);
@@ -65,7 +71,7 @@ const getFileSubtitle = (files) => {
       .join(', ');
     return base0 + (exts ? ` (${exts})` : '');
   }
-  return files.map((f) => f.file_name).filter(Boolean).join(' • ');
+  return files.map((f) => f.file_name || f.file_path).filter(Boolean).join(' • ');
 };
 
 const formatOrder = { pdf: 1, docx: 2, doc: 3, xlsx: 4, xls: 5 };
@@ -236,6 +242,30 @@ export default function StaffDownloads() {
                                   <td className="px-6 py-5 text-center">
                                     <div className="flex justify-center items-center gap-2 flex-wrap">
                                       {item.files.map((file) => {
+                                        const isLink = 
+                                          file.url || 
+                                          file.file_path?.startsWith('http://') || 
+                                          file.file_path?.startsWith('https://') || 
+                                          file.file_type?.toUpperCase() === 'LINK' || 
+                                          file.file_type?.toUpperCase() === 'URL';
+
+                                        if (isLink) {
+                                          const linkHref = file.url || (file.file_path?.startsWith('http') ? file.file_path : `/api/downloads/download/${file.id}`);
+                                          return (
+                                            <a
+                                              key={file.id}
+                                              href={linkHref}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="px-3.5 py-1.5 rounded-lg text-[11px] font-bold border text-purple-700 border-purple-200 bg-purple-50 hover:bg-purple-600 hover:text-white transition-all active:scale-95 shadow-xs inline-flex items-center gap-1.5"
+                                              title={`เปิดลิงก์ ${file.file_name || item.title}`}
+                                            >
+                                              <ExternalLink size={12} />
+                                              {file.file_type?.toUpperCase() || 'LINK'}
+                                            </a>
+                                          );
+                                        }
+
                                         const fType = file.file_type?.toLowerCase();
                                         const isPdf = fType === 'pdf';
                                         const isDoc = fType === 'docx' || fType === 'doc' || fType === 'word';
@@ -248,20 +278,6 @@ export default function StaffDownloads() {
                                             : isXls
                                               ? 'text-emerald-600 border-emerald-200 bg-emerald-50 hover:bg-emerald-600 hover:text-white'
                                               : 'text-slate-600 border-slate-200 bg-slate-50 hover:bg-slate-600 hover:text-white';
-
-                                        if (file.url) {
-                                          return (
-                                            <a
-                                              key={file.id}
-                                              href={file.url}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="px-3 py-1.5 rounded-lg text-[11px] font-bold border text-indigo-600 border-indigo-200 bg-indigo-50 hover:bg-indigo-600 hover:text-white transition-all active:scale-95 shadow-xs"
-                                            >
-                                              LINK
-                                            </a>
-                                          );
-                                        }
 
                                         return (
                                           <a
