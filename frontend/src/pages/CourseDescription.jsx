@@ -12,15 +12,147 @@ import { cleanThaiDisplay } from "../utils/thaiText";
 export default function CourseDescription() {
   const location = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedDegree, setSelectedDegree] = useState("bachelor-normal");
-  const [selectedYear, setSelectedYear] = useState("2569");
+  const [selectedDegree, setSelectedDegree] = useState("all");
+  const [selectedYear, setSelectedYear] = useState("all");
   const [selectedTrack, setSelectedTrack] = useState("all");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [activeDegreeTab, setActiveDegreeTab] = useState("all");
   
   const [subjects, setSubjects] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [activeModalSubject, setActiveModalSubject] = useState(null);
   const [copiedCode, setCopiedCode] = useState(null);
+
+  // ข้อมูลหลักสูตรครบถ้วนทั้งใหม่และเก่า ตามโครงสร้างภาควิชาฯ
+  const curriculumOptions = [
+    {
+      id: "all",
+      label: "ทุกระดับการศึกษา (ปริญญาตรี / โท / เอก ทั้งหมด)",
+      degree_level: "all",
+      years: [
+        { year: "all", code: "all", name: "ทุกปีหลักสูตร (ทั้งหมด)" },
+        { year: "2569", code: "CS69", name: "พ.ศ. 2569 (วท.บ. CS69)" },
+        { year: "2567", code: "MS-CS67", name: "พ.ศ. 2567 (วท.ม. MS-CS67)" },
+        { year: "2564", code: "CS64", name: "พ.ศ. 2564 (วท.บ. CS64 / ปร.ด. PhD-CS64)" },
+        { year: "2562", code: "MS-CS62", name: "พ.ศ. 2562 (วท.ม. MS-CS62)" },
+        { year: "2559", code: "CS59", name: "พ.ศ. 2559 (วท.บ. CS59 / วท.ม. MS-SE59)" },
+        { year: "2554", code: "CS54", name: "พ.ศ. 2554 (วท.บ. CS54)" }
+      ]
+    },
+    {
+      id: "bachelor-all",
+      label: "ปริญญาตรี ทั้งหมด (วท.บ.)",
+      degree_level: "bachelor",
+      years: [
+        { year: "all", code: "all", name: "ทุกปีหลักสูตรปริญญาตรี" },
+        { year: "2569", code: "CS69", name: "หลักสูตรปรับปรุง พ.ศ. 2569 (ใหม่ล่าสุด)" },
+        { year: "2564", code: "CS64", name: "หลักสูตรปรับปรุง พ.ศ. 2564" },
+        { year: "2559", code: "CS59", name: "หลักสูตรปรับปรุง พ.ศ. 2559" },
+        { year: "2554", code: "CS54", name: "หลักสูตร พ.ศ. 2554" }
+      ]
+    },
+    {
+      id: "bachelor-normal",
+      label: "ปริญญาตรี ภาคปกติ (วท.บ.)",
+      degree_level: "bachelor",
+      curriculum_code: "CS",
+      years: [
+        { year: "all", code: "all", name: "ทุกปีหลักสูตรภาคปกติ" },
+        { year: "2569", code: "CS69", name: "หลักสูตรปรับปรุง พ.ศ. 2569 (ใหม่ล่าสุด)" },
+        { year: "2564", code: "CS64", name: "หลักสูตรปรับปรุง พ.ศ. 2564" },
+        { year: "2559", code: "CS59", name: "หลักสูตรปรับปรุง พ.ศ. 2559" },
+        { year: "2554", code: "CS54", name: "หลักสูตร พ.ศ. 2554" }
+      ]
+    },
+    {
+      id: "bachelor-inter",
+      label: "ปริญญาตรี โครงการพิเศษ สองภาษา (วท.บ.)",
+      degree_level: "bachelor",
+      curriculum_code: "CS-Inter",
+      years: [
+        { year: "all", code: "all", name: "ทุกปีหลักสูตรโครงการพิเศษ" },
+        { year: "2564", code: "CS-Inter64", name: "โครงการพิเศษ สองภาษา พ.ศ. 2564" }
+      ]
+    },
+    {
+      id: "master-all",
+      label: "ปริญญาโท ทั้งหมด (วท.ม.)",
+      degree_level: "master",
+      years: [
+        { year: "all", code: "all", name: "ทุกปีหลักสูตรปริญญาโท" },
+        { year: "2567", code: "MS-CS67", name: "วท.ม. วิทยาการคอมพิวเตอร์ พ.ศ. 2567" },
+        { year: "2562", code: "MS-CS62", name: "วท.ม. วิทยาการคอมพิวเตอร์ พ.ศ. 2562" },
+        { year: "2559", code: "MS-SE59", name: "วท.ม. วิศวกรรมซอฟต์แวร์ พ.ศ. 2559" }
+      ]
+    },
+    {
+      id: "master-cs",
+      label: "ปริญญาโท สาขาวิชาวิทยาการคอมพิวเตอร์ (วท.ม.)",
+      degree_level: "master",
+      curriculum_code: "MS-CS",
+      years: [
+        { year: "all", code: "all", name: "ทุกปีหลักสูตร CS ปริญญาโท" },
+        { year: "2567", code: "MS-CS67", name: "หลักสูตรปรับปรุง พ.ศ. 2567" },
+        { year: "2562", code: "MS-CS62", name: "หลักสูตรปรับปรุง พ.ศ. 2562" }
+      ]
+    },
+    {
+      id: "master-se",
+      label: "ปริญญาโท สาขาวิชาวิศวกรรมซอฟต์แวร์ (วท.ม.)",
+      degree_level: "master",
+      curriculum_code: "MS-SE",
+      years: [
+        { year: "all", code: "all", name: "ทุกปีหลักสูตร SE ปริญญาโท" },
+        { year: "2559", code: "MS-SE59", name: "หลักสูตรปรับปรุง พ.ศ. 2559" }
+      ]
+    },
+    {
+      id: "doctor-all",
+      label: "ปริญญาเอก ทั้งหมด (ปร.ด.)",
+      degree_level: "doctor",
+      years: [
+        { year: "all", code: "all", name: "ทุกปีหลักสูตรปริญญาเอก" },
+        { year: "2564", code: "PhD-CS64", name: "ปร.ด. วิทยาการคอมพิวเตอร์ พ.ศ. 2564" },
+        { year: "2559", code: "PhD-CS59", name: "ปร.ด. วิทยาการคอมพิวเตอร์ พ.ศ. 2559" }
+      ]
+    },
+    {
+      id: "doctor-cs",
+      label: "ปริญญาเอก สาขาวิชาวิทยาการคอมพิวเตอร์ (ปร.ด.)",
+      degree_level: "doctor",
+      curriculum_code: "PhD-CS",
+      years: [
+        { year: "all", code: "all", name: "ทุกปีหลักสูตร CS ปริญญาเอก" },
+        { year: "2564", code: "PhD-CS64", name: "หลักสูตรปรับปรุง พ.ศ. 2564" },
+        { year: "2559", code: "PhD-CS59", name: "หลักสูตรปรับปรุง พ.ศ. 2559" }
+      ]
+    }
+  ];
+
+  // รายการกลุ่มวิชาชีพ (Track)
+  const trackOptions = [
+    { id: "all", label: "ทุกกลุ่มวิชาชีพ (All Tracks)" },
+    { id: "Software Engineering & Cloud", label: "Software Engineering & Cloud" },
+    { id: "Data Science & Artificial Intelligence", label: "Data Science & AI" },
+    { id: "Network & Cybersecurity", label: "Network & Cybersecurity" },
+    { id: "IoT & Intelligent Systems", label: "IoT & Intelligent Systems" },
+    { id: "ทั่วไป", label: "วิชาแกน / ทั่วไป" }
+  ];
+
+  // รายการหมวดหมู่วิชา
+  const categoryOptions = [
+    { id: "all", label: "ทุกหมวดหมู่วิชา" },
+    { id: "หมวดวิชาเฉพาะด้านบังคับ", label: "หมวดวิชาเฉพาะด้านบังคับ" },
+    { id: "หมวดวิชาบังคับ", label: "หมวดวิชาบังคับ / วิชาแกน" },
+    { id: "หมวดวิชาเลือก", label: "หมวดวิชาเลือก" },
+    { id: "หมวดโครงงาน/วิทยานิพนธ์", label: "หมวดโครงงาน / วิทยานิพนธ์ / สารนิพนธ์" },
+    { id: "หมวดสัมมนา", label: "หมวดสัมมนา" },
+    { id: "หมวดฝึกงานและสหกิจศึกษา", label: "หมวดฝึกงานและสหกิจศึกษา" },
+    { id: "หมวดวิชาศึกษาทั่วไป", label: "หมวดวิชาศึกษาทั่วไป" }
+  ];
+
+  // เมื่อเปลี่ยนระดับหลักสูตร ให้เลือกปีแรกอัตโนมัติ (เฉพาะเมื่อปีที่เลือกไม่อยู่ใน degree ใหม่)
+  const currentDegreeConfig = curriculumOptions.find(c => c.id === selectedDegree) || curriculumOptions[0];
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -44,80 +176,19 @@ export default function CourseDescription() {
       }
     }
 
-    if (degree && year) {
-      const matchDeg = curriculumOptions.find(d => d.degree_level === degree);
-      if (matchDeg) {
-        setSelectedDegree(matchDeg.id);
-        const matchY = matchDeg.years.find(y => y.year === String(year));
-        if (matchY) {
-          setSelectedYear(matchY.year);
-        }
-        return;
+    if (degree) {
+      if (degree === 'master') {
+        setSelectedDegree('master-all');
+      } else if (degree === 'doctor') {
+        setSelectedDegree('doctor-all');
+      } else if (degree === 'bachelor') {
+        setSelectedDegree('bachelor-normal');
+      }
+      if (year) {
+        setSelectedYear(String(year));
       }
     }
   }, [location.search]);
-
-  // ข้อมูลหลักสูตรครบถ้วนทั้งใหม่และเก่า ตามโครงสร้างภาควิชาฯ
-  const curriculumOptions = [
-    {
-      id: "bachelor-normal",
-      label: "ปริญญาตรี ภาคปกติ (วท.บ.)",
-      degree_level: "bachelor",
-      years: [
-        { year: "2569", code: "CS69", name: "หลักสูตรปรับปรุง พ.ศ. 2569 (ใหม่ล่าสุด)" },
-        { year: "2564", code: "CS64", name: "หลักสูตรปรับปรุง พ.ศ. 2564" },
-        { year: "2559", code: "CS59", name: "หลักสูตรปรับปรุง พ.ศ. 2559" },
-        { year: "2554", code: "CS54", name: "หลักสูตร พ.ศ. 2554" }
-      ]
-    },
-    {
-      id: "bachelor-inter",
-      label: "ปริญญาตรี โครงการพิเศษ สองภาษา (วท.บ.)",
-      degree_level: "bachelor",
-      years: [
-        { year: "2564", code: "CS-Inter64", name: "โครงการพิเศษ สองภาษา พ.ศ. 2564" }
-      ]
-    },
-    {
-      id: "master-cs",
-      label: "ปริญญาโท สาขาวิชาวิทยาการคอมพิวเตอร์ (วท.ม.)",
-      degree_level: "master",
-      years: [
-        { year: "2567", code: "MS-CS67", name: "หลักสูตรปรับปรุง พ.ศ. 2567" },
-        { year: "2562", code: "MS-CS62", name: "หลักสูตรปรับปรุง พ.ศ. 2562" }
-      ]
-    },
-    {
-      id: "master-se",
-      label: "ปริญญาโท สาขาวิชาวิศวกรรมซอฟต์แวร์ (วท.ม.)",
-      degree_level: "master",
-      years: [
-        { year: "2559", code: "MS-SE59", name: "หลักสูตรปรับปรุง พ.ศ. 2559" }
-      ]
-    },
-    {
-      id: "doctor-cs",
-      label: "ปริญญาเอก สาขาวิชาวิทยาการคอมพิวเตอร์ (ปร.ด.)",
-      degree_level: "doctor",
-      years: [
-        { year: "2564", code: "PhD-CS64", name: "หลักสูตรปรับปรุง พ.ศ. 2564" },
-        { year: "2559", code: "PhD-CS59", name: "หลักสูตรปรับปรุง พ.ศ. 2559" }
-      ]
-    }
-  ];
-
-  // รายการกลุ่มวิชาชีพ (Track)
-  const trackOptions = [
-    { id: "all", label: "ทุกกลุ่มวิชาชีพ (All Tracks)" },
-    { id: "Software Engineering & Cloud", label: "Software Engineering & Cloud" },
-    { id: "Data Science & Artificial Intelligence", label: "Data Science & AI" },
-    { id: "Network & Cybersecurity", label: "Network & Cybersecurity" },
-    { id: "IoT & Intelligent Systems", label: "IoT & Intelligent Systems" },
-    { id: "ทั่วไป", label: "วิชาแกน / ทั่วไป" }
-  ];
-
-  // เมื่อเปลี่ยนระดับหลักสูตร ให้เลือกปีแรกอัตโนมัติ (เฉพาะเมื่อปีที่เลือกไม่อยู่ใน degree ใหม่)
-  const currentDegreeConfig = curriculumOptions.find(c => c.id === selectedDegree) || curriculumOptions[0];
 
   useEffect(() => {
     if (currentDegreeConfig && currentDegreeConfig.years.length > 0) {
@@ -132,12 +203,47 @@ export default function CourseDescription() {
   const fetchSubjects = async () => {
     setIsLoading(true);
     try {
-      const selectedYearObj = currentDegreeConfig.years.find(y => y.year === selectedYear) || currentDegreeConfig.years[0];
-      const params = {
-        keyword: searchTerm.trim(),
-        curriculum_year: selectedYear,
-        degree_level: currentDegreeConfig.degree_level
-      };
+      const q = searchTerm.trim();
+      const params = {};
+
+      if (q) {
+        params.keyword = q;
+      }
+
+      // เมื่อมีการค้นหาด้วยคำสำคัญ (Keyword search):
+      // หากผู้ใช้ไม่ได้เลือกระดับปริญญาเฉพาะเจาะจง (เช่น อยู่ที่ all หรือ bachelor-all)
+      // ให้สืบค้นครอบคลุมทุกระดับการศึกษา เพื่อให้ค้นพบทั้ง ปริญญาตรี ปริญญาโท และปริญญาเอก ได้ทันที
+      const isSearching = Boolean(q);
+
+      if (isSearching) {
+        // หากผู้ใช้จงใจเลือกระดับ ป.โท หรือ ป.เอก ใน dropdown
+        if (selectedDegree.startsWith("master")) {
+          params.degree_level = "master";
+          if (currentDegreeConfig?.curriculum_code) {
+            params.curriculum_code = currentDegreeConfig.curriculum_code;
+          }
+        } else if (selectedDegree.startsWith("doctor")) {
+          params.degree_level = "doctor";
+        } else if (selectedDegree === "bachelor-inter") {
+          params.curriculum_code = "CS-Inter";
+        }
+
+        // หากผู้ใช้เลือกปีที่ไม่ใช่ all และไม่ใช่ปีดีฟอลต์
+        if (selectedYear !== "all" && selectedYear !== "2569") {
+          params.curriculum_year = selectedYear;
+        }
+      } else {
+        // โหมดการเลือกดูรายวิชาตามหลักสูตรปกติ (ไม่มีคำค้นหา)
+        if (currentDegreeConfig && currentDegreeConfig.degree_level !== "all") {
+          params.degree_level = currentDegreeConfig.degree_level;
+        }
+        if (currentDegreeConfig?.curriculum_code) {
+          params.curriculum_code = currentDegreeConfig.curriculum_code;
+        }
+        if (selectedYear && selectedYear !== "all") {
+          params.curriculum_year = selectedYear;
+        }
+      }
 
       if (selectedTrack !== "all") {
         params.track = selectedTrack;
@@ -154,34 +260,16 @@ export default function CourseDescription() {
       }));
 
       // 🌟 Smart Search Fallback:
-      // ถ้าค้นหาด้วยคีย์เวิร์ด (เช่น รหัสวิชา หรือ ชื่อวิชา) แล้วไม่พบในหลักสูตรที่เลือก
-      // ให้ลองค้นหาทุกหลักสูตร และถ้าพบในหลักสูตรอื่น ให้สลับไปที่หลักสูตรที่พบโดยอัตโนมัติ!
-      if (data.length === 0 && searchTerm.trim().length >= 3) {
+      // ถ้าค้นหาด้วยคำสำคัญแล้วไม่พบในตัวกรองที่เลือก ให้ค้นหาข้ามทุกหลักสูตรทันที
+      if (data.length === 0 && q) {
         try {
-          const globalRes = await axios.get("/api/subjects", {
-            params: { keyword: searchTerm.trim() }
-          });
-          const allMatches = (globalRes.data || []).map(s => ({
-            ...s,
-            title_th: cleanThaiDisplay(s.title_th),
-            description_th: cleanThaiDisplay(s.description_th)
-          }));
-          if (allMatches.length > 0) {
-            const first = allMatches[0];
-            for (const deg of curriculumOptions) {
-              const foundYear = deg.years.find(y => 
-                (first.curriculum_code && y.code.toLowerCase() === first.curriculum_code.toLowerCase()) ||
-                (deg.degree_level === first.degree_level && y.year === String(first.curriculum_year))
-              );
-              if (foundYear) {
-                setSelectedDegree(deg.id);
-                setSelectedYear(foundYear.year);
-                setSubjects(allMatches.filter(s => s.curriculum_code === first.curriculum_code || (s.curriculum_year === foundYear.year && s.degree_level === deg.degree_level)));
-                return;
-              }
-            }
-            setSubjects(allMatches);
-            return;
+          const fallbackRes = await axios.get("/api/subjects", { params: { keyword: q } });
+          if (fallbackRes.data && fallbackRes.data.length > 0) {
+            data = fallbackRes.data.map(s => ({
+              ...s,
+              title_th: cleanThaiDisplay(s.title_th),
+              description_th: cleanThaiDisplay(s.description_th)
+            }));
           }
         } catch (e) {
           console.warn("Global subject search fallback error:", e);
@@ -224,6 +312,15 @@ export default function CourseDescription() {
         return "bg-slate-50 text-slate-600 border-slate-200";
     }
   };
+
+  // กรองรายวิชาตาม Degree Tab ที่เลือกบนหน้าจอ
+  const bachelorCount = subjects.filter(s => s.degree_level === 'bachelor').length;
+  const masterCount = subjects.filter(s => s.degree_level === 'master').length;
+  const doctorCount = subjects.filter(s => s.degree_level === 'doctor').length;
+
+  const displayedSubjects = activeDegreeTab === "all" 
+    ? subjects 
+    : subjects.filter(s => s.degree_level === activeDegreeTab);
 
   return (
     <div className="bg-slate-50/50 min-h-screen flex flex-col text-left">
@@ -319,10 +416,9 @@ export default function CourseDescription() {
                   onChange={(e) => setSelectedCategory(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-sm font-bold text-slate-800 outline-none focus:ring-2 focus:ring-[#3F51B5]/20 focus:border-[#3F51B5] transition-all cursor-pointer"
                 >
-                  <option value="all">ทุกหมวดหมู่วิชา</option>
-                  <option value="หมวดวิชาเฉพาะด้านบังคับ">หมวดวิชาเฉพาะด้านบังคับ</option>
-                  <option value="หมวดวิชาเลือก">หมวดวิชาเลือก</option>
-                  <option value="หมวดวิชาศึกษาทั่วไป">หมวดวิชาศึกษาทั่วไป</option>
+                  {categoryOptions.map((cat) => (
+                    <option key={cat.id} value={cat.id}>{cat.label}</option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -335,7 +431,7 @@ export default function CourseDescription() {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="ค้นหารหัสวิชา, ชื่อวิชา (ไทย/อังกฤษ) หรือคำอธิบายรายวิชา..."
+              placeholder="ค้นหารหัสวิชา, ชื่อวิชา (ไทย/อังกฤษ) หรือคำอธิบายรายวิชา (เช่น 040635201, ความมั่นคงไซเบอร์, วิจัย)..."
               className="w-full bg-slate-50/70 border border-slate-200 rounded-2xl py-4 pl-14 pr-12 text-sm font-medium outline-none focus:ring-2 focus:ring-[#3F51B5]/20 focus:border-[#3F51B5] focus:bg-white transition-all shadow-inner"
             />
             {searchTerm && (
@@ -349,23 +445,89 @@ export default function CourseDescription() {
           </div>
         </div>
 
-        {/* 📊 สรุปผลการค้นหา */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-2">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-slate-700">ผลการค้นหารายวิชา:</span>
-            <span className="px-3 py-1 bg-[#3F51B5] text-white rounded-full text-xs font-black">
-              {isLoading ? "กำลังโหลด..." : `${subjects.length} วิชา`}
-            </span>
-            <span className="text-xs text-slate-400 font-medium">
-              (หลักสูตรปี {selectedYear} • {currentDegreeConfig.label})
-            </span>
+        {/* 🏷️ แถบสลับระดับการศึกษา (Quick Degree Tabs) & สรุปผลการค้นหา */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-2">
+          {/* Degree Tabs */}
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => setActiveDegreeTab("all")}
+              className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 ${
+                activeDegreeTab === "all"
+                  ? "bg-[#183153] text-white shadow-md shadow-slate-900/10"
+                  : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+              }`}
+            >
+              <span>ทั้งหมด</span>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                activeDegreeTab === "all" ? "bg-white/20 text-white" : "bg-slate-100 text-slate-700"
+              }`}>
+                {subjects.length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveDegreeTab("bachelor")}
+              className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 ${
+                activeDegreeTab === "bachelor"
+                  ? "bg-[#3F51B5] text-white shadow-md shadow-indigo-600/10"
+                  : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+              }`}
+            >
+              <span className="w-2 h-2 rounded-full bg-indigo-400"></span>
+              <span>ปริญญาตรี (วท.บ.)</span>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                activeDegreeTab === "bachelor" ? "bg-white/20 text-white" : "bg-indigo-50 text-indigo-700"
+              }`}>
+                {bachelorCount}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveDegreeTab("master")}
+              className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 ${
+                activeDegreeTab === "master"
+                  ? "bg-purple-700 text-white shadow-md shadow-purple-900/10"
+                  : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+              }`}
+            >
+              <span className="w-2 h-2 rounded-full bg-purple-400"></span>
+              <span>ปริญญาโท (วท.ม.)</span>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                activeDegreeTab === "master" ? "bg-white/20 text-white" : "bg-purple-50 text-purple-700"
+              }`}>
+                {masterCount}
+              </span>
+            </button>
+
+            {doctorCount > 0 && (
+              <button
+                onClick={() => setActiveDegreeTab("doctor")}
+                className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 ${
+                  activeDegreeTab === "doctor"
+                    ? "bg-rose-700 text-white shadow-md shadow-rose-900/10"
+                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-rose-400"></span>
+                <span>ปริญญาเอก (ปร.ด.)</span>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                  activeDegreeTab === "doctor" ? "bg-white/20 text-white" : "bg-rose-50 text-rose-700"
+                }`}>
+                  {doctorCount}
+                </span>
+              </button>
+            )}
           </div>
 
-          {selectedYear === "2569" && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-200 text-amber-700 rounded-full text-xs font-bold">
-              <Sparkles size={14} className="text-amber-500" /> หลักสูตรใหม่ล่าสุด พ.ศ. 2569
-            </span>
-          )}
+          {/* สรุปจำนวน */}
+          <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
+            <span>แสดงผล: <strong className="text-slate-800">{displayedSubjects.length}</strong> รายวิชา</span>
+            {searchTerm && (
+              <span className="bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-lg text-[11px] font-bold">
+                ค้นหา: "{searchTerm}"
+              </span>
+            )}
+          </div>
         </div>
 
         {/* 📋 ตารางรายวิชา (Table แยกฟิลด์อย่างละเอียด) */}
@@ -374,7 +536,7 @@ export default function CourseDescription() {
             <table className="w-full min-w-[1000px] text-left border-collapse">
               <thead className="bg-slate-50/70 text-slate-500 text-[11px] font-black uppercase tracking-wider border-b border-slate-100">
                 <tr>
-                  <th className="py-4 px-6 w-36">รหัสวิชา</th>
+                  <th className="py-4 px-6 w-44">รหัสวิชา & ระดับ</th>
                   <th className="py-4 px-6">ชื่อวิชา (TH / EN)</th>
                   <th className="py-4 px-4 w-28 text-center">หน่วยกิต</th>
                   <th className="py-4 px-6 w-44">วิชาบังคับก่อน (Prerequisite)</th>
@@ -389,13 +551,13 @@ export default function CourseDescription() {
                       กำลังดึงข้อมูลรายวิชา...
                     </td>
                   </tr>
-                ) : subjects.length > 0 ? (
-                  subjects.map((sub) => (
+                ) : displayedSubjects.length > 0 ? (
+                  displayedSubjects.map((sub) => (
                     <tr key={sub.id} className="hover:bg-indigo-50/30 transition-colors group">
-                      {/* รหัสวิชา */}
+                      {/* รหัสวิชา & ระดับการศึกษา */}
                       <td className="py-4 px-6 font-bold font-mono text-[#3F51B5] align-top">
                         <div className="flex items-center gap-1.5">
-                          <span>{sub.subject_code}</span>
+                          <span className="text-base">{sub.subject_code}</span>
                           <button
                             onClick={() => copyToClipboard(sub.subject_code)}
                             title="คัดลอกรหัสวิชา"
@@ -404,7 +566,28 @@ export default function CourseDescription() {
                             {copiedCode === sub.subject_code ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
                           </button>
                         </div>
-                        <span className="text-[10px] font-medium text-slate-400 block mt-0.5">
+                        
+                        {/* ป้ายกำกับระดับหลักสูตร */}
+                        <div className="mt-1 flex flex-wrap gap-1 items-center">
+                          {sub.degree_level === 'master' ? (
+                            <span className="px-1.5 py-0.5 bg-purple-100 text-purple-700 border border-purple-200 font-bold rounded text-[10px]">
+                              ป.โท วท.ม.
+                            </span>
+                          ) : sub.degree_level === 'doctor' ? (
+                            <span className="px-1.5 py-0.5 bg-rose-100 text-rose-700 border border-rose-200 font-bold rounded text-[10px]">
+                              ป.เอก ปร.ด.
+                            </span>
+                          ) : (
+                            <span className="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold rounded text-[10px]">
+                              ป.ตรี วท.บ.
+                            </span>
+                          )}
+                          <span className="text-[10px] font-mono text-slate-400 font-semibold">
+                            {sub.curriculum_code || `ปี ${sub.curriculum_year}`}
+                          </span>
+                        </div>
+
+                        <span className="text-[10px] font-medium text-slate-400 block mt-1">
                           {sub.category || "วิชาเฉพาะ"}
                         </span>
                       </td>
@@ -461,7 +644,7 @@ export default function CourseDescription() {
                 ) : (
                   <tr>
                     <td colSpan="6" className="py-16 text-center text-slate-400">
-                      ไม่พบข้อมูลรายวิชาตามเงื่อนไขที่เลือก
+                      ไม่พบข้อมูลรายวิชาตามเงื่อนไขหรือคำค้นหาที่ระบุ
                     </td>
                   </tr>
                 )}
@@ -488,11 +671,24 @@ export default function CourseDescription() {
                 <X size={20} />
               </button>
 
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex flex-wrap items-center gap-2 mb-2">
                 <span className="px-3 py-1 bg-[#3F51B5] text-white rounded-full text-xs font-black font-mono">
                   {activeModalSubject.subject_code}
                 </span>
-                <span className="text-xs text-slate-400 font-bold uppercase">
+                <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                  activeModalSubject.degree_level === 'master'
+                    ? "bg-purple-100 text-purple-700"
+                    : activeModalSubject.degree_level === 'doctor'
+                    ? "bg-rose-100 text-rose-700"
+                    : "bg-indigo-100 text-indigo-700"
+                }`}>
+                  {activeModalSubject.degree_level === 'master'
+                    ? "ระดับปริญญาโท (วท.ม.)"
+                    : activeModalSubject.degree_level === 'doctor'
+                    ? "ระดับปริญญาเอก (ปร.ด.)"
+                    : "ระดับปริญญาตรี (วท.บ.)"}
+                </span>
+                <span className="text-xs text-slate-400 font-bold uppercase ml-auto">
                   หน่วยกิต {activeModalSubject.credit}
                 </span>
               </div>
@@ -505,7 +701,7 @@ export default function CourseDescription() {
               </p>
 
               {/* ข้อมูลประกอบ */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6 p-4 bg-slate-50 rounded-2xl text-xs">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6 p-4 bg-slate-50 rounded-2xl text-xs">
                 <div>
                   <p className="text-slate-400 font-bold uppercase text-[10px]">วิชาบังคับก่อน</p>
                   <p className="font-bold text-slate-700 mt-0.5">
@@ -519,7 +715,13 @@ export default function CourseDescription() {
                 </div>
                 <div>
                   <p className="text-slate-400 font-bold uppercase text-[10px]">หลักสูตร</p>
-                  <p className="font-bold text-slate-700 mt-0.5">พ.ศ. {activeModalSubject.curriculum_year}</p>
+                  <p className="font-bold text-slate-700 mt-0.5">
+                    {activeModalSubject.curriculum_code || `พ.ศ. ${activeModalSubject.curriculum_year}`}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-slate-400 font-bold uppercase text-[10px]">หมวดหมู่</p>
+                  <p className="font-bold text-slate-700 mt-0.5">{activeModalSubject.category || "วิชาเฉพาะ"}</p>
                 </div>
               </div>
 

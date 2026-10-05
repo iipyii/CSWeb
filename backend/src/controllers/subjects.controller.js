@@ -267,7 +267,12 @@ export const getSubjects = async (req, res) => {
     const where = {};
 
     if (curriculum_code && curriculum_code !== "all" && curriculum_code.trim() !== "") {
-      where.curriculum_code = curriculum_code;
+      const codeTrim = curriculum_code.trim();
+      if (codeTrim.includes(",")) {
+        where.curriculum_code = { in: codeTrim.split(",").map(c => c.trim()) };
+      } else {
+        where.curriculum_code = { contains: codeTrim, mode: "insensitive" };
+      }
     }
 
     if (curriculum_year && curriculum_year !== "all" && !isNaN(parseInt(curriculum_year))) {
@@ -288,13 +293,28 @@ export const getSubjects = async (req, res) => {
 
     if (keyword && keyword.trim() !== "") {
       const q = keyword.trim();
-      where.OR = [
+      const cleanCode = q.replace(/[^0-9a-zA-Z]/g, "");
+      const orConditions = [
         { subject_code: { contains: q, mode: "insensitive" } },
         { title_th: { contains: q, mode: "insensitive" } },
         { title_en: { contains: q, mode: "insensitive" } },
         { description_th: { contains: q, mode: "insensitive" } },
         { description_en: { contains: q, mode: "insensitive" } }
       ];
+
+      if (cleanCode && cleanCode !== q && cleanCode.length >= 3) {
+        orConditions.push({ subject_code: { contains: cleanCode, mode: "insensitive" } });
+      }
+
+      const words = q.split(/\s+/).filter(w => w.length >= 2);
+      if (words.length > 1) {
+        words.forEach(w => {
+          orConditions.push({ title_th: { contains: w, mode: "insensitive" } });
+          orConditions.push({ title_en: { contains: w, mode: "insensitive" } });
+        });
+      }
+
+      where.OR = orConditions;
     }
 
     const subjects = await prisma.subjects.findMany({
