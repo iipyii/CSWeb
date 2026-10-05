@@ -17,7 +17,8 @@ import {
   Download, 
   AlertCircle,
   Pencil,
-  GraduationCap
+  GraduationCap,
+  ChevronDown
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -397,7 +398,7 @@ export default function ManageConsultants() {
       )}
 
       {/* 🔍 Filter & Search */}
-      <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 space-y-4">
+      <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1 flex-wrap">
             {/* ค้นหา */}
@@ -430,15 +431,15 @@ export default function ManageConsultants() {
                 onChange={(e) => setSelectedYear(e.target.value)}
                 className="w-full pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-[#3F51B5]/20 focus:border-[#3F51B5] transition-all cursor-pointer appearance-none"
               >
-                <option value="all">ทุกรหัส (ทั้งหมด)</option>
+                <option value="all">รหัสปี (ทั้งหมด)</option>
                 {cohortList.map(c => (
                   <option key={c} value={c}>
                     รหัส {c}
                   </option>
                 ))}
               </select>
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-xs">
-                ▼
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                <ChevronDown size={15} />
               </div>
             </div>
 
@@ -460,8 +461,8 @@ export default function ManageConsultants() {
                     </option>
                   ))}
                 </select>
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-xs">
-                  ▼
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                  <ChevronDown size={15} />
                 </div>
               </div>
             )}
@@ -475,41 +476,6 @@ export default function ManageConsultants() {
             </span>
             <span>คน {isUserAdmin ? `(จากทั้งหมด ${students.length} คน)` : `ในที่ปรึกษา`}</span>
           </div>
-        </div>
-
-        {/* 🏷️ Quick Cohort Pills (ปุ่มเลือกรหัส เช่น รหัส 68, รหัส 67, รหัส 65...) */}
-        <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center gap-2">
-          <span className="text-xs font-bold text-slate-400 mr-1 select-none">
-            เลือกรหัส:
-          </span>
-          <button
-            type="button"
-            onClick={() => setSelectedYear("all")}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shadow-sm cursor-pointer ${
-              selectedYear === "all"
-                ? "bg-[#183153] text-white"
-                : "bg-white text-slate-700 hover:text-[#183153] hover:border-[#183153] hover:bg-slate-50 border border-slate-200"
-            }`}
-          >
-            ทั้งหมด
-          </button>
-          {cohortList.map((c) => {
-            const isSelected = selectedYear === c || String(selectedYear).slice(-2) === c;
-            return (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setSelectedYear(c)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shadow-sm cursor-pointer ${
-                  isSelected
-                    ? "bg-[#183153] text-white"
-                    : "bg-white text-slate-700 hover:text-[#183153] hover:border-[#183153] hover:bg-slate-50 border border-slate-200"
-                }`}
-              >
-                รหัส {c}
-              </button>
-            );
-          })}
         </div>
       </div>
 
