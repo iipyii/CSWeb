@@ -5,6 +5,7 @@ import {
   Plus, Search, Edit3, Trash2, Archive,
   Clock, FileText, LayoutGrid
 } from 'lucide-react';
+import { formatThaiDate } from '../../utils/thaiText';
 
 const categories = [
   { id: 'all', label: 'ทั้งหมด', icon: <LayoutGrid size={16} /> },
@@ -36,7 +37,6 @@ export default function ManageNews() {
       };
 
       const todayBkk = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(new Date());
-      const endOfTodayBkk = new Date(`${todayBkk}T23:59:59.999+07:00`);
 
       // กรองและแปลงร่างข้อมูล
       const activeNews = res.data
@@ -46,12 +46,10 @@ export default function ManageNews() {
           title: item.title,
           category: item.category || 'department',
           categoryLabel: getCategoryLabel(item.category),
-          isScheduled: item.start_date ? new Date(item.start_date) > endOfTodayBkk : false,
+          isScheduled: item.start_date ? String(item.start_date).split('T')[0] > todayBkk : false,
           rawDate: item.start_date || item.created_at,
           // แปลงวันที่จาก DB ให้เป็นรูปแบบไทย (ใช้วันเริ่มเผยแพร่ที่กำหนดเอง หรือวันสร้าง)
-          date: new Date(item.start_date || item.created_at).toLocaleDateString('th-TH', {
-            year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Bangkok'
-          }),
+          date: formatThaiDate(item.start_date || item.created_at),
 
           image: item.image 
             ? `${item.image}` 

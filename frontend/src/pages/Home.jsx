@@ -23,6 +23,7 @@ import {
 
 // นำเข้าข้อมูลข่าวสารจากไฟล์ data (ตรวจสอบให้แน่ใจว่า path ถูกต้อง)
 import { newsData } from '../data/newsData';
+import { formatThaiDate } from '../utils/thaiText';
 
 const defaultActions = [
   { icon: 'Monitor', label: 'ระบบคำร้องออนไลน์', path: 'https://reg.kmutnb.ac.th/registrar/home', isExternal: true },
@@ -74,12 +75,14 @@ export default function Home() {
         // จัดการข่าวสาร
         if (newsRes?.data) {
           const todayBkk = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(new Date());
-          const endOfTodayBkk = new Date(`${todayBkk}T23:59:59.999+07:00`);
 
           const formattedNews = newsRes.data
             .filter(item => {
               if (item.status !== 'active') return false;
-              if (item.start_date && new Date(item.start_date) > endOfTodayBkk) return false;
+              if (item.start_date) {
+                const startStr = String(item.start_date).split('T')[0];
+                if (startStr > todayBkk) return false;
+              }
               return true;
             })
             .map(item => ({
@@ -88,9 +91,7 @@ export default function Home() {
               isPinned: item.is_urgent,
               image: item.image ? `${item.image}` : "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800",
               rawDate: item.start_date || item.created_at,
-              date: new Date(item.start_date || item.created_at).toLocaleDateString('th-TH', {
-                year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Bangkok'
-              }),
+              date: formatThaiDate(item.start_date || item.created_at),
               tag: item.category === 'department' ? 'ข่าวภาควิชาฯ' :
                 item.category === 'faculty' ? 'ข่าวคณะฯ' :
                   item.category === 'scholarship' ? 'ข่าวทุนการศึกษา' : 'ข่าวรับสมัครงาน'

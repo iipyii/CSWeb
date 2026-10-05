@@ -12,32 +12,38 @@ const decodeOriginalName = (orig) => {
   }
 };
 
-// คำนวณขอบเขตวันปัจจุบันตามเวลาประเทศไทย (Asia/Bangkok)
+// คำนวณขอบเขตวันปัจจุบันตามเวลาประเทศไทย (Asia/Bangkok) สำหรับคอลัมน์ @db.Date
 const getBangkokDateBounds = () => {
   const bkkDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(new Date());
-  const startOfToday = new Date(`${bkkDate}T00:00:00.000+07:00`);
-  const endOfToday = new Date(`${bkkDate}T23:59:59.999+07:00`);
-  return { bkkDate, startOfToday, endOfToday };
+  // สำหรับ Prisma กับ PostgreSQL @db.Date ฟิลด์เป็น DATE บริสุทธิ์
+  // ต้องส่ง Date object ที่มีเวลา UTC 00:00:00.000Z ของวันที่ bkkDate เพื่อไม่ให้เกิด timezone shift
+  const todayDateUtc = new Date(`${bkkDate}T00:00:00.000Z`);
+  return { bkkDate, todayDateUtc };
 };
 
-// แปลง Input วันที่ให้อยู่ในโซนเวลาประเทศไทย (เริ่มวัน หรือ สิ้นสุดวัน)
-const parseDateInput = (val, isEnd = false) => {
-  if (!val || val === "null" || val === "undefined") return null;
-  if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(val)) {
-    return new Date(`${val}T${isEnd ? '23:59:59.999' : '00:00:00.000'}+07:00`);
+// แปลง Input วันที่สำหรับคอลัมน์ @db.Date (PostgreSQL DATE)
+// ต้องให้ค่า UTC ตรงกับวันที่ที่ผู้ใช้เลือก (YYYY-MM-DD)
+// เพื่อไม่ให้เกิดปัญหา Timezone Offset ลบถอยหลัง 1 วันเมื่อบันทึกลงฐานข้อมูล
+const parseDateInput = (val) => {
+  if (!val || val === "null" || val === "undefined" || val === "") return null;
+  const str = String(val).trim();
+  const match = str.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (match) {
+    return new Date(`${match[1]}T00:00:00.000Z`);
   }
-  return new Date(val);
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? null : d;
 };
 
 // ตรวจสอบและย้ายข่าวที่หมดอายุ (end_date < ปัจจุบัน) ไปยังคลังข่าว (status: 'archived') อัตโนมัติ
 const autoArchiveExpiredNews = async () => {
   try {
-    const { startOfToday } = getBangkokDateBounds();
+    const { todayDateUtc } = getBangkokDateBounds();
     await prisma.news.updateMany({
       where: {
         status: "active",
         end_date: {
-          lt: startOfToday
+          lt: todayDateUtc
         }
       },
       data: {
@@ -67,7 +73,7 @@ export const getActiveNews = async (req, res) => {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 50;
 
-    const { startOfToday, endOfToday } = getBangkokDateBounds();
+    const { todayDateUtc } = getBangkokDateBounds();
 
     const news = await prisma.news.findMany({
       where: {
@@ -76,13 +82,13 @@ export const getActiveNews = async (req, res) => {
           {
             OR: [
               { start_date: null },
-              { start_date: { lte: endOfToday } }
+              { start_date: { lte: todayDateUtc } }
             ]
           },
           {
             OR: [
               { end_date: null },
-              { end_date: { gte: startOfToday } }
+              { end_date: { gte: todayDateUtc } }
             ]
           }
         ]
@@ -133,14 +139,14 @@ export const createNews = async (req, res) => {
       });
     }
 
-    const parsedStartDate = parseDateInput(start_date, false);
-    const parsedEndDate = parseDateInput(end_date, true);
+    const parsedStartDate = parseDateInput(start_date);
+    const parsedEndDate = parseDateInput(end_date);
 
     // ตรวจสอบวันสิ้นสุด: ถ้าสิ้นสุดเป็นวันที่ผ่านมาแล้ว ให้ย้ายเข้าคลังข่าว (status: 'archived') ทันที
     let finalStatus = "active";
     if (parsedEndDate) {
-      const now = new Date();
-      if (parsedEndDate < now) {
+      const { todayDateUtc } = getBangkokDateBounds();
+      if (parsedEndDate < todayDateUtc) {
         finalStatus = "archived";
       }
     }
@@ -273,21 +279,21 @@ export const updateNews = async (req, res) => {
     // จัดการวันที่ (ถ้าไม่ได้ส่งมา ให้คงของเดิมไว้)
     let finalStartDate = existing.start_date;
     if (start_date !== undefined) {
-      finalStartDate = parseDateInput(start_date, false);
+      finalStartDate = parseDateInput(start_date);
     }
 
     let finalEndDate = existing.end_date;
     if (end_date !== undefined) {
-      finalEndDate = parseDateInput(end_date, true);
+      finalEndDate = parseDateInput(end_date);
     }
 
     // จัดการสถานะและการกู้คืน (Restore)
     let finalStatus = status !== undefined ? status : existing.status;
+    const { todayDateUtc } = getBangkokDateBounds();
     
     // ถ้าผู้ใช้ระบุ end_date มา และวันสิ้นสุดเป็นอดีต -> ย้ายเข้า archived
     if (end_date !== undefined && finalEndDate) {
-      const now = new Date();
-      if (finalEndDate < now) {
+      if (finalEndDate < todayDateUtc) {
         finalStatus = "archived";
       }
     }
@@ -296,8 +302,7 @@ export const updateNews = async (req, res) => {
     // หากวันสิ้นสุดเดิมในอดีตหมดอายุไปแล้ว ให้ล้างวันสิ้นสุด (เป็น null) 
     // เพื่อไม่ให้ autoArchiveExpiredNews ดึงข่าวกลับเข้าคลังทันทีที่รีเฟรชหน้าเว็บ!
     if (status === 'active' && end_date === undefined && finalEndDate) {
-      const now = new Date();
-      if (finalEndDate < now) {
+      if (finalEndDate < todayDateUtc) {
         finalEndDate = null;
       }
     }
@@ -445,7 +450,7 @@ export const getLatestNews = async (req, res) => {
   try {
     await autoArchiveExpiredNews();
 
-    const { startOfToday, endOfToday } = getBangkokDateBounds();
+    const { todayDateUtc } = getBangkokDateBounds();
 
     const news = await prisma.news.findMany({
       where: { 
@@ -454,13 +459,13 @@ export const getLatestNews = async (req, res) => {
           {
             OR: [
               { start_date: null },
-              { start_date: { lte: endOfToday } }
+              { start_date: { lte: todayDateUtc } }
             ]
           },
           {
             OR: [
               { end_date: null },
-              { end_date: { gte: startOfToday } }
+              { end_date: { gte: todayDateUtc } }
             ]
           }
         ]
@@ -481,7 +486,7 @@ export const getNewsByCategory = async (req, res) => {
     await autoArchiveExpiredNews();
 
     const { category } = req.params;
-    const { startOfToday, endOfToday } = getBangkokDateBounds();
+    const { todayDateUtc } = getBangkokDateBounds();
 
     const news = await prisma.news.findMany({
       where: {
@@ -491,13 +496,13 @@ export const getNewsByCategory = async (req, res) => {
           {
             OR: [
               { start_date: null },
-              { start_date: { lte: endOfToday } }
+              { start_date: { lte: todayDateUtc } }
             ]
           },
           {
             OR: [
               { end_date: null },
-              { end_date: { gte: startOfToday } }
+              { end_date: { gte: todayDateUtc } }
             ]
           }
         ]

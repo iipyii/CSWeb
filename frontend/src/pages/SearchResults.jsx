@@ -4,7 +4,7 @@ import axios from 'axios';
 import { ArrowRight, Compass, FolderGit2, BookOpen, Users, Newspaper, FileText } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import Footer from '../components/Footer';
-import { cleanThaiDisplay } from '../utils/thaiText';
+import { cleanThaiDisplay, formatThaiDate } from '../utils/thaiText';
 
 export default function SearchResults() {
   const query = new URLSearchParams(useLocation().search).get('q') || "";
@@ -315,7 +315,7 @@ export default function SearchResults() {
                         </h3>
                       </div>
                       <div className="mt-4 pt-3 border-t border-slate-50 text-xs text-slate-400 flex items-center justify-between">
-                        <span>{(item.start_date || item.created_at) ? new Date(item.start_date || item.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'Asia/Bangkok' }) : 'อ่านข่าวสาร'}</span>
+                        <span>{(item.start_date || item.created_at) ? formatThaiDate(item.start_date || item.created_at, 'short') : 'อ่านข่าวสาร'}</span>
                         <ArrowRight size={14} className="text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
                       </div>
                     </Link>

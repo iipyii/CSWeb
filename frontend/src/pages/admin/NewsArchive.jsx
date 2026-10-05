@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ChevronLeft, Search, Trash2, RotateCcw, FileText } from 'lucide-react';
+import { formatThaiDate } from '../../utils/thaiText';
 
 export default function NewsArchive() {
   const navigate = useNavigate();
@@ -16,9 +17,7 @@ export default function NewsArchive() {
         .filter(item => item.status === 'archived')
         .map(item => ({
           ...item,
-          date: (item.start_date || item.created_at)
-            ? new Date(item.start_date || item.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Bangkok' })
-            : '-'
+          date: formatThaiDate(item.start_date || item.created_at)
         }));
       setArchivedData(archived);
     } catch (error) {

@@ -107,7 +107,7 @@ export const globalSearch = async (req, res) => {
                         { category: { contains: keyword, mode: "insensitive" } }
                     ]
                 },
-                select: { id: true, title: true, category: true, created_at: true },
+                select: { id: true, title: true, category: true, start_date: true, created_at: true },
                 take: 8
             }).catch((err) => {
                 console.warn("⚠️ ค้นหา news ไม่สำเร็จ:", err.message);

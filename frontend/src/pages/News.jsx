@@ -4,6 +4,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Footer from '../components/Footer';
 import { ArrowRightCircle, Clock, Search, Tag, Newspaper } from 'lucide-react';
+import { formatThaiDate } from '../utils/thaiText';
 
 const ALLOWED_TAGS = [
   'ข่าวภาควิชาฯ',
@@ -47,12 +48,14 @@ export default function News() {
       try {
         const res = await axios.get("/api/news");
         const todayBkk = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(new Date());
-        const endOfTodayBkk = new Date(`${todayBkk}T23:59:59.999+07:00`);
 
         const formattedNews = res.data
           .filter(item => {
             if (item.status !== 'active') return false;
-            if (item.start_date && new Date(item.start_date) > endOfTodayBkk) return false;
+            if (item.start_date) {
+              const startStr = String(item.start_date).split('T')[0];
+              if (startStr > todayBkk) return false;
+            }
             return true;
           })
           .map(item => ({
@@ -63,7 +66,7 @@ export default function News() {
             isPinned: item.is_urgent,
             image: item.image ? (item.image.startsWith('http') ? item.image : item.image) : "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800",
             rawDate: item.start_date || item.created_at,
-            date: new Date(item.start_date || item.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Bangkok' }),
+            date: formatThaiDate(item.start_date || item.created_at),
             tag: item.category === 'department' ? 'ข่าวภาควิชาฯ' :
               item.category === 'faculty' ? 'ข่าวคณะและมหาวิทยาลัย' :
                 item.category === 'scholarship' ? 'ข่าวทุนการศึกษา' : 'ข่าวรับสมัครงาน-ประชาสัมพันธ์'

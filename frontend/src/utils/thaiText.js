@@ -96,3 +96,48 @@ export function cleanThaiDisplay(str) {
 
   return s;
 }
+
+/**
+ * ฟังก์ชันแปลงวันที่ให้เป็นรูปแบบภาษาไทยอย่างถูกต้อง
+ * รองรับทั้ง Date object, ISO string, และ date-only string (YYYY-MM-DD)
+ * โดยแก้ปัญหา timezone shift ของคอลัมน์ date-only (เช่น start_date)
+ */
+export function formatThaiDate(dateInput, formatType = 'long') {
+  if (!dateInput) return '-';
+
+  // 1. ถ้ามี date-only string หรือ ISO string ที่ส่งมาจาก Prisma สำหรับ @db.Date (เช่น "2026-10-17T00:00:00.000Z" หรือ "2026-10-17")
+  if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateInput)) {
+    const datePart = dateInput.split('T')[0];
+    const [yearStr, monthStr, dayStr] = datePart.split('-');
+    const year = parseInt(yearStr, 10) + 543;
+    const monthIndex = parseInt(monthStr, 10) - 1;
+    const day = parseInt(dayStr, 10);
+
+    const thaiMonthsLong = [
+      'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+      'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+    ];
+    const thaiMonthsShort = [
+      'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',
+      'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'
+    ];
+
+    if (monthIndex >= 0 && monthIndex < 12 && !isNaN(day) && !isNaN(year)) {
+      const hasTime = dateInput.includes('T') && !dateInput.endsWith('T00:00:00.000Z') && !dateInput.endsWith('T00:00:00Z');
+      if (!hasTime) {
+        const month = formatType === 'short' ? thaiMonthsShort[monthIndex] : thaiMonthsLong[monthIndex];
+        return `${day} ${month} ${year}`;
+      }
+    }
+  }
+
+  // 2. สำหรับ Timestamp ทั่วไป (เช่น created_at) แปลงตามเวลา Asia/Bangkok
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) return '-';
+  return d.toLocaleDateString('th-TH', {
+    year: 'numeric',
+    month: formatType === 'short' ? 'short' : 'long',
+    day: 'numeric',
+    timeZone: 'Asia/Bangkok'
+  });
+}

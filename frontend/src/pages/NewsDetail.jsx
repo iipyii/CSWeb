@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 
 import Footer from '../components/Footer';
+import { formatThaiDate } from '../utils/thaiText';
 
 const NewsDetail = () => {
   const { id } = useParams();
@@ -43,7 +44,7 @@ const NewsDetail = () => {
           
           attachments: safeParseArray(data.attachments),
 
-          date: new Date(data.start_date || data.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Bangkok' }),
+          date: formatThaiDate(data.start_date || data.created_at),
           tag: data.category === 'department' ? 'ข่าวภาควิชาฯ' : 'ข่าวสาร',
           author: 'ผู้ดูแลระบบ', 
         });
