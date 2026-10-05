@@ -47,7 +47,9 @@ model faq {
 model news {
   id         Int       @id @default(autoincrement())
   title      String    @db.VarChar(255)
+  title_en   String?   @db.VarChar(255)
   content    String
+  content_en String?   @db.Text
   category   String    @db.VarChar(100)
   status     String    @default("active") @db.VarChar(20)
   image      String?
@@ -55,6 +57,7 @@ model news {
   additional_images String[] // เก็บรายชื่อไฟล์รูปภาพเพิ่มเติม
   attachments       String[] // เก็บรายชื่อไฟล์เอกสารแนบ
   summary           String?   @db.Text
+  summary_en        String?   @db.Text
   
   slug       String?   @unique
   start_date DateTime?  @db.Date

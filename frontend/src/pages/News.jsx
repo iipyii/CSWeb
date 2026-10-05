@@ -5,6 +5,7 @@ import axios from 'axios';
 import Footer from '../components/Footer';
 import { ArrowRightCircle, Clock, Search, Tag, Newspaper } from 'lucide-react';
 import { formatThaiDate } from '../utils/thaiText';
+import { useLanguage } from '../context/LanguageContext';
 
 const ALLOWED_TAGS = [
   'ข่าวภาควิชาฯ',
@@ -12,6 +13,28 @@ const ALLOWED_TAGS = [
   'ข่าวทุนการศึกษา',
   'ข่าวรับสมัครงาน-ประชาสัมพันธ์'
 ];
+
+export const formatNewsDate = (rawDate, lang) => {
+  if (!rawDate) return "";
+  if (lang === 'EN') {
+    const d = new Date(rawDate);
+    return isNaN(d.getTime()) ? "" : d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+  return formatThaiDate(rawDate);
+};
+
+export const getCategoryLabel = (category, lang) => {
+  if (lang === 'EN') {
+    if (category === 'department') return 'Department News';
+    if (category === 'faculty') return 'Faculty & University';
+    if (category === 'scholarship') return 'Scholarships';
+    return 'Job Opportunities & PR';
+  }
+  if (category === 'department') return 'ข่าวภาควิชาฯ';
+  if (category === 'faculty') return 'ข่าวคณะและมหาวิทยาลัย';
+  if (category === 'scholarship') return 'ข่าวทุนการศึกษา';
+  return 'ข่าวรับสมัครงาน-ประชาสัมพันธ์';
+};
 
 // ฟังก์ชันแปลงค่าหมวดหมู่จาก URL Query Param ให้เป็นชื่อแท็บมาตรฐาน
 const getTabFromParams = (params) => {
@@ -31,6 +54,7 @@ const getTabFromParams = (params) => {
 };
 
 export default function News() {
+  const { lang, t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [newsData, setNewsData] = useState([]);
@@ -61,12 +85,19 @@ export default function News() {
           .map(item => ({
             id: item.id,
             title: item.title,
-            description: item.summary || (item.content ? item.content.replace(/<[^>]+>/g, '').substring(0, 150) + '...' : ''), // ดึงเนื้อหาย่อ
+            title_en: item.title_en,
+            content: item.content,
+            content_en: item.content_en,
+            summary: item.summary,
+            summary_en: item.summary_en,
+            description: item.summary || (item.content ? item.content.replace(/<[^>]+>/g, '').substring(0, 150) + '...' : ''),
+            description_en: item.summary_en || (item.content_en ? item.content_en.replace(/<[^>]+>/g, '').substring(0, 150) + '...' : ''),
             isLatest: true,
             isPinned: item.is_urgent,
             image: item.image ? (item.image.startsWith('http') ? item.image : item.image) : "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800",
             rawDate: item.start_date || item.created_at,
             date: formatThaiDate(item.start_date || item.created_at),
+            category: item.category,
             tag: item.category === 'department' ? 'ข่าวภาควิชาฯ' :
               item.category === 'faculty' ? 'ข่าวคณะและมหาวิทยาลัย' :
                 item.category === 'scholarship' ? 'ข่าวทุนการศึกษา' : 'ข่าวรับสมัครงาน-ประชาสัมพันธ์'
@@ -133,7 +164,24 @@ export default function News() {
   //   },
   // ];
 
-  const tabs = useMemo(() => ['ล่าสุด', ...ALLOWED_TAGS], []);
+  const tabs = useMemo(() => {
+    if (lang === 'EN') {
+      return [
+        { key: 'ล่าสุด', label: 'Latest' },
+        { key: 'ข่าวภาควิชาฯ', label: 'Department' },
+        { key: 'ข่าวคณะและมหาวิทยาลัย', label: 'Faculty & University' },
+        { key: 'ข่าวทุนการศึกษา', label: 'Scholarships' },
+        { key: 'ข่าวรับสมัครงาน-ประชาสัมพันธ์', label: 'Jobs & PR' },
+      ];
+    }
+    return [
+      { key: 'ล่าสุด', label: 'ล่าสุด' },
+      { key: 'ข่าวภาควิชาฯ', label: 'ข่าวภาควิชาฯ' },
+      { key: 'ข่าวคณะและมหาวิทยาลัย', label: 'ข่าวคณะและมหาวิทยาลัย' },
+      { key: 'ข่าวทุนการศึกษา', label: 'ข่าวทุนการศึกษา' },
+      { key: 'ข่าวรับสมัครงาน-ประชาสัมพันธ์', label: 'ข่าวรับสมัครงาน-ประชาสัมพันธ์' },
+    ];
+  }, [lang]);
 
   // 🔍 Logic การกรองและเรียงลำดับ (Sorting) พร้อมระบบปักหมุด
   const filteredNews = useMemo(() => {
@@ -142,7 +190,9 @@ export default function News() {
         ? news.isLatest === true
         : news.tag === activeTab;
 
-      const matchesSearch = news.title.toLowerCase().includes(searchQuery.toLowerCase());
+      const currentTitle = (lang === 'EN' && news.title_en) ? news.title_en : news.title;
+      const searchLower = searchQuery.toLowerCase();
+      const matchesSearch = currentTitle.toLowerCase().includes(searchLower) || news.title.toLowerCase().includes(searchLower);
       return matchesTab && matchesSearch;
     });
 
@@ -155,7 +205,7 @@ export default function News() {
       const timeB = b.rawDate ? new Date(b.rawDate).getTime() : 0;
       return timeB - timeA;
     });
-  }, [activeTab, searchQuery, newsData]);
+  }, [activeTab, searchQuery, newsData, lang]);
 
   return (
     <div className="bg-slate-50 min-h-screen flex flex-col text-left text-slate-800">
@@ -168,7 +218,9 @@ export default function News() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">ข่าวสาร CIS</h1>
+            <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">
+              {lang === 'EN' ? 'News & Announcements' : 'ข่าวสาร CIS'}
+            </h1>
             <div className="w-12 h-1 bg-white/30 mb-5"></div>
           </motion.div>
         </div>
@@ -184,14 +236,14 @@ export default function News() {
           <div className="flex items-center gap-2 overflow-x-auto pb-4 scrollbar-hide w-full md:w-auto">
             {tabs.map((tab) => (
               <button
-                key={tab}
-                onClick={() => handleTabChange(tab)} // ✨ ใช้ฟังก์ชันที่อัปเดต URL ด้วย
-                className={`px-7 py-3 rounded-2xl text-sm font-bold transition-all whitespace-nowrap
-                  ${activeTab === tab
+                key={tab.key}
+                onClick={() => handleTabChange(tab.key)} // ✨ ใช้ฟังก์ชันที่อัปเดต URL ด้วย
+                className={`px-7 py-3 rounded-2xl text-sm font-bold transition-all whitespace-nowrap cursor-pointer
+                  ${activeTab === tab.key
                     ? 'bg-[#3F51B5] text-white shadow-lg shadow-indigo-100'
                     : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-100'}`}
               >
-                {tab}
+                {tab.label}
               </button>
             ))}
           </div>
@@ -200,7 +252,7 @@ export default function News() {
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#3F51B5] transition-colors" size={20} />
             <input
               type="text"
-              placeholder="ค้นหาข่าว..."
+              placeholder={lang === 'EN' ? "Search news..." : "ค้นหาข่าว..."}
               className="w-full pl-14 pr-6 py-4 rounded-2xl border border-slate-100 focus:outline-none focus:ring-4 focus:ring-[#3F51B5]/5 bg-white shadow-sm transition-all text-slate-600"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -212,7 +264,7 @@ export default function News() {
         <AnimatePresence mode="wait">
           {filteredNews.length > 0 ? (
             <motion.div
-              key={activeTab + searchQuery}
+              key={activeTab + searchQuery + lang}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
@@ -234,7 +286,7 @@ export default function News() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-60"></div>
 
                     <div className="absolute top-6 left-6 bg-[#3F51B5] text-white text-[10px] px-4 py-2 rounded-xl font-bold shadow-xl flex items-center backdrop-blur-md border border-white/20">
-                      <Tag size={12} className="mr-2" /> {item.tag}
+                      <Tag size={12} className="mr-2" /> {getCategoryLabel(item.category, lang)}
                     </div>
 
                     {item.isPinned && (
@@ -247,19 +299,24 @@ export default function News() {
                   <div className="p-8 flex flex-col flex-1">
                     <div className="flex items-center text-slate-400 text-xs mb-4 font-bold tracking-wide uppercase">
                       <Clock size={14} className="mr-2 text-[#3F51B5]/60" />
-                      ประกาศเมื่อ : {item.date}
+                      {lang === 'EN' ? `Published : ${formatNewsDate(item.rawDate, 'EN')}` : `ประกาศเมื่อ : ${item.date}`}
+                      {lang === 'EN' && !item.title_en && (
+                        <span className="ml-2 px-2 py-0.5 text-[9px] font-bold rounded-md bg-amber-50 text-amber-700 border border-amber-200">
+                          TH only
+                        </span>
+                      )}
                     </div>
                     <h3 className="text-xl font-bold text-slate-800 leading-[1.5] mb-4 group-hover:text-[#3F51B5] transition-colors line-clamp-2">
-                      {item.title}
+                      {lang === 'EN' && item.title_en ? item.title_en : item.title}
                     </h3>
                     <p className="text-slate-500 text-sm leading-relaxed mb-8 line-clamp-3 font-normal opacity-80">
-                      {item.description}
+                      {lang === 'EN' && item.description_en ? item.description_en : item.description}
                     </p>
 
                     <div className="mt-auto pt-6 border-t border-slate-50 flex justify-between items-center">
                       <button
                         onClick={() => navigate(`/news/${item.id}`)} className="text-[#3F51B5] text-sm font-bold flex items-center gap-2 group/btn active:scale-95 transition-all">
-                        อ่านรายละเอียดเพิ่มเติม
+                        {lang === 'EN' ? 'Read More' : 'อ่านรายละเอียดเพิ่มเติม'}
                         <ArrowRightCircle size={20} className="group-hover:translate-x-1 transition-transform" />
                       </button>
                     </div>
@@ -276,7 +333,9 @@ export default function News() {
               <div className="p-10 inline-block bg-slate-50 rounded-full mb-6">
                 <Newspaper className="text-slate-300" size={48} />
               </div>
-              <p className="text-slate-500 text-xl font-medium">ไม่พบข้อมูลข่าวสารที่คุณกำลังค้นหา</p>
+              <p className="text-slate-500 text-xl font-medium">
+                {lang === 'EN' ? 'No news found matching your search.' : 'ไม่พบข้อมูลข่าวสารที่คุณกำลังค้นหา'}
+              </p>
             </motion.div>
           )}
         </AnimatePresence>

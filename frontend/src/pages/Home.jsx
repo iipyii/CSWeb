@@ -21,9 +21,8 @@ import {
   HelpCircle
 } from 'lucide-react';
 
-// นำเข้าข้อมูลข่าวสารจากไฟล์ data (ตรวจสอบให้แน่ใจว่า path ถูกต้อง)
-import { newsData } from '../data/newsData';
-import { formatThaiDate } from '../utils/thaiText';
+import { useLanguage } from '../context/LanguageContext';
+import { formatNewsDate, getCategoryLabel } from './News';
 
 const defaultActions = [
   { icon: 'Monitor', label: 'ระบบคำร้องออนไลน์', path: 'https://reg.kmutnb.ac.th/registrar/home', isExternal: true },
@@ -55,8 +54,20 @@ const renderActionIcon = (iconName) => {
   }
 };
 
+const getActionLabel = (act, lang) => {
+  if (lang !== 'EN') return act.label;
+  const map = {
+    'ระบบคำร้องออนไลน์': 'Online Request System',
+    'ปฏิทินการศึกษา': 'Academic Calendar',
+    'ดาวน์โหลดเอกสาร': 'Student Downloads',
+    'ระบบประเมินอาจารย์': 'Instructor Evaluation'
+  };
+  return map[act.label] || act.label;
+};
+
 export default function Home() {
   const navigate = useNavigate();
+  const { lang } = useLanguage();
 
   const [newsList, setNewsList] = useState([]);
   const [actions, setActions] = useState(defaultActions);
@@ -88,13 +99,12 @@ export default function Home() {
             .map(item => ({
               id: item.id,
               title: item.title,
+              title_en: item.title_en,
+              summary_en: item.summary_en,
+              category: item.category,
               isPinned: item.is_urgent,
               image: item.image ? `${item.image}` : "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800",
-              rawDate: item.start_date || item.created_at,
-              date: formatThaiDate(item.start_date || item.created_at),
-              tag: item.category === 'department' ? 'ข่าวภาควิชาฯ' :
-                item.category === 'faculty' ? 'ข่าวคณะฯ' :
-                  item.category === 'scholarship' ? 'ข่าวทุนการศึกษา' : 'ข่าวรับสมัครงาน'
+              rawDate: item.start_date || item.created_at
             }))
             .sort((a, b) => {
               if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
@@ -155,7 +165,7 @@ export default function Home() {
                     {renderActionIcon(act.icon)}
                   </motion.div>
                   <span className="text-[14px] font-medium tracking-wide text-center leading-tight">
-                    {act.label}
+                    {getActionLabel(act, lang)}
                   </span>
                 </div>
               </motion.div>
@@ -172,14 +182,16 @@ export default function Home() {
               className="flex flex-col md:flex-row md:items-end justify-between mb-20 border-l-[8px] border-secondary pl-5"
             >
               <div>
-                <h2 className="text-2xl md:text-4xl font-bold text-slate-800 tracking-tight uppercase">ข่าวสาร CIS</h2>
+                <h2 className="text-2xl md:text-4xl font-bold text-slate-800 tracking-tight uppercase">
+                  {lang === 'EN' ? 'CIS News' : 'ข่าวสาร CIS'}
+                </h2>
               </div>
               <button
                 onClick={() => navigate('/news')}
                 className="mt-4 md:mt-0 flex items-center text-secondary font-bold group"
               >
                 <span className="bg-gradient-to-r from-current to-current bg-no-repeat bg-left-bottom bg-[length:0%_2px] group-hover:bg-[length:100%_2px] transition-[background-size] duration-300 pb-0.5">
-                  ดูข่าวทั้งหมด
+                  {lang === 'EN' ? 'View All News' : 'ดูข่าวทั้งหมด'}
                 </span>
                 <ArrowRightCircle size={20} className="ml-2 group-hover:translate-x-1 transition-transform" />
               </button>
@@ -187,61 +199,68 @@ export default function Home() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
               {newsList.length > 0 ? (
-                newsList.map((item, index) => (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
-                    whileHover={{ y: -4 }}
-                    onClick={() => navigate(`/news/${item.id}`)}
-                    className={`w-full sm:max-w-[380px] mx-auto bg-white rounded-[28px] overflow-hidden shadow-sm hover:shadow-lg transition-all duration-500 flex flex-col group cursor-pointer border
-                      ${item.isPinned ? 'border-indigo-100 bg-indigo-50/10' : 'border-slate-50'}`}
-                  >
-                    <div className="relative h-[220px] w-full overflow-hidden">
-                      <img src={item.image} alt={item.title} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                newsList.map((item, index) => {
+                  const displayTitle = lang === 'EN' && item.title_en ? item.title_en : item.title;
+                  const displayTag = getCategoryLabel(item.category, lang);
+                  const displayDate = formatNewsDate(item.rawDate, lang);
 
-                      {/* Tag หมวดหมู่ */}
-                      <div className="absolute top-4 left-4 bg-secondary text-white text-[10px] px-3 py-1.5 rounded-xl font-bold shadow-md">
-                        {item.tag}
-                      </div>
+                  return (
+                    <motion.div
+                      key={item.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                      whileHover={{ y: -4 }}
+                      onClick={() => navigate(`/news/${item.id}`)}
+                      className={`w-full sm:max-w-[380px] mx-auto bg-white rounded-[28px] overflow-hidden shadow-sm hover:shadow-lg transition-all duration-500 flex flex-col group cursor-pointer border
+                        ${item.isPinned ? 'border-indigo-100 bg-indigo-50/10' : 'border-slate-50'}`}
+                    >
+                      <div className="relative h-[220px] w-full overflow-hidden">
+                        <img src={item.image} alt={displayTitle} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
 
-                      {/* ✨ Badge ข่าวด่วน (Urgent) */}
-                      {item.isPinned && (
-                        <div className="absolute top-4 right-4 z-10 flex items-center gap-1.5">
-                          {/* จุดไฟกะพริบสีแดง */}
-                          <span className="relative flex h-3 w-3">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
-                          </span>
-
-                          {/* ตัวป้าย */}
-                          <div className="bg-rose-500 text-white text-[10px] px-3 py-1.5 rounded-full font-black shadow-[0_0_15px_rgba(244,63,94,0.4)] uppercase tracking-wider flex items-center gap-1">
-                            <AlertCircle size={12} strokeWidth={3} /> URGENT
-                          </div>
+                        {/* Tag หมวดหมู่ */}
+                        <div className="absolute top-4 left-4 bg-secondary text-white text-[10px] px-3 py-1.5 rounded-xl font-bold shadow-md">
+                          {displayTag}
                         </div>
-                      )}
-                    </div>
 
-                    <div className="px-7 pt-7 pb-6 flex flex-col flex-1 min-h-[190px]">
-                      <div className="flex items-center text-slate-400 text-[12px] mb-4 font-bold uppercase tracking-wider">
-                        <Clock size={14} className="mr-2 text-secondary/40" />
-                        ประกาศเมื่อ : {item.date}
+                        {/* ✨ Badge ข่าวด่วน (Urgent) */}
+                        {item.isPinned && (
+                          <div className="absolute top-4 right-4 z-10 flex items-center gap-1.5">
+                            <span className="relative flex h-3 w-3">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
+                            </span>
+                            <div className="bg-rose-500 text-white text-[10px] px-3 py-1.5 rounded-full font-black shadow-[0_0_15px_rgba(244,63,94,0.4)] uppercase tracking-wider flex items-center gap-1">
+                              <AlertCircle size={12} strokeWidth={3} /> URGENT
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <h3 className="text-[17px] font-bold text-slate-800 leading-[1.6] mb-4 line-clamp-2 group-hover:text-secondary transition-colors">
-                        {item.title}
-                      </h3>
 
-                      <div className="mt-auto pt-4 border-t border-slate-50 flex justify-between items-center">
-                        <span className="text-secondary text-[13px] font-bold">อ่านรายละเอียด</span>
-                        <ArrowRightCircle size={18} className="text-slate-300 group-hover:text-secondary group-hover:translate-x-1 transition-all" />
+                      <div className="px-7 pt-7 pb-6 flex flex-col flex-1 min-h-[190px]">
+                        <div className="flex items-center text-slate-400 text-[12px] mb-4 font-bold uppercase tracking-wider">
+                          <Clock size={14} className="mr-2 text-secondary/40" />
+                          {lang === 'EN' ? 'Published : ' : 'ประกาศเมื่อ : '}{displayDate}
+                        </div>
+                        <h3 className="text-[17px] font-bold text-slate-800 leading-[1.6] mb-4 line-clamp-2 group-hover:text-secondary transition-colors">
+                          {displayTitle}
+                        </h3>
+
+                        <div className="mt-auto pt-4 border-t border-slate-50 flex justify-between items-center">
+                          <span className="text-secondary text-[13px] font-bold">
+                            {lang === 'EN' ? 'Read More' : 'อ่านรายละเอียด'}
+                          </span>
+                          <ArrowRightCircle size={18} className="text-slate-300 group-hover:text-secondary group-hover:translate-x-1 transition-all" />
+                        </div>
                       </div>
-                    </div>
-                  </motion.div>
-                ))
+                    </motion.div>
+                  );
+                })
               ) : (
-                <p className="text-slate-400 col-span-full text-center py-20">ยังไม่มีข่าวประชาสัมพันธ์ล่าสุดในขณะนี้</p>
+                <p className="text-slate-400 col-span-full text-center py-20">
+                  {lang === 'EN' ? 'No recent news available at this time' : 'ยังไม่มีข่าวประชาสัมพันธ์ล่าสุดในขณะนี้'}
+                </p>
               )}
             </div>
           </section>
@@ -259,7 +278,9 @@ export default function Home() {
               transition={{ duration: 0.7 }}
               className="flex items-center mb-20 border-l-[8px] border-secondary pl-5"
             >
-              <h2 className="text-2xl md:text-4xl font-bold text-slate-800 tracking-tight uppercase">หลักสูตรแนะนำของเรา</h2>
+              <h2 className="text-2xl md:text-4xl font-bold text-slate-800 tracking-tight uppercase">
+                {lang === 'EN' ? 'Recommended Programs' : 'หลักสูตรแนะนำของเรา'}
+              </h2>
             </motion.div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
               {courses.slice(0, 4).map((course, index) => (
@@ -267,6 +288,7 @@ export default function Home() {
                   key={course.id}
                   course={course}
                   index={index}
+                  lang={lang}
                   onViewDetail={() => navigate(`/course-sections/${course.level}`)}
                 />
               ))}
@@ -278,6 +300,7 @@ export default function Home() {
                   <CourseCard
                     course={courses[4]}
                     index={4}
+                    lang={lang}
                     onViewDetail={() => navigate(`/course-sections/${courses[4].level}`)}
                   />
                 </div>
@@ -293,7 +316,10 @@ export default function Home() {
 }
 
 // คอมโพเนนต์การ์ดหลักสูตร
-function CourseCard({ course, index = 0, onViewDetail }) {
+function CourseCard({ course, index = 0, lang, onViewDetail }) {
+  const displayTitle = lang === 'EN' && course.enTitle ? course.enTitle : course.title;
+  const displaySub = lang === 'EN' ? (course.title !== course.enTitle ? course.title : '') : course.enTitle;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -304,21 +330,25 @@ function CourseCard({ course, index = 0, onViewDetail }) {
       className="bg-white p-8 rounded-[28px] shadow-[0_8px_30px_rgba(63,81,181,0.08)] border border-slate-100 flex flex-col lg:flex-row space-y-6 lg:space-y-0 lg:space-x-8 hover:shadow-xl transition-all duration-500 group"
     >
       <div className="w-full lg:w-56 h-56 rounded-3xl shrink-0 overflow-hidden bg-slate-50 shadow-inner">
-        <img src={course.image} alt={course.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+        <img src={course.image} alt={displayTitle} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
       </div>
       <div className="flex flex-col justify-between py-2 flex-1 text-left">
         <div>
           <span className="text-xs text-slate-400 font-bold flex items-center mb-4 uppercase tracking-widest">
-            <Calendar size={14} className="mr-2 text-indigo-300" /> อัปเดตเมื่อ: {course.date}
+            <Calendar size={14} className="mr-2 text-indigo-300" />
+            {lang === 'EN' ? 'Updated: ' : 'อัปเดตเมื่อ: '} {course.date}
           </span>
-          <h4 className="text-slate-800 font-bold text-[20px] leading-[1.4] mb-4 group-hover:text-secondary transition-colors">{course.title}</h4>
-          <p className="text-[13px] text-slate-400 italic font-light leading-relaxed line-clamp-2 uppercase tracking-tight">{course.enTitle}</p>
+          <h4 className="text-slate-800 font-bold text-[20px] leading-[1.4] mb-4 group-hover:text-secondary transition-colors">{displayTitle}</h4>
+          {displaySub && (
+            <p className="text-[13px] text-slate-400 italic font-light leading-relaxed line-clamp-2 uppercase tracking-tight">{displaySub}</p>
+          )}
         </div>
         <button
           onClick={onViewDetail}
           className="bg-secondary text-white text-[14px] px-10 py-3.5 rounded-full w-fit font-bold hover:bg-indigo-800 transition-all flex items-center shadow-lg hover:shadow-indigo-200 mt-8 active:scale-95"
         >
-          <ArrowRightCircle size={18} className="mr-2" /> รายละเอียดหลักสูตร
+          <ArrowRightCircle size={18} className="mr-2" />
+          {lang === 'EN' ? 'Program Details' : 'รายละเอียดหลักสูตร'}
         </button>
       </div>
     </motion.div>

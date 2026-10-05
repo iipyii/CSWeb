@@ -111,7 +111,18 @@ export const getActiveNews = async (req, res) => {
 // ✅ POST news (admin only)
 export const createNews = async (req, res) => {
   try {
-    const { title, content, summary, category, start_date, end_date, is_urgent } = req.body;
+    const {
+      title,
+      title_en,
+      content,
+      content_en,
+      summary,
+      summary_en,
+      category,
+      start_date,
+      end_date,
+      is_urgent
+    } = req.body;
 
     // 1. ดึงไฟล์รูปหน้าปก (ถ้ามี)
     const imagePath = req.files?.['image'] ? `/uploads/${req.files['image'][0].filename}` : null;
@@ -154,8 +165,11 @@ export const createNews = async (req, res) => {
     const news = await prisma.news.create({
       data: {
         title,
+        title_en: title_en || null,
         content,
+        content_en: content_en || null,
         summary: summary || null,
+        summary_en: summary_en || null,
         category,
         image: imagePath,
         status: finalStatus,
@@ -210,8 +224,11 @@ export const updateNews = async (req, res) => {
 
     const {
       title,
+      title_en,
       content,
+      content_en,
       summary,
+      summary_en,
       category,
       status,
       start_date,
@@ -310,8 +327,11 @@ export const updateNews = async (req, res) => {
     // 4. ข้อมูลสำหรับอัปเดตลง Database (ถ้า field ไหนไม่ได้ส่งมา ให้คงของเดิมไว้ทั้งหมด)
     const updateData = {
       title: title !== undefined ? title : existing.title,
+      title_en: title_en !== undefined ? (title_en || null) : existing.title_en,
       content: content !== undefined ? content : existing.content,
+      content_en: content_en !== undefined ? (content_en || null) : existing.content_en,
       summary: summary !== undefined ? summary : existing.summary,
+      summary_en: summary_en !== undefined ? (summary_en || null) : existing.summary_en,
       category: category !== undefined ? category : existing.category,
       status: finalStatus,
       start_date: finalStartDate,
@@ -549,5 +569,93 @@ export const downloadAttachment = async (req, res) => {
   } catch (error) {
     console.error("Download attachment error:", error);
     res.status(500).json({ error: "Failed to download file" });
+  }
+};
+
+// ✅ แปลข่าวสารเป็นภาษาอังกฤษด้วย Gemini AI
+export const translateNewsAI = async (req, res) => {
+  try {
+    const { title, content, summary } = req.body;
+
+    if (!title && !content) {
+      return res.status(400).json({ error: "Title or content is required for translation" });
+    }
+
+    const prompt = `You are a professional academic translator and copywriter for the Department of Computer and Information Science (CIS), Faculty of Applied Science, King Mongkut's University of Technology North Bangkok (KMUTNB).
+
+Translate the following Thai university news announcement into fluent, professional, and elegant English:
+
+[THAI INPUT]
+- Title: ${title || ""}
+- Summary: ${summary || ""}
+- Content (HTML/Rich-text):
+${content || ""}
+
+[RULES]
+1. Translate into natural, formal academic/institutional English suitable for a university portal.
+2. For Thai Buddhist years, convert to Western calendar year (e.g. 2569 -> 2026, 2570 -> 2027) where appropriate.
+3. Preserve all HTML structure, tags (e.g. <p>, <strong>, <em>, <ul>, <li>, <a>, <br>, <h1>-<h6>), inline styles, and attributes in the content exactly. Do not strip or alter the HTML tags; only translate the readable text inside them.
+4. If summary was empty or brief, create a clear, engaging 1-2 sentence English summary.
+5. Return ONLY a valid JSON object matching this structure:
+{
+  "title_en": "English title here",
+  "summary_en": "English summary here",
+  "content_en": "English rich-text HTML content here"
+}`;
+
+    const GEMINI_MODELS = [
+      "gemini-2.5-flash",
+      "gemini-2.0-flash",
+      "gemini-1.5-flash"
+    ];
+
+    let translatedData = null;
+    const key = process.env.GEMINI_API_KEY;
+
+    for (const model of GEMINI_MODELS) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: {
+                temperature: 0.2,
+                responseMimeType: "application/json"
+              }
+            })
+          }
+        );
+
+        const data = await response.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) {
+          try {
+            const cleanJson = text.replace(/```json/g, "").replace(/```/g, "").trim();
+            translatedData = JSON.parse(cleanJson);
+            break;
+          } catch (pe) {
+            console.error("JSON parse error:", pe);
+          }
+        }
+      } catch (err) {
+        console.warn(`Model ${model} failed in translateNewsAI:`, err.message);
+      }
+    }
+
+    if (!translatedData) {
+      return res.status(500).json({ error: "ไม่สามารถแปลภาษาด้วย AI ได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง" });
+    }
+
+    res.json({
+      title_en: translatedData.title_en || "",
+      summary_en: translatedData.summary_en || "",
+      content_en: translatedData.content_en || ""
+    });
+  } catch (error) {
+    console.error("translateNewsAI error:", error);
+    res.status(500).json({ error: error.message || "Translation error" });
   }
 };

@@ -9,13 +9,17 @@ import {
   Maximize2,
   User,
   FileText,
-  Download
+  Download,
+  Info
 } from 'lucide-react';
 
 import Footer from '../components/Footer';
 import { formatThaiDate } from '../utils/thaiText';
+import { useLanguage } from '../context/LanguageContext';
+import { formatNewsDate, getCategoryLabel } from './News';
 
 const NewsDetail = () => {
+  const { lang } = useLanguage();
   const { id } = useParams();
   const navigate = useNavigate();
   const [zoomedImage, setZoomedImage] = useState(null);
@@ -38,12 +42,13 @@ const NewsDetail = () => {
 
         setNews({
           ...data,
+          title_en: data.title_en,
+          content_en: data.content_en,
+          summary_en: data.summary_en,
           image: data.image ? `${data.image}` : "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800",
-          
           additional_images: safeParseArray(data.additional_images).map(img => `${img}`),
-          
           attachments: safeParseArray(data.attachments),
-
+          rawDate: data.start_date || data.created_at,
           date: formatThaiDate(data.start_date || data.created_at),
           tag: data.category === 'department' ? 'ข่าวภาควิชาฯ' : 'ข่าวสาร',
           author: 'ผู้ดูแลระบบ', 
@@ -136,12 +141,12 @@ const NewsDetail = () => {
       <div className="max-w-4xl mx-auto px-6 py-6">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center text-gray-500 hover:text-[#3F51B5] font-medium transition-all group text-sm"
+          className="flex items-center text-gray-500 hover:text-[#3F51B5] font-medium transition-all group text-sm cursor-pointer"
         >
           <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center mr-2 group-hover:shadow-md transition-all border border-gray-100">
             <ChevronLeft size={18} />
           </div>
-          ย้อนกลับ
+          {lang === 'EN' ? 'Back' : 'ย้อนกลับ'}
         </button>
       </div>
 
@@ -155,19 +160,19 @@ const NewsDetail = () => {
           >
             <img
               src={news.image}
-              alt={news.title}
+              alt={lang === 'EN' && news.title_en ? news.title_en : news.title}
               className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
 
             <div className="absolute top-6 left-6">
               <span className="bg-[#3F51B5] text-white text-[10px] px-4 py-1.5 rounded-full font-bold shadow-md uppercase tracking-wide">
-                {news.tag}
+                {getCategoryLabel(news.category, lang)}
               </span>
             </div>
 
             <div className="absolute bottom-4 right-6 bg-black/40 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg text-xs font-light flex items-center opacity-0 group-hover/img:opacity-100 transition-opacity border border-white/20">
-              <Maximize2 size={14} className="mr-1.5" /> คลิกเพื่อดูรูปเต็ม
+              <Maximize2 size={14} className="mr-1.5" /> {lang === 'EN' ? 'Click to view full image' : 'คลิกเพื่อดูรูปเต็ม'}
             </div>
           </div>
 
@@ -175,16 +180,24 @@ const NewsDetail = () => {
             {/* ข้อมูล Metadata */}
             <div className="flex flex-wrap items-center gap-3 mb-6 text-gray-500 text-[13px] font-medium">
               <div className="flex items-center bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
-                <Calendar size={14} className="mr-2 text-[#3F51B5]" /> {news.date}
+                <Calendar size={14} className="mr-2 text-[#3F51B5]" /> {formatNewsDate(news.rawDate, lang)}
               </div>
               <div className="flex items-center bg-indigo-50/50 px-3 py-1.5 rounded-lg border border-indigo-100/50 text-[#3F51B5]">
                 <User size={14} className="mr-2" />
-                <span>{news.author}</span>
+                <span>{lang === 'EN' ? 'Administrator' : news.author}</span>
               </div>
             </div>
 
+            {/* แจ้งเตือนกรณีเปิดดูเวอร์ชัน EN แต่ยังไม่มีข้อมูลแปล */}
+            {lang === 'EN' && !news.title_en && (
+              <div className="mb-6 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center gap-2.5">
+                <Info size={18} className="text-amber-600 shrink-0" />
+                <span>Notice: This announcement is currently available only in Thai.</span>
+              </div>
+            )}
+
             <h1 className="text-2xl md:text-3xl font-bold text-[#1E293B] leading-[1.3] mb-8">
-              {news.title}
+              {lang === 'EN' && news.title_en ? news.title_en : news.title}
             </h1>
 
             <div className="w-12 h-1 bg-[#3F51B5] rounded-full mb-8 opacity-80"></div>
@@ -192,7 +205,7 @@ const NewsDetail = () => {
             {/* รายละเอียดเนื้อหาฉบับเต็ม */}
             <article
               className="news-content overflow-x-hidden prose prose-slate max-w-none text-gray-600 text-base md:text-lg leading-[1.7] mb-12 font-light"
-              dangerouslySetInnerHTML={{ __html: news.content }}
+              dangerouslySetInnerHTML={{ __html: (lang === 'EN' && news.content_en) ? news.content_en : news.content }}
             />
 
             {/* 🌟 1. ส่วนแสดงรูปภาพเพิ่มเติม 🌟 */}
@@ -200,7 +213,7 @@ const NewsDetail = () => {
               <div className="mb-12">
                 <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
                   <div className="w-1.5 h-6 bg-[#3F51B5] rounded-full"></div>
-                  รูปภาพเพิ่มเติม
+                  {lang === 'EN' ? 'Additional Images' : 'รูปภาพเพิ่มเติม'}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {news.additional_images.map((imgUrl, index) => (
@@ -228,7 +241,7 @@ const NewsDetail = () => {
               <div className="mb-12 pt-8 border-t border-slate-100">
                 <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
                   <div className="w-1.5 h-6 bg-[#3F51B5] rounded-full"></div>
-                  เอกสารดาวน์โหลด
+                  {lang === 'EN' ? 'Download Attachments' : 'เอกสารดาวน์โหลด'}
                 </h3>
                 <div className="space-y-3">
                   {news.attachments.map((attItem, index) => {

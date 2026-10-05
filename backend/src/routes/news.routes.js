@@ -9,7 +9,8 @@ import {
   updateNews,
   deleteNews,
   getArchivedNews,
-  downloadAttachment
+  downloadAttachment,
+  translateNewsAI
 } from "../controllers/news.controller.js";
 
 import { upload } from "../middlewares/upload.middleware.js";
@@ -42,6 +43,7 @@ router.get("/archive", getArchivedNews);
 router.get("/attachment/download", downloadAttachment);
 router.get("/category/:category", getNewsByCategory);
 
+router.post("/ai-translate", translateNewsAI);
 router.get("/:id", getNewsById);
 
 router.put("/:id", handleUploadFields(newsUploadFields), updateNews);
