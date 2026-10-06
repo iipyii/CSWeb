@@ -12,7 +12,7 @@ const fadeInUp = {
 };
 
 export default function Administrator() {
-  const { t } = useLanguage();
+  const { lang, t } = useLanguage();
   const [lecturers, setLecturers] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -34,12 +34,27 @@ export default function Administrator() {
     return `${imagePath.startsWith("/") ? imagePath : "/" + imagePath}`;
   };
 
+  const getStaffName = (staff) => {
+    if (!staff) return "";
+    return (lang === 'EN' && staff.fullname_en) ? staff.fullname_en : staff.fullname_th;
+  };
+
+  const getStaffPosition = (staff, defaultThai = "อาจารย์ประจำ") => {
+    if (!staff) return "";
+    if (lang === 'EN') {
+      return staff.position_en || "Faculty Member";
+    }
+    return staff.position_th || defaultThai;
+  };
+
   if (loading) {
     return (
       <div className="bg-slate-50 min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center">
           <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="text-slate-500 font-medium text-sm">กำลังโหลดข้อมูลบุคลากรสายวิชาการ...</p>
+          <p className="text-slate-500 font-medium text-sm">
+            {lang === 'EN' ? 'Loading academic faculty...' : 'กำลังโหลดข้อมูลบุคลากรสายวิชาการ...'}
+          </p>
         </div>
       </div>
     );
@@ -48,7 +63,7 @@ export default function Administrator() {
   // 🔥 แบ่งกลุ่มจากตำแหน่ง
   const head = lecturers.find(l => 
     l.position_en === "Head of Department" || 
-    l.position_th?.includes("หัวหน้าภาควิชา") && !l.position_th?.includes("รอง") && !l.position_th?.includes("ผู้ช่วย")
+    (l.position_th?.includes("หัวหน้าภาควิชา") && !l.position_th?.includes("รอง") && !l.position_th?.includes("ผู้ช่วย"))
   );
   
   const deputy = lecturers.find(l => 
@@ -92,7 +107,9 @@ export default function Administrator() {
         {(head || deputy || assistants.length > 0) && (
           <section className="mb-24 text-center">
             <div className="mb-12">
-              <h2 className="text-2xl font-bold text-[#3F51B5]">ผู้บริหารภาควิชา</h2>
+              <h2 className="text-2xl font-bold text-[#3F51B5]">
+                {lang === 'EN' ? 'Department Executives' : 'ผู้บริหารภาควิชา'}
+              </h2>
               <div className="w-16 h-1 bg-[#3F51B5] mx-auto mt-4"></div>
             </div>
             
@@ -104,7 +121,7 @@ export default function Administrator() {
                     <div className="relative aspect-[3/4] w-64 mb-6 rounded-3xl overflow-hidden shadow-xl border-4 border-[#3F51B5]/20 bg-white group-hover:-translate-y-2 transition-all duration-300">
                       <img
                         src={getImageUrl(head.image_path)}
-                        alt={head.fullname_th}
+                        alt={getStaffName(head)}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                         onError={(e) => { e.target.src = "/img/placeholder-user.png"; }}
                       />
@@ -112,10 +129,10 @@ export default function Administrator() {
                     
                     <div className="w-full max-w-[400px] text-center px-4">
                       <h3 className="font-bold text-base md:text-[17px] text-slate-800 group-hover:text-[#3F51B5] whitespace-nowrap">
-                        {head.fullname_th}
+                        {getStaffName(head)}
                       </h3>
                       <p className="text-[#3F51B5] font-bold text-sm uppercase tracking-wide mt-1">
-                        {head.position_th}
+                        {getStaffPosition(head, "หัวหน้าภาควิชา")}
                       </p>
                     </div>
                   </motion.div>
@@ -131,7 +148,7 @@ export default function Administrator() {
                     <div className="relative aspect-[3/4] w-64 mb-6 rounded-3xl overflow-hidden shadow-xl border-4 border-[#3F51B5]/20 bg-white group-hover:-translate-y-2 transition-all duration-300">
                       <img
                         src={getImageUrl(deputy.image_path)}
-                        alt={deputy.fullname_th}
+                        alt={getStaffName(deputy)}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                         onError={(e) => { e.target.src = "/img/placeholder-user.png"; }}
                       />
@@ -139,10 +156,10 @@ export default function Administrator() {
                     
                     <div className="w-full max-w-[400px] text-center px-4">
                       <h3 className="font-bold text-base md:text-[17px] text-slate-800 group-hover:text-[#3F51B5] whitespace-nowrap">
-                        {deputy.fullname_th}
+                        {getStaffName(deputy)}
                       </h3>
                       <p className="text-[#3F51B5] font-bold text-sm uppercase tracking-wide mt-1">
-                        {deputy.position_th}
+                        {getStaffPosition(deputy, "รองหัวหน้าภาควิชา")}
                       </p>
                     </div>
                   </motion.div>
@@ -162,14 +179,14 @@ export default function Administrator() {
                     <motion.div 
                       variants={fadeInUp} 
                       initial="hidden" 
-                      whileInView="visible"
+                      whileInView="visible" 
                       className="flex flex-col items-center"
                     >
                       <div className="relative aspect-[3/4] w-48 mb-6 rounded-2xl overflow-hidden shadow-md border-2 border-white bg-white group-hover:shadow-xl group-hover:-translate-y-2 transition-all duration-300">
                         <div className="w-full h-full bg-slate-100 flex items-center justify-center">
                           <img
                             src={getImageUrl(staff.image_path)}
-                            alt={staff.fullname_th}
+                            alt={getStaffName(staff)}
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                             onError={(e) => { e.target.src = "/img/placeholder-user.png"; }}
                           />
@@ -178,10 +195,10 @@ export default function Administrator() {
 
                       <div className="w-full max-w-[280px] text-center px-2">
                         <h4 className="font-bold text-slate-800 text-[14px] md:text-[15px] group-hover:text-[#3F51B5] transition-colors">
-                          {staff.fullname_th}
+                          {getStaffName(staff)}
                         </h4>
                         <p className="text-[11px] text-[#3F51B5] font-black uppercase tracking-tighter mt-1.5 leading-tight">
-                          {staff.position_th}
+                          {getStaffPosition(staff, "ผู้ช่วยหัวหน้าภาควิชา")}
                         </p>
                       </div>
                     </motion.div>
@@ -195,7 +212,9 @@ export default function Administrator() {
         {/* คณาจารย์ประจำ (Faculty Section) */}
         <section className="text-center">
           <div className="mb-16">
-            <h2 className="text-2xl font-bold text-[#3F51B5]">คณาจารย์</h2>
+            <h2 className="text-2xl font-bold text-[#3F51B5]">
+              {lang === 'EN' ? 'Academic Faculty' : 'คณาจารย์'}
+            </h2>
             <div className="w-16 h-1 bg-[#3F51B5] mx-auto mt-4"></div>
           </div>
 
@@ -209,14 +228,14 @@ export default function Administrator() {
                 <motion.div 
                   variants={fadeInUp} 
                   initial="hidden" 
-                  whileInView="visible"
+                  whileInView="visible" 
                   className="flex flex-col items-center"
                 >
                   <div className="relative aspect-[3/4] w-48 mb-6 rounded-2xl overflow-hidden shadow-sm border border-slate-100 bg-white group-hover:shadow-lg group-hover:-translate-y-2 transition-all duration-300">
                     <div className="w-full h-full bg-slate-50 flex items-center justify-center">
                       <img
                         src={getImageUrl(staff.image_path)}
-                        alt={staff.fullname_th}
+                        alt={getStaffName(staff)}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                         onError={(e) => { e.target.src = "/img/placeholder-user.png"; }}
                       />
@@ -225,10 +244,10 @@ export default function Administrator() {
 
                   <div className="w-full max-w-[260px] px-1">
                     <h4 className="font-bold text-slate-800 text-[13.5px] md:text-[14px] group-hover:text-[#3F51B5] transition-colors">
-                      {staff.fullname_th}
+                      {getStaffName(staff)}
                     </h4>
                     <p className="text-[11px] text-[#3F51B5] font-medium mt-1.5 opacity-80">
-                      {staff.position_th || "อาจารย์ประจำ"}
+                      {getStaffPosition(staff, "อาจารย์ประจำ")}
                     </p>
                   </div>
                 </motion.div>

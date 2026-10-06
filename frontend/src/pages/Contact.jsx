@@ -5,12 +5,17 @@ import axios from 'axios';
 import Footer from '../components/Footer';
 import { useLanguage } from '../context/LanguageContext';
 
-const defaultContactInfo = {
+const defaultContactInfoTh = {
   name: "ภาควิชาวิทยาการคอมพิวเตอร์และสารสนเทศ",
+  name_en: "Department of Computer and Information Science",
   faculty: "คณะวิทยาศาสตร์ประยุกต์ มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ",
+  faculty_en: "Faculty of Applied Science, King Mongkut's University of Technology North Bangkok",
   address: "1518 ถนนประชาราษฎร์ 1 แขวงวงศ์สว่าง เขตบางซื่อ กรุงเทพฯ 10800",
+  address_en: "1518 Pracharat 1 Rd., Wongsawang, Bangsue, Bangkok 10800, Thailand",
   phone: "02-555-2000 ต่อ 4601, 4602 (ในเวลาราชการ)",
+  phone_en: "02-555-2000 ext. 4601, 4602 (Official Hours)",
   officeHours: "จันทร์ - ศุกร์ | 08:30 - 16:30 น.",
+  officeHours_en: "Monday - Friday | 08:30 AM - 04:30 PM",
   facebook: "CIS KMUTNB",
   facebookUrl: "https://www.facebook.com/profile.php?id=100057122843991#",
   mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3874.331163158434!2d100.51184657589574!3d13.819129595749764!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x30e29b9f7158782f%3A0xc3f832729a8a783!2sDepartment%20of%20Computer%20and%20Information%20Science%20(CIS)%2C%20KMUTNB!5e0!3m2!1sen!2sth!4v1708600000000!5m2!1sen!2sth"
@@ -26,8 +31,8 @@ const cardVariants = {
 };
 
 export default function Contact() {
-  const { t } = useLanguage();
-  const [contactInfo, setContactInfo] = useState(defaultContactInfo);
+  const { lang, t } = useLanguage();
+  const [contactInfo, setContactInfo] = useState(defaultContactInfoTh);
 
   useEffect(() => {
     const fetchContact = async () => {
@@ -42,6 +47,12 @@ export default function Contact() {
     };
     fetchContact();
   }, []);
+
+  const displayName = lang === 'EN' ? (contactInfo.name_en || defaultContactInfoTh.name_en) : contactInfo.name;
+  const displayFaculty = lang === 'EN' ? (contactInfo.faculty_en || defaultContactInfoTh.faculty_en) : contactInfo.faculty;
+  const displayAddress = lang === 'EN' ? (contactInfo.address_en || defaultContactInfoTh.address_en) : contactInfo.address;
+  const displayPhone = lang === 'EN' ? (contactInfo.phone_en || defaultContactInfoTh.phone_en) : contactInfo.phone;
+  const displayOfficeHours = lang === 'EN' ? (contactInfo.officeHours_en || defaultContactInfoTh.officeHours_en) : (contactInfo.officeHours || "จันทร์ - ศุกร์ | 08:30 - 16:30 น.");
 
   return (
     <div className="bg-slate-50 min-h-screen text-slate-700">
@@ -78,8 +89,8 @@ export default function Contact() {
               <div className="w-16 h-16 mb-6">
                  <img src="/cis-logo.svg" alt="CIS Logo" className="w-full h-full object-contain" />
               </div>
-              <h2 className="text-lg font-bold text-slate-800 mb-2 leading-tight">{contactInfo.name}</h2>
-              <p className="text-slate-500 text-xs font-light mb-8 leading-relaxed">{contactInfo.faculty}</p>
+              <h2 className="text-lg font-bold text-slate-800 mb-2 leading-tight">{displayName}</h2>
+              <p className="text-slate-500 text-xs font-light mb-8 leading-relaxed">{displayFaculty}</p>
               
               <div className="space-y-6">
                 <div className="flex items-start gap-4 group">
@@ -88,7 +99,7 @@ export default function Contact() {
                   </div>
                   <div>
                     <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">{t('contact_address')}</p>
-                    <p className="text-sm leading-relaxed text-slate-600">{contactInfo.address}</p>
+                    <p className="text-sm leading-relaxed text-slate-600">{displayAddress}</p>
                   </div>
                 </div>
 
@@ -98,7 +109,7 @@ export default function Contact() {
                   </div>
                   <div>
                     <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">{t('contact_phone')}</p>
-                    <p className="text-sm text-slate-600">{contactInfo.phone}</p>
+                    <p className="text-sm text-slate-600">{displayPhone}</p>
                   </div>
                 </div>
 
@@ -108,7 +119,7 @@ export default function Contact() {
                   </div>
                   <div>
                     <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">{t('contact_hours')}</p>
-                    <p className="text-sm text-slate-600">{contactInfo.officeHours || "จันทร์ - ศุกร์ | 08:30 - 16:30 น."}</p>
+                    <p className="text-sm text-slate-600">{displayOfficeHours}</p>
                   </div>
                 </div>
               </div>

@@ -3,9 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, FileText, Loader2, ExternalLink } from 'lucide-react';
 import Footer from '../components/Footer';
 import axios from "axios";
+import { useLanguage } from '../context/LanguageContext';
 
-// Map raw categories to user-friendly Thai display titles
-const categoryLabels = {
+// Map raw categories to user-friendly display titles
+const categoryLabelsTh = {
   'finance': 'งานการเงิน',
   'personnel': 'งานบุคคล',
   'academic': 'งานวิชาการ',
@@ -18,9 +19,60 @@ const categoryLabels = {
   'current-student': 'สำหรับนักศึกษาปัจจุบัน',
 };
 
-const getCategoryLabel = (category) => {
-  if (!category) return 'ทั่วไป';
-  return categoryLabels[category] || categoryLabels[category.toLowerCase()] || category;
+const categoryLabelsEn = {
+  'finance': 'Finance & Accounting Affairs',
+  'personnel': 'Human Resources & Personnel',
+  'academic': 'Academic Affairs',
+  'curriculum': 'Curriculum & Program Affairs',
+  'general': 'General Administration',
+  'special-project': 'Special Projects & Thesis',
+  'csb': 'Bilingual Program (CSB)',
+  'internship': 'Internship & Practicum',
+  'graduate': 'Graduate Studies',
+  'current-student': 'Current Students',
+};
+
+const thaiToEnCategory = {
+  'งานการเงิน': 'Finance & Accounting Affairs',
+  'งานบุคคล': 'Human Resources & Personnel',
+  'งานวิชาการ': 'Academic Affairs',
+  'งานหลักสูตร': 'Curriculum & Program Affairs',
+  'ทั่วไป': 'General Administration',
+  'โครงงานพิเศษ, ปริญญานิพนธ์': 'Special Projects & Thesis',
+  'โครงการสองภาษา (CSB)': 'Bilingual Program (CSB)',
+  'การฝึกงาน': 'Internship & Practicum',
+  'ระดับบัณฑิตศึกษา': 'Graduate Studies',
+  'สำหรับนักศึกษาปัจจุบัน': 'Current Students'
+};
+
+const getCategoryLabel = (category, lang = 'TH') => {
+  if (!category) return lang === 'EN' ? 'General' : 'ทั่วไป';
+  const cleanCat = category.trim();
+  if (lang === 'EN') {
+    if (thaiToEnCategory[cleanCat]) return thaiToEnCategory[cleanCat];
+    const lower = cleanCat.toLowerCase();
+    if (categoryLabelsEn[lower]) return categoryLabelsEn[lower];
+  }
+  return categoryLabelsTh[cleanCat] || categoryLabelsTh[cleanCat.toLowerCase()] || cleanCat;
+};
+
+const docTitleEnMap = {
+  'แบบฟอร์มขออนุมัติตัวบุคคลและค่าใช้จ่าย': 'Personnel and Expense Approval Request Form',
+  'แบบฟอร์มขออนุมัติเดินทางไปปฏิบัติงาน': 'Official Duty Travel & Transportation Request Form',
+  'แบบฟอร์มขอสอนชดเชย': 'Make-up Teaching Request Form',
+  'แบบคำร้องขอเปิดรายวิชา': 'Course Opening Request Form',
+  'แบบฟอร์มเบิกจ่ายค่าสอนพิเศษ': 'Extra Teaching Compensation Claim Form',
+  'แบบฟอร์มขอใช้ห้องปฏิบัติการ': 'Computer Laboratory Usage Request Form',
+  'แบบเสนอหัวข้อโครงงานพิเศษ': 'Special Project Proposal Form',
+  'แบบฟอร์มรายงานผลการศึกษา': 'Academic Progress Report Form',
+};
+
+const getLocalizedDocTitle = (item, lang = 'TH') => {
+  if (lang === 'EN') {
+    if (item.title_en) return item.title_en;
+    if (docTitleEnMap[item.title]) return docTitleEnMap[item.title];
+  }
+  return item.title;
 };
 
 // Generates a grouping key for merging identical documents across formats (e.g. PDF and DOCX)
@@ -77,6 +129,7 @@ const getFileSubtitle = (files) => {
 const formatOrder = { pdf: 1, docx: 2, doc: 3, xlsx: 4, xls: 5 };
 
 export default function StaffDownloads() {
+  const { lang } = useLanguage();
   const [openSections, setOpenSections] = useState([0]);
   const [downloads, setDownloads] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -122,6 +175,7 @@ export default function StaffDownloads() {
           topicMap.set(key, {
             id: item.id,
             title: getCleanTitle(item.title),
+            title_en: item.title_en,
             category: item.category,
             files: [],
           });
@@ -162,7 +216,9 @@ export default function StaffDownloads() {
       <section className="bg-[#3F51B5] text-white py-8 px-6 relative overflow-hidden">
         <div className="max-w-5xl mx-auto relative z-10">
           <motion.div initial={{ opacity: 0, y: -15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-            <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">แบบฟอร์มดาวน์โหลดสำหรับบุคลากร</h1>
+            <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">
+              {lang === 'EN' ? 'Staff Document Downloads' : 'แบบฟอร์มดาวน์โหลดสำหรับบุคลากร'}
+            </h1>
             <div className="w-12 h-1 bg-white/30 mb-5"></div>
           </motion.div>
         </div>
@@ -175,17 +231,21 @@ export default function StaffDownloads() {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-3">
             <Loader2 size={32} className="animate-spin text-[#3F51B5]" />
-            <p className="text-sm">กำลังโหลดเอกสารดาวน์โหลด...</p>
+            <p className="text-sm">
+              {lang === 'EN' ? 'Loading staff downloads...' : 'กำลังโหลดเอกสารดาวน์โหลด...'}
+            </p>
           </div>
         ) : Object.keys(grouped).length === 0 ? (
           <div className="bg-white rounded-2xl p-12 text-center border border-slate-100 shadow-sm text-slate-500">
             <FileText size={40} className="mx-auto mb-3 text-slate-300" />
-            <p className="font-semibold text-lg">ยังไม่มีรายการเอกสารสำหรับบุคลากร</p>
+            <p className="font-semibold text-lg">
+              {lang === 'EN' ? 'No staff documents available at this time.' : 'ยังไม่มีรายการเอกสารสำหรับบุคลากร'}
+            </p>
           </div>
         ) : (
           Object.entries(grouped).map(([category, items], sIdx) => {
             const isOpen = openSections.includes(sIdx);
-            const categoryTitle = getCategoryLabel(category);
+            const categoryTitle = getCategoryLabel(category, lang);
             return (
               <div key={sIdx} className="mb-6">
                 <button
@@ -199,7 +259,7 @@ export default function StaffDownloads() {
                     {categoryTitle}
                   </h2>
                   <span className="ml-auto text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
-                    {items.length} รายการ
+                    {items.length} {lang === 'EN' ? (items.length === 1 ? 'item' : 'items') : 'รายการ'}
                   </span>
                 </button>
 
@@ -217,9 +277,15 @@ export default function StaffDownloads() {
                           <table className="w-full min-w-[640px] text-left">
                             <thead className="bg-slate-50/80 border-b border-slate-100 text-slate-400">
                               <tr>
-                                <th className="px-6 py-4 text-xs font-bold w-16 text-center uppercase tracking-wider">ลำดับ</th>
-                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">ชื่อรายการเอกสาร</th>
-                                <th className="px-6 py-4 text-xs font-bold text-center w-48 uppercase tracking-wider">ไฟล์</th>
+                                <th className="px-6 py-4 text-xs font-bold w-16 text-center uppercase tracking-wider">
+                                  {lang === 'EN' ? 'No.' : 'ลำดับ'}
+                                </th>
+                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">
+                                  {lang === 'EN' ? 'Document Title' : 'ชื่อรายการเอกสาร'}
+                                </th>
+                                <th className="px-6 py-4 text-xs font-bold text-center w-48 uppercase tracking-wider">
+                                  {lang === 'EN' ? 'File / Format' : 'ไฟล์'}
+                                </th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
@@ -229,7 +295,7 @@ export default function StaffDownloads() {
                                   <td className="px-6 py-5 text-slate-700 text-[15px] group-hover:text-[#3F51B5] transition-colors">
                                     <div>
                                       <p className="font-medium text-slate-800 group-hover:text-[#3F51B5] transition-colors">
-                                        {item.title}
+                                        {getLocalizedDocTitle(item, lang)}
                                       </p>
                                       {item.files?.length > 0 && (
                                         <p className="text-xs text-slate-400 font-normal mt-0.5 flex items-center gap-1.5 flex-wrap">
@@ -258,7 +324,7 @@ export default function StaffDownloads() {
                                               target="_blank"
                                               rel="noopener noreferrer"
                                               className="px-3.5 py-1.5 rounded-lg text-[11px] font-bold border text-purple-700 border-purple-200 bg-purple-50 hover:bg-purple-600 hover:text-white transition-all active:scale-95 shadow-xs inline-flex items-center gap-1.5"
-                                              title={`เปิดลิงก์ ${file.file_name || item.title}`}
+                                              title={lang === 'EN' ? `Open link ${file.file_name || item.title}` : `เปิดลิงก์ ${file.file_name || item.title}`}
                                             >
                                               <ExternalLink size={12} />
                                               {file.file_type?.toUpperCase() || 'LINK'}
@@ -287,7 +353,7 @@ export default function StaffDownloads() {
                                             rel="noopener noreferrer"
                                             download={file.file_name || `${item.title}.${file.file_type || 'pdf'}`}
                                             className={`px-3.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all active:scale-95 inline-flex items-center gap-1 shadow-xs ${badgeStyle}`}
-                                            title={`ดาวน์โหลด ${file.file_name || file.file_type?.toUpperCase()}`}
+                                            title={lang === 'EN' ? `Download ${file.file_name || file.file_type?.toUpperCase()}` : `ดาวน์โหลด ${file.file_name || file.file_type?.toUpperCase()}`}
                                           >
                                             {file.file_type?.toUpperCase() || 'FILE'}
                                           </a>

@@ -52,8 +52,33 @@ const fadeInUp = {
   }
 };
 
+const roleTranslations = {
+  'หัวหน้าภาควิชาฯ': 'Head of Department',
+  'หัวหน้าภาควิชา': 'Head of Department',
+  'รองหัวหน้าภาควิชาฯ': 'Deputy Head of Department',
+  'รองหัวหน้าภาควิชา': 'Deputy Head of Department',
+  'ผู้ช่วยหัวหน้าภาควิชา': 'Assistant Head of Department',
+  'ผู้ช่วยหัวหน้าภาควิชาฯ': 'Assistant Head of Department',
+  'ฝ่ายสารสนเทศและวิจัย': 'Information Systems & Research',
+  'ฝ่ายกิจการนักศึกษา': 'Student Affairs',
+  'ประกันคุณภาพการศึกษาและบริหารความเสี่ยง': 'Quality Assurance & Risk Management',
+  'ฝ่ายสหกิจศึกษาและบริการวิชาการ': 'Cooperative Education & Academic Services',
+};
+
+const nameTranslations = {
+  'รศ.ดร.ธนภัทร์ อนุศาสน์อมรกุล': 'Assoc. Prof. Dr. Thanapat Anusas-amornkul',
+  'ผศ.ดร.ลือพล พิพานเมฆาภรณ์': 'Asst. Prof. Dr. Luepol Pipanmaekaporn',
+  'ผศ.ดร.นิกร สุทธิเสงี่ยม': 'Asst. Prof. Dr. Nikorn Sutthisangiam',
+  'ผศ.ดร.คันธารัตน์ อเนกบุณย์': 'Asst. Prof. Dr. Kantharat Anekboon',
+  'ผศ.ดร.อภิสิทธิ์ รัตนาตรานุรักษ์': 'Asst. Prof. Dr. Apisit Rattanatranurak',
+  'ผศ.ดร.สรร รัตนสัญญา': 'Asst. Prof. Dr. San Rattanasanya'
+};
+
+const getRoleEn = (role) => roleTranslations[role?.trim()] || role;
+const getNameEn = (name) => nameTranslations[name?.trim()] || name;
+
 export default function Organization() {
-  const { t } = useLanguage();
+  const { lang, t } = useLanguage();
   const [orgData, setOrgData] = useState(defaultOrgData);
   const [loading, setLoading] = useState(true);
 
@@ -123,8 +148,12 @@ export default function Organization() {
                     onError={(e) => { e.target.src = '/cis-logo.svg'; }}
                   />
                 </div>
-                <h3 className="text-[#3F51B5] font-bold text-lg mb-1">{orgData.head.name}</h3>
-                <p className="text-slate-500 text-sm font-medium">{orgData.head.role}</p>
+                <h3 className="text-[#3F51B5] font-bold text-lg mb-1">
+                  {lang === 'EN' ? getNameEn(orgData.head.name) : orgData.head.name}
+                </h3>
+                <p className="text-slate-500 text-sm font-medium">
+                  {lang === 'EN' ? getRoleEn(orgData.head.role) : orgData.head.role}
+                </p>
               </div>
             </motion.div>
           </div>
@@ -153,8 +182,12 @@ export default function Organization() {
                     onError={(e) => { e.target.src = '/cis-logo.svg'; }}
                   />
                 </div>
-                <h3 className="text-[#3F51B5] font-bold text-lg mb-1">{orgData.deputy.name}</h3>
-                <p className="text-slate-500 text-sm font-medium">{orgData.deputy.role}</p>
+                <h3 className="text-[#3F51B5] font-bold text-lg mb-1">
+                  {lang === 'EN' ? getNameEn(orgData.deputy.name) : orgData.deputy.name}
+                </h3>
+                <p className="text-slate-500 text-sm font-medium">
+                  {lang === 'EN' ? getRoleEn(orgData.deputy.role) : orgData.deputy.role}
+                </p>
               </div>
             </motion.div>
           </div>
@@ -193,11 +226,17 @@ export default function Organization() {
                     onError={(e) => { e.target.src = '/cis-logo.svg'; }}
                   />
                 </div>
-                <h4 className="text-slate-800 font-bold text-sm mb-2 group-hover:text-[#3F51B5] transition-colors">{item.name}</h4>
+                <h4 className="text-slate-800 font-bold text-sm mb-2 group-hover:text-[#3F51B5] transition-colors">
+                  {lang === 'EN' ? getNameEn(item.name) : item.name}
+                </h4>
                 <div className="space-y-1">
-                  <p className="text-[#3F51B5] text-[10px] font-bold uppercase tracking-tighter leading-tight">{item.role}</p>
+                  <p className="text-[#3F51B5] text-[10px] font-bold uppercase tracking-tighter leading-tight">
+                    {lang === 'EN' ? getRoleEn(item.role) : item.role}
+                  </p>
                   {item.detail && (
-                    <p className="text-slate-400 text-[10px] font-light italic leading-tight">{item.detail}</p>
+                    <p className="text-slate-400 text-[10px] font-light italic leading-tight">
+                      {lang === 'EN' ? getRoleEn(item.detail) : item.detail}
+                    </p>
                   )}
                 </div>
               </div>

@@ -137,7 +137,7 @@ export default function Navbar() {
           label: t("nav_consult_student"), 
           href: "#", 
           submenu: [
-            { label: "ค้นหาอาจารย์ที่ปรึกษา", href: "/consult-student" },
+            { label: t("nav_search_advisor"), href: "/consult-student" },
           ]
         },
         { label: t("nav_internship"), href: "/internship" },

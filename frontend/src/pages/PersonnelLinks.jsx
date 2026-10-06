@@ -59,8 +59,33 @@ const defaultLinkData = [
   { title: "ระบบส่งเอกสาร OBE และ IDP", icon_name: "ClipboardCheck", color: "text-orange-500", url: "https://cs.kmutnb.ac.th/login.jsp" }
 ];
 
+const linkTitleEnMap = {
+  "ระบบเพื่องานทะเบียนนักศึกษา": "Student Registrar & Academic Records System",
+  "สหกรณ์ออมทรัพย์": "KMUTNB Savings and Credit Cooperative",
+  "ระบบเพื่อรายงานข้อมูลและสถิตินักศึกษา": "Student Information & Statistics Reporting (U-Report)",
+  "Microsoft Azure Dev Tool for Teaching": "Microsoft Azure Dev Tools for Teaching",
+  "KMUTNB Online Learning": "KMUTNB Online Learning Portal",
+  "บริการซอฟต์แวร์ลิขสิทธิ์": "Licensed Software Services",
+  "ระบบบริหารลูกหนี้เงินยืม": "Advance Loan & Debtor Management System",
+  "ระบบเบิกเงินสวัสดิการเกี่ยวกับการรักษาพยาบาล": "Medical Welfare Reimbursement System",
+  "ระบบสวัสดิการเกี่ยวกับการศึกษาของบุตร": "Children's Tuition Welfare System",
+  "ระบบสารสนเทศทรัพยากรมนุษย์ : Human Resources Information System (HRIS)": "Human Resources Information System (HRIS)",
+  "ระบบลาออนไลน์": "Online Leave Request System (PLS)",
+  "ระบบยื่นคำร้องสอนชดเชย": "Make-up Teaching Request System",
+  "แบบฟอร์มขออนุมัติตัวบุคคลและค่าใช้จ่าย": "Personnel & Expense Approval Request Form",
+  "ระบบส่งเอกสาร OBE และ IDP": "OBE & IDP Document Submission System",
+};
+
+const getLinkTitle = (item, lang = 'TH') => {
+  if (lang === 'EN') {
+    if (item.title_en) return item.title_en;
+    if (linkTitleEnMap[item.title]) return linkTitleEnMap[item.title];
+  }
+  return item.title;
+};
+
 export default function PersonnelLinks() {
-  const { t } = useLanguage();
+  const { lang, t } = useLanguage();
   const [links, setLinks] = useState(defaultLinkData);
   const [loading, setLoading] = useState(true);
 
@@ -107,7 +132,7 @@ export default function PersonnelLinks() {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400">
             <RefreshCw className="animate-spin mb-4 text-[#3F51B5]" size={32} />
-            <p>กำลังดึงข้อมูลลิงก์...</p>
+            <p>{lang === 'EN' ? 'Loading personnel links...' : 'กำลังดึงข้อมูลลิงก์...'}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -134,7 +159,7 @@ export default function PersonnelLinks() {
                   </div>
                   {/* Link Title */}
                   <h3 className="text-[15px] font-bold text-slate-700 leading-relaxed group-hover:text-[#3F51B5] transition-colors">
-                    {item.title}
+                    {getLinkTitle(item, lang)}
                   </h3>
                 </motion.a>
               );

@@ -1,10 +1,62 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ChevronDown, HelpCircle, MessageCircle, Loader2 } from 'lucide-react';
+import { Search, ChevronDown, MessageCircle, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import Footer from '../components/Footer';
+import { useLanguage } from '../context/LanguageContext';
+
+const categoryMap = {
+  all: { th: 'ทั้งหมด', en: 'All' },
+  'หลักสูตร': { th: 'หลักสูตร', en: 'Curriculum' },
+  'ฝึกงาน': { th: 'ฝึกงาน', en: 'Internship' },
+  'ทั่วไป': { th: 'ทั่วไป', en: 'General' },
+};
+
+const faqTranslations = {
+  1: {
+    question_en: "What is the tuition fee and course overview per semester?",
+    answer_en: "The curriculum focuses on computer programming, data structures, algorithms, database systems, web & mobile app development, artificial intelligence (AI), and cybersecurity, blending theory with hands-on practice. (Tuition is approximately 19,000 - 24,000 THB per semester for regular programs; please refer to official announcements for exact fee schedules)."
+  },
+  2: {
+    question_en: "What is the difference between an Internship and Cooperative Education (Co-op)?",
+    answer_en: "A standard internship is conducted during the summer break for approximately 2 months. In contrast, Cooperative Education (Co-op) requires full-time professional immersion at an enterprise or partner company for a full semester (approx. 4-6 months), giving students deeper career readiness and evaluated as formal coursework."
+  },
+  3: {
+    question_en: "What career paths can CIS graduates pursue?",
+    answer_en: "Graduates can pursue high-demand technology roles, including Software Developer, Data Scientist, Systems Analyst, Network Engineer, UX/UI Designer, Cybersecurity Analyst, Cloud Architect, or launch tech entrepreneurship ventures."
+  },
+  4: {
+    question_en: "Where is the department office located, and how can I contact them?",
+    answer_en: "The Department of Computer and Information Science is located at Building 78, 2nd Floor, Faculty of Applied Science, King Mongkut's University of Technology North Bangkok (KMUTNB). You can reach the department office by phone at +66 2 555-2000 ext. 4601."
+  }
+};
+
+const getCategoryLabel = (cat, lang) => {
+  if (cat === 'all') return lang === 'EN' ? 'All' : 'ทั้งหมด';
+  if (lang === 'EN') {
+    if (categoryMap[cat]?.en) return categoryMap[cat].en;
+  }
+  return categoryMap[cat]?.th || cat;
+};
+
+const getFaqQuestion = (faq, lang) => {
+  if (lang === 'EN') {
+    if (faq.question_en) return faq.question_en;
+    if (faqTranslations[faq.id]?.question_en) return faqTranslations[faq.id].question_en;
+  }
+  return faq.question;
+};
+
+const getFaqAnswer = (faq, lang) => {
+  if (lang === 'EN') {
+    if (faq.answer_en) return faq.answer_en;
+    if (faqTranslations[faq.id]?.answer_en) return faqTranslations[faq.id].answer_en;
+  }
+  return faq.answer;
+};
 
 export default function FAQ() {
+  const { lang } = useLanguage();
   const [faqs, setFaqs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -19,7 +71,7 @@ export default function FAQ() {
         if (Array.isArray(res.data) && res.data.length > 0) {
           setFaqs(res.data);
         } else {
-          // Fallback หากยังไม่มีข้อมูลใน DB
+          // Fallback
           setFaqs([
             {
               id: 1,
@@ -57,15 +109,18 @@ export default function FAQ() {
     fetchFaqs();
   }, []);
 
-  // ดึงหมวดหมู่ทั้งหมดที่มี
+  // หมวดหมู่ทั้งหมดที่มี
   const categories = ["all", ...Array.from(new Set(faqs.map(f => f.category).filter(Boolean)))];
 
-  // ฟังก์ชันกรองคำถามตามการค้นหาและหมวดหมู่
+  // กรองคำถามตามการค้นหาและหมวดหมู่
   const filteredFaqs = faqs.filter(faq => {
     const matchCategory = selectedCategory === "all" || faq.category === selectedCategory;
-    const matchSearch =
-      (faq.question || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (faq.answer || "").toLowerCase().includes(searchTerm.toLowerCase());
+    const q = getFaqQuestion(faq, lang).toLowerCase();
+    const a = getFaqAnswer(faq, lang).toLowerCase();
+    const origQ = (faq.question || "").toLowerCase();
+    const origA = (faq.answer || "").toLowerCase();
+    const s = searchTerm.toLowerCase();
+    const matchSearch = q.includes(s) || a.includes(s) || origQ.includes(s) || origA.includes(s);
     return matchCategory && matchSearch;
   });
 
@@ -76,31 +131,33 @@ export default function FAQ() {
   return (
     <div className="bg-slate-50 min-h-screen flex flex-col text-left">
       
-      {/* 🏛️ Header Section */}
+      {/* Header Section */}
       <section className="bg-[#3F51B5] text-white py-8 px-6 relative overflow-hidden">
-              <div className="max-w-5xl mx-auto relative z-10">
-                <motion.div
-                  initial={{ opacity: 0, y: -15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8 }}
-                >
-                  <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">คำถามที่พบบ่อย</h1>
-                  <div className="w-12 h-1 bg-white/30 mb-5"></div>
-                </motion.div>
-              </div>
-              <div className="absolute right-[0%] bottom-[5%] opacity-5 select-none pointer-events-none">
-                <h2 className="text-[5rem] font-bold">CIS</h2>
-              </div>
-            </section>
+        <div className="max-w-5xl mx-auto relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: -15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">
+              {lang === 'EN' ? 'Frequently Asked Questions (FAQ)' : 'คำถามที่พบบ่อย'}
+            </h1>
+            <div className="w-12 h-1 bg-white/30 mb-5"></div>
+          </motion.div>
+        </div>
+        <div className="absolute right-[0%] bottom-[5%] opacity-5 select-none pointer-events-none">
+          <h2 className="text-[5rem] font-bold">CIS</h2>
+        </div>
+      </section>
 
-      {/* 📂 Main Content */}
+      {/* Main Content */}
       <main className="max-w-4xl mx-auto w-full px-6 md:px-10 py-16 flex-grow">
         
-        {/* 🔍 Search Bar */}
+        {/* Search Bar */}
         <div className="relative mb-6 group">
           <input
             type="text"
-            placeholder="ค้นหาคำถามที่ต้องการทราบ..."
+            placeholder={lang === 'EN' ? "Search questions or keywords..." : "ค้นหาคำถามที่ต้องการทราบ..."}
             className="w-full pl-14 pr-6 py-4 bg-white border border-slate-200 rounded-2xl shadow-sm focus:ring-2 focus:ring-[#3F51B5] focus:border-transparent transition-all outline-none text-slate-600"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -108,7 +165,7 @@ export default function FAQ() {
           <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#3F51B5] transition-colors" size={24} />
         </div>
 
-        {/* 🏷️ Category Filter Chips */}
+        {/* Category Filter Chips */}
         {categories.length > 1 && (
           <div className="flex flex-wrap gap-2 mb-10">
             {categories.map((cat) => (
@@ -121,17 +178,19 @@ export default function FAQ() {
                     : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"
                 }`}
               >
-                {cat === "all" ? "ทั้งหมด" : cat}
+                {getCategoryLabel(cat, lang)}
               </button>
             ))}
           </div>
         )}
 
-        {/* 📋 FAQ List */}
+        {/* FAQ List */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-3">
             <Loader2 className="animate-spin text-[#3F51B5]" size={36} />
-            <span>กำลังโหลดข้อมูลคำถาม-คำตอบ...</span>
+            <span>
+              {lang === 'EN' ? 'Loading frequently asked questions...' : 'กำลังโหลดข้อมูลคำถาม-คำตอบ...'}
+            </span>
           </div>
         ) : (
           <div className="space-y-4">
@@ -152,11 +211,11 @@ export default function FAQ() {
                       <div className="flex items-center gap-3 flex-wrap">
                         {faq.category && (
                           <span className="px-2.5 py-0.5 text-[11px] font-semibold rounded-full bg-indigo-50 text-[#3F51B5]">
-                            {faq.category}
+                            {getCategoryLabel(faq.category, lang)}
                           </span>
                         )}
                         <span className="font-bold text-slate-700 md:text-lg">
-                          {faq.question}
+                          {getFaqQuestion(faq, lang)}
                         </span>
                       </div>
                       <motion.div
@@ -167,31 +226,33 @@ export default function FAQ() {
                       </motion.div>
                     </button>
 
-                  <AnimatePresence>
-                    {openIndex === index && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <div className="px-6 pb-6 text-slate-500 leading-relaxed border-t border-slate-50 pt-4">
-                          {faq.answer}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
-              ))
-            ) : (
-              <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200">
-                <MessageCircle className="mx-auto text-slate-200 mb-4" size={48} />
-                <p className="text-slate-400">ไม่พบคำถามที่เกี่ยวข้องกับการค้นหา</p>
-              </div>
-            )}
-          </AnimatePresence>
-        </div>
-      )}
+                    <AnimatePresence>
+                      {openIndex === index && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <div className="px-6 pb-6 text-slate-500 leading-relaxed border-t border-slate-50 pt-4">
+                            {getFaqAnswer(faq, lang)}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                ))
+              ) : (
+                <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200">
+                  <MessageCircle className="mx-auto text-slate-200 mb-4" size={48} />
+                  <p className="text-slate-400">
+                    {lang === 'EN' ? 'No questions found matching your search.' : 'ไม่พบคำถามที่เกี่ยวข้องกับการค้นหา'}
+                  </p>
+                </div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
       </main>
 
       <Footer />

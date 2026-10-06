@@ -4,36 +4,15 @@ import { motion } from 'framer-motion';
 import { Mail, Phone, GraduationCap, BookOpen, ChevronLeft } from 'lucide-react';
 import axios from "axios";
 import Footer from '../components/Footer';
-
-// ฐานข้อมูลจำลองสำหรับดึงข้อมูลมาแสดงผล
-// const staffDatabase = {
-//   "รศดรธนภัทร์-อนุศาสน์อมรกุล": {
-//     name: "รองศาสตราจารย์ ดร.ธนภัทร์ อนุศาสน์อมรกุล (TNA)",
-//     engName: "Associate Professor Tanapat Anusas-amornkul, Ph.D.",
-//     image: "/img/staff/tanapat.jpg",
-//     email: "tanapat.a@sci.kmutnb.ac.th",
-//     phone: "0-2555-2000 ต่อ 4621",
-//     education: [
-//       "ปริญญาเอก Ph.D. (Information Science), University of Pittsburgh, USA",
-//       "ปริญญาโท MS. (Telecommunications), University of Colorado at Boulder, USA",
-//       "ปริญญาตรี วศ.บ. (วิศวกรรมไฟฟ้า) มหาวิทยาลัยเกษตรศาสตร์"
-//     ],
-//     publications: [
-//       "N. Bussabong and T. Anusas-amornkul, \"Enhanced Keystroke Dynamics Authentication Using Keystroke Vector Dissimilarity,\" 2023 15th International Conference on Information Technology and Electrical Engineering (ICITEE), Chiang Mai, Thailand, 2023, pp. 223-228.",
-//       "T. Anusas-amornkul, K. Intarak and B. Limthanmaphon, \"Security Enhancement on ECC Dynamic Point Encoding for IoT,\" 2020 Fourth World Conference on Smart Trends in Systems, Security and Sustainability (WorldS4), London, UK, 2020, pp. 443-448."
-//     ]
-//   }
-//   // คุณสามารถเพิ่มข้อมูลอาจารย์ท่านอื่นลงใน Object นี้ได้โดยใช้ชื่อเป็น Key
-// };
+import { useLanguage } from '../context/LanguageContext';
 
 export default function AdministratorDetail() {
   const { code } = useParams();
   const navigate = useNavigate();
+  const { lang } = useLanguage();
 
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  // ดึงข้อมูลตามชื่อจาก URL ถ้าไม่พบจะแสดงข้อมูลของหัวหน้าภาคเป็นตัวอย่าง (Fallback)
-  // const profile = staffDatabase[staffName] || staffDatabase["รศดรธนภัทร์-อนุศาสน์อมรกุล"];
 
   useEffect(() => {
     axios
@@ -48,8 +27,8 @@ export default function AdministratorDetail() {
       });
   }, [code]);
 
-  if (loading) return <p className="text-center mt-20">Loading...</p>;
-  if (!profile) return <p className="text-center mt-20">Not found</p>;
+  if (loading) return <p className="text-center mt-20">{lang === 'EN' ? 'Loading...' : 'กำลังโหลด...'}</p>;
+  if (!profile) return <p className="text-center mt-20">{lang === 'EN' ? 'Personnel not found' : 'ไม่พบข้อมูลบุคลากร'}</p>;
 
   // 🔥 แยกวุฒิการศึกษาตามบรรทัด
   const educationList = profile.education_th
@@ -59,6 +38,10 @@ export default function AdministratorDetail() {
       .map(e => e.trim())
       .filter(e => e !== "")
   : [];
+
+  const displayName = lang === 'EN' && profile.fullname_en ? profile.fullname_en : profile.fullname_th;
+  const displaySubName = lang === 'EN' ? profile.fullname_th : profile.fullname_en;
+  const displayPosition = lang === 'EN' ? (profile.position_en || profile.position_th) : profile.position_th;
 
   return (
     <div className="bg-white min-h-screen text-slate-700">
@@ -70,7 +53,9 @@ export default function AdministratorDetail() {
           className="flex items-center gap-2 text-slate-400 hover:text-[#3F51B5] transition-colors mb-12 group"
         >
           <ChevronLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-          <span className="text-sm font-medium">ย้อนกลับหน้าบุคลากร</span>
+          <span className="text-sm font-medium">
+            {lang === 'EN' ? 'Back to Personnel' : 'ย้อนกลับหน้าบุคลากร'}
+          </span>
         </button>
 
         <div className="flex flex-col md:flex-row gap-12 lg:gap-20 items-start">
@@ -86,7 +71,7 @@ export default function AdministratorDetail() {
                 src={profile.image_path
                   ? `${profile.image_path}`
                   : "/img/staff/default-avatar.jpg"}
-                alt={profile.fullname_th}
+                alt={displayName}
                 className="w-full h-full object-cover"
                 onError={(e) => { e.target.src = "/img/staff/default-avatar.jpg"; }}
               />
@@ -118,28 +103,25 @@ export default function AdministratorDetail() {
           >
             <div className="mb-12 border-b border-slate-100 pb-8">
               <h1 className="text-2xl md:text-3xl font-bold text-slate-800 mb-3 leading-tight">
-                {profile.fullname_th}
+                {displayName}
                 {" "}({profile.lecturer_code})
               </h1>
-              <p className="mb-4 text-lg md:text-xl text-[#3F51B5] font-light italic leading-relaxed">
-                {profile.fullname_en}
-              </p>
+              {displaySubName && (
+                <p className="mb-4 text-lg md:text-xl text-[#3F51B5] font-light italic leading-relaxed">
+                  {displaySubName}
+                </p>
+              )}
 
               <p className="mb-4 font-medium text-gray-600 flex flex-col">
-                {profile.position_th}
+                {displayPosition}
               </p>
-
-              <p className="mb-4 font-small text-gray-500 flex flex-col">
-                {profile.position_en}
-              </p>
-
             </div>
 
             {/* ส่วนวุฒิการศึกษา */}
             <section className="mb-16">
               <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-3">
                 <div className="w-1.5 h-8 bg-[#3F51B5] rounded-full"></div>
-                <GraduationCap className="text-[#3F51B5]" /> วุฒิการศึกษา
+                <GraduationCap className="text-[#3F51B5]" /> {lang === 'EN' ? 'Education' : 'วุฒิการศึกษา'}
               </h2>
               <ul className="space-y-4">
                 {educationList.map((edu, index) => (
@@ -155,13 +137,10 @@ export default function AdministratorDetail() {
             <section>
               <h2 className="text-xl font-bold text-slate-800 mb-8 flex items-center gap-3">
                 <div className="w-1.5 h-8 bg-[#3F51B5] rounded-full"></div>
-                <BookOpen className="text-[#3F51B5]" /> ผลงานทางวิชาการ
+                <BookOpen className="text-[#3F51B5]" /> {lang === 'EN' ? 'Academic Publications' : 'ผลงานทางวิชาการ'}
               </h2>
               <div className="space-y-10">
                 <div>
-                  {/* <h3 className="text-[#3F51B5] font-bold text-xs uppercase tracking-[0.2em] mb-6 opacity-80">
-                    International Conferences
-                  </h3> */}
                   <ul className="space-y-8">
                     {/* {profile.publications?.map((pub, index) => (
                       <li key={index} className="relative pl-8 border-l border-slate-100 pb-2">
