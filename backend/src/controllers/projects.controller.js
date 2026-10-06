@@ -27,8 +27,8 @@ export const getAllProjects = async (req, res) => {
       where,
       include: {
         student: { select: { id: true, firstname: true, lastname: true, student_id: true } },
-        advisor: { select: { id: true, fullname_th: true, lecturer_code: true } },
-        co_advisor: { select: { id: true, fullname_th: true, lecturer_code: true } }
+        advisor: { select: { id: true, fullname_th: true, fullname_en: true, lecturer_code: true } },
+        co_advisor: { select: { id: true, fullname_th: true, fullname_en: true, lecturer_code: true } }
       },
       orderBy: [
         { year: "desc" },
@@ -197,9 +197,9 @@ async function validateProjectStudents({
 export const createProject = async (req, res) => {
   try {
     const { 
-      title_th, title_en, abstract, year, semester, image_path, 
+      title_th, title_en, abstract, abstract_en, year, semester, image_path, 
       document_url, github_url, student1Id, student1Name, 
-      student2Id, student2Name, students_text, studentsList,
+      student2Id, student2Name, students_text, students_text_en, studentsList,
       advisor_id, co_advisor_id, student_id 
     } = req.body;
 
@@ -266,12 +266,14 @@ export const createProject = async (req, res) => {
         title_th,
         title_en: title_en || null,
         abstract: abstract || null,
+        abstract_en: abstract_en || null,
         image_path: image_path || null,
         document_url: document_url || null,
         github_url: github_url || null,
         year: year ? parseInt(year) : null,
         semester: semester ? parseInt(semester) : 1,
         students_text: finalStudentsText || null,
+        students_text_en: students_text_en || null,
         student_id: targetStudentId,
         advisor_id: advisor_id ? parseInt(advisor_id) : null,
         co_advisor_id: co_advisor_id ? parseInt(co_advisor_id) : null
@@ -294,9 +296,9 @@ export const updateProject = async (req, res) => {
   try {
     const { id } = req.params;
     const { 
-      title_th, title_en, abstract, year, semester, image_path, 
+      title_th, title_en, abstract, abstract_en, year, semester, image_path, 
       document_url, github_url, student1Id, student1Name, 
-      student2Id, student2Name, students_text, studentsList,
+      student2Id, student2Name, students_text, students_text_en, studentsList,
       advisor_id, co_advisor_id, student_id 
     } = req.body;
 
@@ -372,12 +374,14 @@ export const updateProject = async (req, res) => {
           title_th: title_th || undefined,
           title_en: title_en !== undefined ? title_en : undefined,
           abstract: abstract !== undefined ? abstract : undefined,
+          abstract_en: abstract_en !== undefined ? abstract_en : undefined,
           image_path: image_path !== undefined ? image_path : undefined,
           document_url: document_url !== undefined ? document_url : undefined,
           github_url: github_url !== undefined ? github_url : undefined,
           year: year ? parseInt(year) : undefined,
           semester: semester !== undefined ? parseInt(semester) : undefined,
           students_text: finalStudentsText !== undefined ? finalStudentsText : undefined,
+          students_text_en: students_text_en !== undefined ? students_text_en : undefined,
           student_id: targetStudentId,
           advisor_id: advisor_id !== undefined ? (advisor_id ? parseInt(advisor_id) : null) : undefined,
           co_advisor_id: co_advisor_id !== undefined ? (co_advisor_id ? parseInt(co_advisor_id) : null) : undefined

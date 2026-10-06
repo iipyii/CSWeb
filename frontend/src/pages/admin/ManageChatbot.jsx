@@ -60,8 +60,11 @@ export default function ManageChatbot() {
   const [editingFaq, setEditingFaq] = useState(null);
   const [faqFormData, setFaqFormData] = useState({
     keywords: "",
+    keywords_en: "",
     answer: "",
-    category: "ทั่วไป"
+    answer_en: "",
+    category: "ทั่วไป",
+    category_en: ""
   });
   const [submittingFaq, setSubmittingFaq] = useState(false);
 
@@ -104,8 +107,11 @@ export default function ManageChatbot() {
         setFaqList(faqRes.data.map(f => ({
           id: f.id,
           keywords: f.question,
+          keywords_en: f.question_en || "",
           answer: f.answer,
+          answer_en: f.answer_en || "",
           category: f.category || "ทั่วไป",
+          category_en: f.category_en || "",
           status: f.status
         })));
       }
@@ -152,15 +158,21 @@ export default function ManageChatbot() {
       setEditingFaq(faq);
       setFaqFormData({
         keywords: faq.keywords,
+        keywords_en: faq.keywords_en || "",
         answer: faq.answer,
-        category: faq.category || "ทั่วไป"
+        answer_en: faq.answer_en || "",
+        category: faq.category || "ทั่วไป",
+        category_en: faq.category_en || ""
       });
     } else {
       setEditingFaq(null);
       setFaqFormData({
         keywords: "",
+        keywords_en: "",
         answer: "",
-        category: faqCategoryFilter !== "all" ? faqCategoryFilter : "ทั่วไป"
+        answer_en: "",
+        category: faqCategoryFilter !== "all" ? faqCategoryFilter : "ทั่วไป",
+        category_en: ""
       });
     }
     setIsFaqModalOpen(true);
@@ -190,8 +202,11 @@ export default function ManageChatbot() {
       setSubmittingFaq(true);
       const payload = {
         question: faqFormData.keywords.trim(),
+        question_en: faqFormData.keywords_en.trim(),
         answer: faqFormData.answer.trim(),
-        category: faqFormData.category.trim()
+        answer_en: faqFormData.answer_en.trim(),
+        category: faqFormData.category.trim(),
+        category_en: faqFormData.category_en.trim()
       };
 
       if (editingFaq) {
@@ -460,18 +475,32 @@ export default function ManageChatbot() {
                           </span>
                         </td>
                         <td className="px-6 py-4 align-top max-w-[220px]">
-                          <div className="flex flex-wrap gap-1.5">
+                          <div className="flex flex-wrap gap-1.5 mb-2">
                             {item.keywords?.split(',').map((kw, i) => (
-                              <span key={i} className="px-2 py-0.5 bg-slate-100 text-slate-700 text-[11px] font-semibold rounded-md border border-slate-200">
+                              <span key={`th-${i}`} className="px-2 py-0.5 bg-slate-100 text-slate-700 text-[11px] font-semibold rounded-md border border-slate-200">
                                 {kw.trim()}
                               </span>
                             ))}
                           </div>
+                          {item.keywords_en && (
+                            <div className="flex flex-wrap gap-1.5">
+                              {item.keywords_en.split(',').map((kw, i) => (
+                                <span key={`en-${i}`} className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-[11px] font-semibold rounded-md border border-indigo-100">
+                                  {kw.trim()}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </td>
                         <td className="px-6 py-4 align-top">
-                          <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed font-normal whitespace-pre-line">
+                          <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed font-normal whitespace-pre-line mb-2">
                             {item.answer}
                           </p>
+                          {item.answer_en && (
+                            <p className="text-xs text-indigo-600/80 line-clamp-3 leading-relaxed font-normal whitespace-pre-line italic border-l-2 border-indigo-200 pl-2">
+                              {item.answer_en}
+                            </p>
+                          )}
                         </td>
                         <td className="px-6 py-4 align-top text-center">
                           <div className="flex justify-center items-center gap-1.5">
@@ -747,9 +776,9 @@ export default function ManageChatbot() {
               </div>
 
               <form onSubmit={handleSubmitFaq} className="p-6 md:p-8 space-y-5 overflow-y-auto">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-600">หมวดหมู่คำถาม</label>
-                  <div className="flex gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-600">หมวดหมู่คำถาม</label>
                     <select
                       value={faqFormData.category}
                       onChange={(e) => setFaqFormData({ ...faqFormData, category: e.target.value })}
@@ -760,6 +789,22 @@ export default function ManageChatbot() {
                       <option value="หลักสูตร">หลักสูตร & รายวิชา</option>
                       <option value="อาจารย์ที่ปรึกษา">อาจารย์ที่ปรึกษา</option>
                       <option value="ฝึกงาน">ฝึกงาน & สหกิจ</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-600">Category (English)</label>
+                    <select
+                      value={faqFormData.category_en}
+                      onChange={(e) => setFaqFormData({ ...faqFormData, category_en: e.target.value })}
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:ring-2 focus:ring-[#183153]/20"
+                    >
+                      <option value="">(None)</option>
+                      <option value="General">General</option>
+                      <option value="Student Handbook">Student Handbook</option>
+                      <option value="Curriculum & Courses">Curriculum & Courses</option>
+                      <option value="Academic Advisor">Academic Advisor</option>
+                      <option value="Internship & Co-op">Internship & Co-op</option>
                     </select>
                   </div>
                 </div>
@@ -782,14 +827,38 @@ export default function ManageChatbot() {
                 </div>
 
                 <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-600">
+                    Keywords (English)
+                  </label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. tuition, scholarships"
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:ring-2 focus:ring-[#183153]/20"
+                    value={faqFormData.keywords_en}
+                    onChange={(e) => setFaqFormData({...faqFormData, keywords_en: e.target.value})}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-600">คำตอบจาก AI (Response)</label>
                   <textarea 
-                    rows={6}
+                    rows={4}
                     placeholder="พิมพ์คำตอบที่ถูกต้อง ครบถ้วน เพื่อให้ AI ตอบแก่นักศึกษา..."
                     className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:ring-2 focus:ring-[#183153]/20 leading-relaxed"
                     value={faqFormData.answer}
                     onChange={(e) => setFaqFormData({...faqFormData, answer: e.target.value})}
                     required
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-600">Answer (English)</label>
+                  <textarea 
+                    rows={4}
+                    placeholder="Provide the English answer for international users..."
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:ring-2 focus:ring-[#183153]/20 leading-relaxed"
+                    value={faqFormData.answer_en}
+                    onChange={(e) => setFaqFormData({...faqFormData, answer_en: e.target.value})}
                   />
                 </div>
 

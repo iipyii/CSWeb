@@ -103,7 +103,7 @@ export const chatWithAI = async (req, res) => {
 
     // 2. ค้นหาใน FAQ (ใช้ pgvector)
     const faqResult = await prisma.$queryRaw`
-      SELECT question, answer, 
+      SELECT question, question_en, answer, answer_en, 
              embedding <-> ${vectorString}::vector AS distance
       FROM faq
       ORDER BY distance ASC
@@ -503,6 +503,9 @@ ${mastYears.length > 0 ? `- ระดับบัณฑิตศึกษา (�
 
     faqResult.forEach((faq) => {
       contextText += `[FAQ] คำถาม: ${faq.question} | คำตอบ: ${faq.answer}\n`;
+      if (faq.question_en || faq.answer_en) {
+        contextText += `[FAQ (English)] Question: ${faq.question_en || '-'} | Answer: ${faq.answer_en || '-'}\n`;
+      }
     });
 
     // 🎯 ใส่รายวิชา (เอา .filter ออก)
@@ -576,13 +579,15 @@ export const updateFaqVectors = async (req, res) => {
       select: {
         id: true,
         question: true,
-        answer: true
+        question_en: true,
+        answer: true,
+        answer_en: true
       }
     });
 
     let count = 0;
     for (const row of faqs) {
-      const textToEmbed = `คำถาม: ${row.question} คำตอบ: ${row.answer}`;
+      const textToEmbed = `คำถาม: ${row.question} คำตอบ: ${row.answer} ${row.question_en ? `Question: ${row.question_en}` : ''} ${row.answer_en ? `Answer: ${row.answer_en}` : ''}`;
       const vector = await getLocalEmbedding(textToEmbed);
       const vectorString = `[${vector.join(",")}]`;
 

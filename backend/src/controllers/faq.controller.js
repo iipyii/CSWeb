@@ -13,8 +13,11 @@ export const getActiveFAQ = async (req, res) => {
       select: {
         id: true,
         question: true,
+        question_en: true,
         answer: true,
+        answer_en: true,
         category: true,
+        category_en: true,
         status: true,
         created_at: true,
       },
@@ -46,13 +49,16 @@ export const getAllFAQ = async (req, res) => {
 // ✅ CREATE FAQ
 export const createFAQ = async (req, res) => {
   try {
-    const { question, answer, category } = req.body;
+    const { question, question_en, answer, answer_en, category, category_en } = req.body;
 
     const newFAQ = await prisma.faq.create({
       data: {
         question,
+        question_en,
         answer,
+        answer_en,
         category,
+        category_en,
         status: "active",
       },
     });
@@ -68,7 +74,7 @@ export const createFAQ = async (req, res) => {
 export const updateFAQ = async (req, res) => {
   try {
     const { id } = req.params;
-    const { question, answer, category, status } = req.body;
+    const { question, question_en, answer, answer_en, category, category_en, status } = req.body;
 
     const updated = await prisma.faq.update({
       where: {
@@ -76,8 +82,11 @@ export const updateFAQ = async (req, res) => {
       },
       data: {
         question,
+        question_en,
         answer,
+        answer_en,
         category,
+        category_en,
         status,
       },
     });

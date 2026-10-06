@@ -4,10 +4,12 @@ import { motion } from 'framer-motion';
 import { ChevronLeft, GraduationCap, BookOpen, Users, Calendar, Info, Loader2, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import Footer from '../components/Footer';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function ProjectDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { lang, t } = useLanguage();
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -20,20 +22,22 @@ export default function ProjectDetail() {
         setProject(res.data);
       } catch (err) {
         console.error("Failed to load project details:", err);
-        setError("ไม่พบข้อมูลโครงงาน หรือเกิดข้อผิดพลาดในการโหลด");
+        setError(lang === 'EN' ? "Senior project details not found or failed to load." : "ไม่พบข้อมูลโครงงาน หรือเกิดข้อผิดพลาดในการโหลด");
       } finally {
         setLoading(false);
       }
     };
     fetchProject();
-  }, [id]);
+  }, [id, lang]);
 
   if (loading) {
     return (
       <div className="bg-[#F8FAFC] min-h-screen flex flex-col">
         <div className="flex-grow flex items-center justify-center py-32 text-slate-400 gap-3">
           <Loader2 className="animate-spin text-[#3F51B5]" size={32} />
-          <span className="text-base font-medium">กำลังโหลดรายละเอียดโครงงาน...</span>
+          <span className="text-base font-medium">
+            {lang === 'EN' ? 'Loading project details...' : 'กำลังโหลดรายละเอียดโครงงาน...'}
+          </span>
         </div>
         <Footer />
       </div>
@@ -44,12 +48,14 @@ export default function ProjectDetail() {
     return (
       <div className="bg-[#F8FAFC] min-h-screen flex flex-col">
         <div className="flex-grow flex flex-col items-center justify-center py-32 text-center px-4">
-          <div className="text-rose-500 font-bold text-lg mb-2">{error || "ไม่พบข้อมูลโครงงาน"}</div>
+          <div className="text-rose-500 font-bold text-lg mb-2">
+            {error || (lang === 'EN' ? 'Project not found' : 'ไม่พบข้อมูลโครงงาน')}
+          </div>
           <button 
             onClick={() => navigate('/student-projects')}
             className="inline-flex items-center gap-2 mt-4 px-5 py-2.5 bg-[#3F51B5] text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all"
           >
-            <ArrowLeft size={16} /> กลับไปยังหน้ารายการโครงงาน
+            <ArrowLeft size={16} /> {lang === 'EN' ? 'Back to Projects' : 'กลับไปยังหน้ารายการโครงงาน'}
           </button>
         </div>
         <Footer />
@@ -59,11 +65,20 @@ export default function ProjectDetail() {
 
   // เตรียมรายชื่อนักศึกษา
   let studentList = [];
-  if (project.students_text) {
+  if (lang === 'EN' && project.students_text_en) {
+    studentList = project.students_text_en.split("\n").map(s => s.trim()).filter(Boolean);
+  } else if (project.students_text) {
     studentList = project.students_text.split("\n").map(s => s.trim()).filter(Boolean);
   } else if (project.student) {
     studentList = [`${project.student.firstname} ${project.student.lastname} (${project.student.student_id})`];
   }
+
+  const advisorName = (lang === 'EN' && project.advisor?.fullname_en) ? project.advisor.fullname_en : (project.advisor?.fullname_th || "");
+  const coAdvisorName = (lang === 'EN' && project.co_advisor?.fullname_en) ? project.co_advisor.fullname_en : (project.co_advisor?.fullname_th || "");
+
+  const displayAbstract = (lang === 'EN' && project.abstract_en) 
+    ? project.abstract_en 
+    : (project.abstract || (lang === 'EN' ? 'Abstract is currently being prepared.' : 'อยู่ระหว่างจัดทำและรวบรวมบทคัดย่อ'));
 
   return (
     <div className="bg-[#F8FAFC] min-h-screen flex flex-col text-left">
@@ -80,9 +95,11 @@ export default function ProjectDetail() {
               onClick={() => navigate('/student-projects')}
               className="inline-flex items-center gap-2 text-indigo-100 hover:text-white text-xs font-semibold mb-4 transition-colors"
             >
-              <ChevronLeft size={16} /> ย้อนกลับหน้ารายการโครงงาน
+              <ChevronLeft size={16} /> {lang === 'EN' ? 'Back to Projects List' : 'ย้อนกลับหน้ารายการโครงงาน'}
             </button>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight leading-snug">รายละเอียดโครงงาน</h1>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight leading-snug">
+              {lang === 'EN' ? 'Project Details' : 'รายละเอียดโครงงาน'}
+            </h1>
             <div className="w-12 h-1 bg-white/30 my-3"></div>
           </motion.div>
         </div>
@@ -98,26 +115,34 @@ export default function ProjectDetail() {
         <div className="bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden">
           <div className="bg-[#EEF2FF] px-8 py-4 border-b border-slate-100 flex items-center gap-2">
             <Info size={18} className="text-[#3F51B5]" />
-            <span className="text-[#3F51B5] font-bold text-sm">ข้อมูลโครงงาน</span>
+            <span className="text-[#3F51B5] font-bold text-sm">
+              {lang === 'EN' ? 'Project Information' : 'ข้อมูลโครงงาน'}
+            </span>
           </div>
           
           <div className="p-8 md:p-10 space-y-6 text-[15px]">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-y-4 md:gap-y-6">
-              <div className="md:col-span-3 font-bold text-slate-700">ชื่อโครงงาน (ภาษาไทย):</div>
+              <div className="md:col-span-3 font-bold text-slate-700">
+                {lang === 'EN' ? 'Thai Title:' : 'ชื่อโครงงาน (ภาษาไทย):'}
+              </div>
               <div className="md:col-span-9 text-slate-800 font-bold leading-relaxed">{project.title_th}</div>
 
               {project.title_en && (
                 <>
-                  <div className="md:col-span-3 font-bold text-slate-700">ชื่อโครงงาน (ภาษาอังกฤษ):</div>
+                  <div className="md:col-span-3 font-bold text-slate-700">
+                    {lang === 'EN' ? 'English Title:' : 'ชื่อโครงงาน (ภาษาอังกฤษ):'}
+                  </div>
                   <div className="md:col-span-9 text-slate-600 italic font-medium leading-relaxed">{project.title_en}</div>
                 </>
               )}
 
-              <div className="md:col-span-3 font-bold text-slate-700 pt-1">อาจารย์ที่ปรึกษา:</div>
+              <div className="md:col-span-3 font-bold text-slate-700 pt-1">
+                {lang === 'EN' ? 'Project Advisor:' : 'อาจารย์ที่ปรึกษา:'}
+              </div>
               <div className="md:col-span-9 text-slate-700 space-y-1.5">
                 {project.advisor ? (
                   <div className="flex items-center gap-2 font-semibold text-indigo-700">
-                    <span>{project.advisor.fullname_th}</span>
+                    <span>{advisorName}</span>
                     {project.advisor.lecturer_code && (
                       <span className="text-xs bg-indigo-50 px-2 py-0.5 rounded font-mono">
                         ({project.advisor.lecturer_code})
@@ -125,13 +150,13 @@ export default function ProjectDetail() {
                     )}
                   </div>
                 ) : (
-                  <span className="text-slate-400 italic">ไม่ระบุ</span>
+                  <span className="text-slate-400 italic">{lang === 'EN' ? 'Not specified' : 'ไม่ระบุ'}</span>
                 )}
 
                 {project.co_advisor && (
                   <div className="flex items-center gap-2 text-slate-600 text-sm">
-                    <span className="text-slate-400 font-semibold">(ที่ปรึกษาร่วม)</span>
-                    <span>{project.co_advisor.fullname_th}</span>
+                    <span className="text-slate-400 font-semibold">{lang === 'EN' ? '(Co-Advisor)' : '(ที่ปรึกษาร่วม)'}</span>
+                    <span>{coAdvisorName}</span>
                     {project.co_advisor.lecturer_code && (
                       <span className="text-xs bg-slate-100 px-1.5 py-0.5 rounded font-mono">
                         ({project.co_advisor.lecturer_code})
@@ -141,7 +166,9 @@ export default function ProjectDetail() {
                 )}
               </div>
 
-              <div className="md:col-span-3 font-bold text-slate-700 pt-1">รายชื่อนักศึกษาผู้จัดทำ:</div>
+              <div className="md:col-span-3 font-bold text-slate-700 pt-1">
+                {lang === 'EN' ? 'Student Authors:' : 'รายชื่อนักศึกษาผู้จัดทำ:'}
+              </div>
               <div className="md:col-span-9 text-slate-700 space-y-1.5">
                 {studentList.length > 0 ? (
                   studentList.map((stu, i) => (
@@ -151,14 +178,19 @@ export default function ProjectDetail() {
                     </div>
                   ))
                 ) : (
-                  <span className="text-slate-400 italic">ไม่ระบุ</span>
+                  <span className="text-slate-400 italic">{lang === 'EN' ? 'Not specified' : 'ไม่ระบุ'}</span>
                 )}
               </div>
 
-              <div className="md:col-span-3 font-bold text-slate-700">ภาค/ปีการศึกษา:</div>
+              <div className="md:col-span-3 font-bold text-slate-700">
+                {lang === 'EN' ? 'Term / Academic Year:' : 'ภาค/ปีการศึกษา:'}
+              </div>
               <div className="md:col-span-9 text-slate-700">
                 <span className="inline-flex items-center px-3 py-1 bg-indigo-50 text-[#3F51B5] text-xs font-bold rounded-lg border border-indigo-100">
-                  {project.semester ? `ภาคเรียนที่ ${project.semester} / ` : ''}ปีการศึกษา {project.year || '-'}
+                  {lang === 'EN' 
+                    ? `${project.semester ? `Semester ${project.semester} / ` : ''}Academic Year ${project.year || '-'}`
+                    : `${project.semester ? `ภาคเรียนที่ ${project.semester} / ` : ''}ปีการศึกษา ${project.year || '-'}`
+                  }
                 </span>
               </div>
             </div>
@@ -169,16 +201,20 @@ export default function ProjectDetail() {
         <div className="bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden">
           <div className="bg-[#EEF2FF] px-8 py-4 border-b border-slate-100 flex items-center gap-2">
             <BookOpen size={18} className="text-[#3F51B5]" />
-            <span className="text-[#3F51B5] font-bold text-sm">บทคัดย่อ (Abstract)</span>
+            <span className="text-[#3F51B5] font-bold text-sm">
+              {lang === 'EN' ? 'Abstract' : 'บทคัดย่อ (Abstract)'}
+            </span>
           </div>
           <div className="p-8 md:p-10">
-            {project.abstract ? (
-              <div className="text-slate-600 leading-[2] text-justify whitespace-pre-line text-base font-normal">
-                {project.abstract}
-              </div>
-            ) : (
-              <div className="text-slate-400 italic text-sm py-4 text-center">
-                อยู่ระหว่างจัดทำและรวบรวมบทคัดย่อ
+            <div className="text-slate-600 leading-[2] text-justify whitespace-pre-line text-base font-normal">
+              {displayAbstract}
+            </div>
+            {lang !== 'EN' && project.abstract_en && (
+              <div className="mt-8 pt-6 border-t border-slate-100">
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">English Abstract</h4>
+                <div className="text-slate-500 italic leading-relaxed text-sm text-justify whitespace-pre-line">
+                  {project.abstract_en}
+                </div>
               </div>
             )}
           </div>
@@ -189,4 +225,4 @@ export default function ProjectDetail() {
       <Footer />
     </div>
   );
-}
+}

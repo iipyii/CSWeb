@@ -6,7 +6,7 @@ import Footer from '../components/Footer';
 import axios from "axios";
 
 // Map raw categories to user-friendly Thai display titles
-const categoryLabels = {
+const categoryLabelsTh = {
   'special-project': 'โครงงานพิเศษ, ปริญญานิพนธ์',
   'csb': 'โครงการสองภาษา (CSB)',
   'internship': 'การฝึกงาน',
@@ -20,9 +20,27 @@ const categoryLabels = {
   'curriculum': 'งานหลักสูตร',
 };
 
-const getCategoryLabel = (category) => {
-  if (!category) return 'ทั่วไป';
-  return categoryLabels[category] || categoryLabels[category.toLowerCase()] || category;
+const categoryLabelsEn = {
+  'special-project': 'Special Project / Thesis',
+  'csb': 'Bilingual Program (CSB)',
+  'internship': 'Internship & Cooperative Education',
+  'graduate': 'Graduate Studies',
+  'current-student': 'Undergraduate Students',
+  'alumni': 'Graduation & Alumni',
+  'general': 'General Documents',
+  'finance': 'Finance & Accounting',
+  'personnel': 'Human Resources',
+  'academic': 'Academic Affairs',
+  'curriculum': 'Curriculum Affairs',
+};
+
+const getCategoryLabel = (category, lang = 'TH') => {
+  if (!category) return lang === 'EN' ? 'General' : 'ทั่วไป';
+  const clean = category.trim().toLowerCase();
+  if (lang === 'EN') {
+    return categoryLabelsEn[clean] || categoryLabelsEn[category] || category;
+  }
+  return categoryLabelsTh[clean] || categoryLabelsTh[category] || category;
 };
 
 // Generates a grouping key for merging identical documents across formats (e.g. PDF and DOCX)
@@ -125,6 +143,7 @@ export default function StudentDownloads() {
           topicMap.set(key, {
             id: item.id,
             title: getCleanTitle(item.title),
+            title_en: item.title_en ? getCleanTitle(item.title_en) : null,
             category: item.category,
             files: [],
           });
@@ -150,14 +169,18 @@ export default function StudentDownloads() {
         return topic;
       });
 
-      // Sort topics naturally by Thai title
-      topicList.sort((a, b) => a.title.localeCompare(b.title, 'th', { numeric: true }));
+      // Sort topics naturally
+      topicList.sort((a, b) => {
+        const textA = (lang === 'EN' && a.title_en) ? a.title_en : a.title;
+        const textB = (lang === 'EN' && b.title_en) ? b.title_en : b.title;
+        return textA.localeCompare(textB, lang === 'EN' ? 'en' : 'th', { numeric: true });
+      });
 
       result[cat] = topicList;
     });
 
     return result;
-  }, [downloads]);
+  }, [downloads, lang]);
 
   return (
     <div className="bg-slate-50 min-h-screen flex flex-col">
@@ -178,17 +201,17 @@ export default function StudentDownloads() {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-3">
             <Loader2 size={32} className="animate-spin text-[#3F51B5]" />
-            <p className="text-sm">กำลังโหลดเอกสาร{t('download')}...</p>
+            <p className="text-sm">{lang === 'EN' ? 'Loading documents...' : 'กำลังโหลดเอกสาร...'}</p>
           </div>
         ) : Object.keys(grouped).length === 0 ? (
           <div className="bg-white rounded-2xl p-12 text-center border border-slate-100 shadow-sm text-slate-500">
             <FileText size={40} className="mx-auto mb-3 text-slate-300" />
-            <p className="font-semibold text-lg">ยังไม่มีรายการเอกสารสำหรับนักศึกษา</p>
+            <p className="font-semibold text-lg">{lang === 'EN' ? 'No student documents available.' : 'ยังไม่มีรายการเอกสารสำหรับนักศึกษา'}</p>
           </div>
         ) : (
           Object.entries(grouped).map(([category, items], sIdx) => {
             const isOpen = openSections.includes(sIdx);
-            const categoryTitle = getCategoryLabel(category);
+            const categoryTitle = getCategoryLabel(category, lang);
             return (
               <div key={sIdx} className="mb-6">
                 <button
@@ -202,7 +225,7 @@ export default function StudentDownloads() {
                     {categoryTitle}
                   </h2>
                   <span className="ml-auto text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
-                    {items.length} รายการ
+                    {items.length} {lang === 'EN' ? 'items' : 'รายการ'}
                   </span>
                 </button>
 
@@ -220,9 +243,9 @@ export default function StudentDownloads() {
                           <table className="w-full min-w-[640px] text-left">
                             <thead className="bg-slate-50/80 border-b border-slate-100 text-slate-400">
                               <tr>
-                                <th className="px-6 py-4 text-xs font-bold w-16 text-center uppercase tracking-wider">ลำดับ</th>
-                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">ชื่อรายการเอกสาร</th>
-                                <th className="px-6 py-4 text-xs font-bold text-center w-48 uppercase tracking-wider">ไฟล์</th>
+                                <th className="px-6 py-4 text-xs font-bold w-16 text-center uppercase tracking-wider">{lang === 'EN' ? 'No.' : 'ลำดับ'}</th>
+                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider">{lang === 'EN' ? 'Document Title' : 'ชื่อรายการเอกสาร'}</th>
+                                <th className="px-6 py-4 text-xs font-bold text-center w-48 uppercase tracking-wider">{lang === 'EN' ? 'Files' : 'ไฟล์'}</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
@@ -232,7 +255,7 @@ export default function StudentDownloads() {
                                   <td className="px-6 py-5 text-slate-700 text-[15px] group-hover:text-[#3F51B5] transition-colors">
                                     <div>
                                       <p className="font-medium text-slate-800 group-hover:text-[#3F51B5] transition-colors">
-                                        {item.title}
+                                        {(lang === 'EN' && item.title_en) ? item.title_en : item.title}
                                       </p>
                                       {item.files?.length > 0 && (
                                         <p className="text-xs text-slate-400 font-normal mt-0.5 flex items-center gap-1.5 flex-wrap">

@@ -1020,6 +1020,17 @@ export default function ManagePersonnel() {
                 />
               </div>
 
+              <div>
+                <label className="text-xs font-bold text-slate-600 block mb-1">ประวัติการศึกษา (อังกฤษ - Education in English)</label>
+                <textarea
+                  rows={2}
+                  placeholder="e.g. Ph.D. in Computer Science, Kasetsart University..."
+                  value={lecturerModal.data?.education_en || ''}
+                  onChange={(e) => setLecturerModal(prev => ({ ...prev, data: { ...prev.data, education_en: e.target.value } }))}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 outline-none"
+                />
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-bold text-slate-600 block mb-1">ORCID ID</label>

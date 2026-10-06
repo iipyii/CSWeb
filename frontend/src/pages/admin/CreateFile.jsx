@@ -26,6 +26,7 @@ export default function CreateFile() {
   const [fileType, setFileType] = useState("LINK");
   
   const [title, setTitle] = useState("");
+  const [titleEn, setTitleEn] = useState("");
   const [audience, setAudience] = useState("student");
   const [category, setCategory] = useState("ทั่วไป");
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -72,6 +73,7 @@ export default function CreateFile() {
       setSubmitting(true);
       const formData = new FormData();
       formData.append("title", title.trim());
+      if (titleEn.trim()) formData.append("title_en", titleEn.trim());
       formData.append("audience", audience);
       formData.append("category", category.trim() || "ทั่วไป");
 
@@ -159,6 +161,18 @@ export default function CreateFile() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="ระบุชื่อเอกสารที่ต้องการให้แสดงบนหน้าเว็บ..."
+                className="w-full px-5 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-[15px] focus:ring-4 focus:ring-[#3F51B5]/5 focus:border-[#3F51B5] outline-none transition-all placeholder:text-slate-300"
+              />
+            </div>
+
+            {/* 1.1 ชื่อเอกสารภาษาอังกฤษ */}
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-600 ml-1">ชื่อเอกสาร / หัวข้อ (ภาษาอังกฤษ - English Title)</label>
+              <input 
+                type="text" 
+                value={titleEn}
+                onChange={(e) => setTitleEn(e.target.value)}
+                placeholder="Document title in English (optional)..."
                 className="w-full px-5 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-[15px] focus:ring-4 focus:ring-[#3F51B5]/5 focus:border-[#3F51B5] outline-none transition-all placeholder:text-slate-300"
               />
             </div>

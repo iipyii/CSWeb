@@ -137,7 +137,7 @@ export const downloadFile = async (req, res) => {
 // POST create download
 export const createDownload = async (req, res) => {
   try {
-    const { title, category, audience, file_type, url, link_url } = req.body;
+    const { title, title_en, category, audience, file_type, url, link_url } = req.body;
     const directUrl = (url || link_url || req.body.file_url || "").trim();
 
     if (!title || !title.trim()) {
@@ -153,6 +153,7 @@ export const createDownload = async (req, res) => {
       const file = await prisma.downloads.create({
         data: {
           title: title.trim(),
+          title_en: title_en ? title_en.trim() : null,
           category: category?.trim() || "ทั่วไป",
           audience: audience?.trim() || "student",
           file_type: (file_type || "LINK").toUpperCase(),
@@ -169,6 +170,7 @@ export const createDownload = async (req, res) => {
     const file = await prisma.downloads.create({
       data: {
         title: title.trim(),
+        title_en: title_en ? title_en.trim() : null,
         category: category?.trim() || "ทั่วไป",
         audience: audience?.trim() || "student",
         file_type: file_type || ext || "PDF",
@@ -188,7 +190,7 @@ export const createDownload = async (req, res) => {
 export const updateDownload = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, category, audience, file_type, url, link_url } = req.body;
+    const { title, title_en, category, audience, file_type, url, link_url } = req.body;
     const directUrl = (url || link_url || req.body.file_url || "").trim();
 
     const existing = await prisma.downloads.findUnique({
@@ -200,6 +202,7 @@ export const updateDownload = async (req, res) => {
 
     const data = {
       title: title ? title.trim() : existing.title,
+      title_en: title_en !== undefined ? (title_en ? title_en.trim() : null) : existing.title_en,
       category: category ? category.trim() : existing.category,
       audience: audience ? audience.trim() : existing.audience,
       file_type: file_type || existing.file_type

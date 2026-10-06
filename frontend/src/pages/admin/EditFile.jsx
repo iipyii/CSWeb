@@ -32,6 +32,7 @@ export default function EditFile() {
 
   const [formData, setFormData] = useState({
     name: "",
+    title_en: "",
     audience: "student",
     category: "",
     date: new Date().toISOString().split('T')[0],
@@ -63,6 +64,7 @@ export default function EditFile() {
 
           setFormData({
             name: data.title || "",
+            title_en: data.title_en || "",
             audience: data.audience || "student",
             category: data.category || "ทั่วไป",
             date: data.created_at ? data.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
@@ -121,6 +123,11 @@ export default function EditFile() {
       setSubmitting(true);
       const data = new FormData();
       data.append("title", formData.name.trim());
+      if (formData.title_en) {
+        data.append("title_en", formData.title_en.trim());
+      } else {
+        data.append("title_en", "");
+      }
       data.append("audience", formData.audience);
       data.append("category", formData.category.trim() || "ทั่วไป");
 
@@ -220,6 +227,19 @@ export default function EditFile() {
                 onChange={handleChange}
                 placeholder="ระบุชื่อเอกสาร..."
                 className="w-full px-5 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-[15px] focus:ring-4 focus:ring-[#3F51B5]/5 focus:border-[#3F51B5] outline-none transition-all"
+              />
+            </div>
+
+            {/* 1.1 ชื่อเอกสารภาษาอังกฤษ */}
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-600 ml-1">ชื่อเอกสาร / หัวข้อ (ภาษาอังกฤษ - English Title)</label>
+              <input 
+                type="text" 
+                name="title_en"
+                value={formData.title_en}
+                onChange={handleChange}
+                placeholder="Document title in English (optional)..."
+                className="w-full px-5 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-[15px] focus:ring-4 focus:ring-[#3F51B5]/5 focus:border-[#3F51B5] outline-none transition-all placeholder:text-slate-300"
               />
             </div>
 

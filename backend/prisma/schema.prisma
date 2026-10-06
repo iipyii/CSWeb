@@ -33,14 +33,17 @@ model lecturers {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model faq {
-  id         Int                    @id @default(autoincrement())
-  question   String
-  answer     String
-  category   String?                @db.VarChar(100)
-  status     String                 @default("active") @db.VarChar(20)
-  created_at DateTime?              @default(now()) @db.Timestamp(6)
-  updated_at DateTime               @updatedAt
-  embedding  Unsupported("vector")?
+  id          Int                    @id @default(autoincrement())
+  question    String
+  question_en String?
+  answer      String
+  answer_en   String?
+  category    String?                @db.VarChar(100)
+  category_en String?                @db.VarChar(100)
+  status      String                 @default("active") @db.VarChar(20)
+  created_at  DateTime?              @default(now()) @db.Timestamp(6)
+  updated_at  DateTime               @updatedAt
+  embedding   Unsupported("vector")?
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -114,6 +117,7 @@ model users {
 model downloads {
   id         Int      @id @default(autoincrement())
   title      String
+  title_en   String?
   file_path  String
   file_name  String?  // ชื่อไฟล์เดิมที่อัปโหลด
   file_type  String?
@@ -292,12 +296,14 @@ model projects {
   title_th     String   @db.VarChar(255)
   title_en     String?  @db.VarChar(255)
   abstract     String?  @db.Text
+  abstract_en  String?  @db.Text
   year         Int?     // ปีการศึกษาที่ทำโปรเจกต์
   semester     Int?     @default(1) // ภาคการศึกษา เช่น 1, 2
   image_path   String?  @db.Text
   document_url String?  @db.Text // ลิงก์ไฟล์เล่มปริญญานิพนธ์
   github_url   String?  @db.Text // ลิงก์ Source Code (ถ้ามี)
   students_text String? @db.Text // รายชื่อนักศึกษาผู้จัดทำ (รองรับหลายคน)
+  students_text_en String? @db.Text
   
   student_id   Int?
   advisor_id   Int?

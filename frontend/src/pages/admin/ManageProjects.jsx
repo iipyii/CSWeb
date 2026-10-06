@@ -83,7 +83,7 @@ export default function ManageProjects() {
     ],
     advisorId: "",
     coAdvisorId: "",
-    abstract: ""
+    abstract: "", abstractEn: ""
   });
 
   const fetchProjects = async () => {
@@ -130,7 +130,7 @@ export default function ManageProjects() {
         studentsList: parsedList,
         advisorId: project.advisor_id ? project.advisor_id.toString() : (project.advisor?.id ? project.advisor.id.toString() : ""),
         coAdvisorId: project.co_advisor_id ? project.co_advisor_id.toString() : (project.co_advisor?.id ? project.co_advisor.id.toString() : ""),
-        abstract: project.abstract || ""
+        abstract: project.abstract || "", abstractEn: project.abstract_en || ""
       });
     } else {
       setEditingProject(null);
@@ -145,7 +145,7 @@ export default function ManageProjects() {
         ],
         advisorId: "",
         coAdvisorId: "",
-        abstract: ""
+        abstract: "", abstractEn: ""
       });
     }
     setIsModalOpen(true);
@@ -312,7 +312,7 @@ export default function ManageProjects() {
         students_text: studentsText,
         advisor_id: formData.advisorId ? parseInt(formData.advisorId) : null,
         co_advisor_id: formData.coAdvisorId ? parseInt(formData.coAdvisorId) : null,
-        abstract: formData.abstract
+        abstract: formData.abstract, abstract_en: formData.abstractEn
       };
 
       if (editingProject) {
@@ -1038,8 +1038,12 @@ export default function ManageProjects() {
                     <textarea rows={2} className="w-full p-3 bg-white border border-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-[#3F51B5]/20 italic text-sm" value={formData.titleEn} onChange={(e)=>setFormData({...formData, titleEn: e.target.value})}/>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-black text-[#3F51B5] uppercase tracking-widest">บทคัดย่อ (Abstract)</label>
-                    <textarea rows={5} className="w-full p-4 bg-white border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-[#3F51B5]/20 text-sm leading-relaxed" value={formData.abstract} onChange={(e)=>setFormData({...formData, abstract: e.target.value})}/>
+                    <label className="text-xs font-black text-[#3F51B5] uppercase tracking-widest">บทคัดย่อ (Abstract - ภาษาไทย)</label>
+                    <textarea rows={4} className="w-full p-4 bg-white border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-[#3F51B5]/20 text-sm leading-relaxed" value={formData.abstract} onChange={(e)=>setFormData({...formData, abstract: e.target.value})}/>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-black text-[#3F51B5] uppercase tracking-widest">Abstract (English)</label>
+                    <textarea rows={4} placeholder="English abstract..." className="w-full p-4 bg-white border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-[#3F51B5]/20 text-sm leading-relaxed italic" value={formData.abstractEn || ""} onChange={(e)=>setFormData({...formData, abstractEn: e.target.value})}/>
                   </div>
                 </div>
 
