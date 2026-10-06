@@ -300,6 +300,7 @@ export default function CourseSections() {
 }
 
 function SelectionCard({ title, onClick, variant = "current" }) {
+  const { t } = useLanguage();
   return (
     <button
       onClick={onClick}

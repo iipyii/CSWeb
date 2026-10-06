@@ -313,7 +313,7 @@ export default function StudentDownloads() {
                                             rel="noopener noreferrer"
                                             download={file.file_name || `${item.title}.${file.file_type || 'pdf'}`}
                                             className={`px-3.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all active:scale-95 inline-flex items-center gap-1 shadow-xs ${badgeStyle}`}
-                                            title={`{t('download')} ${file.file_name || file.file_type?.toUpperCase()}`}
+                                            title={`${t('download')} ${file.file_name || file.file_type?.toUpperCase()}`}
                                           >
                                             {file.file_type?.toUpperCase() || 'FILE'}
                                           </a>
