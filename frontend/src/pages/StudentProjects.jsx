@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from  'react';
+import { useLanguage } from '../context/LanguageContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Calendar, FolderGit2, FileText, GraduationCap, Loader2 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -6,6 +7,7 @@ import axios from 'axios';
 import Footer from '../components/Footer';
 
 export default function StudentProjects() {
+  const { t, lang } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
@@ -101,7 +103,7 @@ export default function StudentProjects() {
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <input 
               type="text" 
-              placeholder="ค้นหาโครงงาน, ชื่อนักศึกษา หรืออาจารย์ที่ปรึกษา..."
+              placeholder="{t('search_project')}, ชื่อนักศึกษา หรืออาจารย์ที่ปรึกษา..."
               className="w-full bg-transparent border-none rounded-xl py-3 pl-12 pr-4 text-sm font-medium outline-none focus:ring-0 text-slate-700 placeholder:text-slate-400"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}

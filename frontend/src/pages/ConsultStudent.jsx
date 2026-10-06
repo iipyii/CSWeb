@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from  'react';
+import { useLanguage } from '../context/LanguageContext';
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Search, Users, GraduationCap, Mail, ExternalLink, 
@@ -12,6 +13,7 @@ import Footer from "../components/Footer";
 import { useAuth } from "../context/AuthContext";
 
 export default function ConsultStudent() {
+  const { t, lang } = useLanguage();
   const { code } = useParams();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -711,7 +713,7 @@ export default function ConsultStudent() {
                                 />
                               </div>
                               <div className="min-w-0">
-                                <p className="text-[10px] text-slate-400 font-bold uppercase">อาจารย์ที่ปรึกษา</p>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase">{t('nav_consult_student')}</p>
                                 <p className="text-xs font-bold text-slate-700 truncate">{student.advisor.fullname_th}</p>
                               </div>
                             </div>

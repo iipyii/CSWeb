@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from  'react';
+import { useLanguage } from '../context/LanguageContext';
 import { motion } from 'framer-motion';
 import {
   ChevronLeft,
@@ -16,6 +17,7 @@ import Footer from '../components/Footer';
 import axios from "axios";
 
 export default function Internship() {
+  const { t, lang } = useLanguage();
   const navigate = useNavigate();
   const [internships, setInternships] = useState([]);
   const [config, setConfig] = useState({

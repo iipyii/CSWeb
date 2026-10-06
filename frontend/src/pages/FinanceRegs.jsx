@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from  'react';
+import { useLanguage } from '../context/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ChevronLeft, Loader2, FileText } from 'lucide-react';
@@ -6,6 +7,7 @@ import axios from 'axios';
 import Footer from '../components/Footer';
 
 export default function FinanceRegs() {
+  const { t, lang } = useLanguage();
   const navigate = useNavigate();
   const [financeDocs, setFinanceDocs] = useState([]);
   const [loading, setLoading] = useState(true);

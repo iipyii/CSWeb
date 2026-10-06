@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from  'react';
+import { useLanguage } from '../context/LanguageContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, Loader2, FileText, Search, BookOpen, HelpCircle, DollarSign } from 'lucide-react';
@@ -27,6 +28,7 @@ const SUBCATEGORIES = [
 ];
 
 export default function GraduateRegs() {
+  const { t, lang } = useLanguage();
   const [docs, setDocs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');

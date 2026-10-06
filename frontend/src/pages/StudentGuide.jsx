@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from  'react';
+import { useLanguage } from '../context/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -21,6 +22,7 @@ const defaultGuides = [
 ];
 
 export default function StudentGuide() {
+  const { t, lang } = useLanguage();
   const navigate = useNavigate();
   const [guides, setGuides] = useState(defaultGuides);
   const [loading, setLoading] = useState(true);
@@ -58,7 +60,7 @@ export default function StudentGuide() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">คู่มือนักศึกษา</h1>
+            <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">{t('student_guide_doc')}</h1>
             <div className="w-12 h-1 bg-white/30 mb-5"></div>
           </motion.div>
         </div>

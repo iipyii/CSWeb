@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from  'react';
+import { useLanguage } from '../context/LanguageContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, FileText, Loader2, ExternalLink } from 'lucide-react';
 import Footer from '../components/Footer';
@@ -78,6 +79,7 @@ const getFileSubtitle = (files) => {
 const formatOrder = { pdf: 1, docx: 2, doc: 3, xlsx: 4, xls: 5 };
 
 export default function StudentDownloads() {
+  const { t, lang } = useLanguage();
   const [openSections, setOpenSections] = useState([0]);
   const [downloads, setDownloads] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -163,7 +165,7 @@ export default function StudentDownloads() {
       <section className="bg-[#3F51B5] text-white py-8 px-6 relative overflow-hidden">
         <div className="max-w-5xl mx-auto relative z-10">
           <motion.div initial={{ opacity: 0, y: -15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-            <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">แบบฟอร์มดาวน์โหลดสำหรับนักศึกษา</h1>
+            <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">{t('nav_student_download')}</h1>
             <div className="w-12 h-1 bg-white/30 mb-5"></div>
           </motion.div>
         </div>
@@ -176,7 +178,7 @@ export default function StudentDownloads() {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-3">
             <Loader2 size={32} className="animate-spin text-[#3F51B5]" />
-            <p className="text-sm">กำลังโหลดเอกสารดาวน์โหลด...</p>
+            <p className="text-sm">กำลังโหลดเอกสาร{t('download')}...</p>
           </div>
         ) : Object.keys(grouped).length === 0 ? (
           <div className="bg-white rounded-2xl p-12 text-center border border-slate-100 shadow-sm text-slate-500">
@@ -288,7 +290,7 @@ export default function StudentDownloads() {
                                             rel="noopener noreferrer"
                                             download={file.file_name || `${item.title}.${file.file_type || 'pdf'}`}
                                             className={`px-3.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all active:scale-95 inline-flex items-center gap-1 shadow-xs ${badgeStyle}`}
-                                            title={`ดาวน์โหลด ${file.file_name || file.file_type?.toUpperCase()}`}
+                                            title={`{t('download')} ${file.file_name || file.file_type?.toUpperCase()}`}
                                           >
                                             {file.file_type?.toUpperCase() || 'FILE'}
                                           </a>

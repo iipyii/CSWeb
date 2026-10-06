@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from  'react';
+import { useLanguage } from '../context/LanguageContext';
 import { useNavigate, Link } from 'react-router-dom'; // ✨ เพิ่ม Link สำหรับนำทางภายในแอป
 import { motion } from 'framer-motion';
 import { ChevronLeft, BookOpen, FileText, ArrowRight } from 'lucide-react';
@@ -6,6 +7,7 @@ import Footer from '../components/Footer';
 import axios from "axios";
 
 export default function SubjectCourses() {
+  const { t, lang } = useLanguage();
   const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
 
@@ -62,7 +64,7 @@ export default function SubjectCourses() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8 }}
                 >
-                  <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">ขบวนวิชา</h1>
+                  <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">{t('nav_subject_courses')}</h1>
                   <div className="w-12 h-1 bg-white/30 mb-5"></div>
                 </motion.div>
               </div>

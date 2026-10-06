@@ -92,7 +92,23 @@ export const translations = {
     footer_faculty_name: "คณะวิทยาศาสตร์ประยุกต์ มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ",
     footer_quick_links: "ลิงก์ด่วน",
     footer_contact_info: "ข้อมูลติดต่อ",
-    footer_copyright: "สงวนลิขสิทธิ์ ภาควิชาวิทยาการคอมพิวเตอร์และสารสนเทศ มจพ."
+    footer_copyright: "สงวนลิขสิทธิ์ ภาควิชาวิทยาการคอมพิวเตอร์และสารสนเทศ มจพ.",
+    
+    // Additional Headers
+    current_curriculum: "ข้อมูลหลักสูตรปัจจุบัน",
+    past_curriculum: "ข้อมูลหลักสูตรในอดีต",
+    course_details: "รายละเอียดหลักสูตร",
+    document_category: "หมวดหมู่เอกสาร",
+    doc_name: "ชื่อเอกสาร",
+    view_data: "ดูข้อมูล",
+    advisor_list: "รายชื่ออาจารย์ที่ปรึกษา",
+    subject_courses_info: "ข้อมูลขบวนวิชา",
+    student_guide_doc: "คู่มือนักศึกษา",
+    student_useful_links: "รวมลิงก์ที่มีประโยชน์",
+    news_announcement: "ระเบียบและประกาศ",
+    search_project: "ค้นหาโครงงาน",
+    all_types: "ทุกประเภท",
+    all_years: "ทุกปี",
   },
   EN: {
     // Top bar & Common
@@ -187,6 +203,22 @@ export const translations = {
     footer_faculty_name: "Faculty of Applied Science, KMUTNB",
     footer_quick_links: "Quick Links",
     footer_contact_info: "Contact Information",
-    footer_copyright: "All Rights Reserved. CIS KMUTNB."
+    footer_copyright: "All Rights Reserved. CIS KMUTNB.",
+    
+    // Additional Headers
+    current_curriculum: "Current Curriculum",
+    past_curriculum: "Past Curriculum",
+    course_details: "Curriculum Details",
+    document_category: "Category",
+    doc_name: "Document Name",
+    view_data: "View",
+    advisor_list: "List of Advisors",
+    subject_courses_info: "Subject Courses Information",
+    student_guide_doc: "Student Handbook",
+    student_useful_links: "Useful Links",
+    news_announcement: "Regulations & Announcements",
+    search_project: "Search Projects",
+    all_types: "All Types",
+    all_years: "All Years",
   }
 };

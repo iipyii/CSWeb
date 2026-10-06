@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from  'react';
+import { useLanguage } from '../context/LanguageContext';
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { 
   ChevronLeft, ChevronRight, FileText, BookOpen, 
@@ -19,6 +20,7 @@ const getPdfUrl = (path) => {
 };
 
 export default function CourseSectionContent() {
+  const { t, lang } = useLanguage();
   const { id } = useParams();
   const navigate = useNavigate();
   const [section, setSection] = useState(null);

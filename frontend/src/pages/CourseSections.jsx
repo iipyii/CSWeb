@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from  'react';
+import { useLanguage } from '../context/LanguageContext';
 import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   BookOpen,
@@ -69,6 +70,7 @@ const fallbackLevels = {
 };
 
 export default function CourseSections() {
+  const { t, lang } = useLanguage();
   const { level } = useParams(); // bachelor | cs-english | cs-master | se-master | doctor
   const navigate = useNavigate();
 
@@ -85,18 +87,18 @@ export default function CourseSections() {
         if (Array.isArray(allPrograms) && allPrograms.length > 0) {
           // ค้นหา program ที่ตรงกับ level
           let targetProg = null;
-          let degreeLabel = "ปริญญาตรี";
+          let degreeLabel = t('nav_bachelor');
           let icon = <GraduationCap size={32} />;
           let borderColor = "border-[#3F51B5]";
 
           if (level === "bachelor" || level === "regular") {
             targetProg = allPrograms.find(p => p.slug === "regular" || (p.degree?.slug === "bachelor" && p.slug !== "csb"));
-            degreeLabel = targetProg?.degree?.name_th || "ปริญญาตรี";
+            degreeLabel = lang === 'en' && targetProg?.degree?.name_en ? targetProg.degree.name_en : (targetProg?.degree?.name_th || t('nav_bachelor'));
             icon = <GraduationCap size={32} />;
             borderColor = "border-[#3F51B5]";
           } else if (level === "cs-english" || level === "csb") {
             targetProg = allPrograms.find(p => p.slug === "csb");
-            degreeLabel = "ปริญญาตรี";
+            degreeLabel = t('nav_bachelor');
             icon = <Laptop size={32} />;
             borderColor = "border-orange-500";
           } else if (level === "cs-master") {
@@ -310,7 +312,7 @@ function SelectionCard({ title, onClick, variant = "current" }) {
           {title}
         </h4>
         <div className="mt-6 flex items-center text-xs font-bold uppercase tracking-widest text-slate-400 group-hover:text-[#3F51B5] transition-colors">
-          <span>รายละเอียดหลักสูตร</span>
+          <span>{t('course_details')}</span>
           <ChevronRight size={16} className="ml-2 transform group-hover:translate-x-2 transition-transform" />
         </div>
       </div>
