@@ -40,6 +40,18 @@ const isDesignatedAdmin = (email, username) => {
   return ADMIN_EMAILS.includes(cleanEmail) || ADMIN_USERNAMES.includes(cleanUsername);
 };
 
+/* บัญชีทดสอบระบบสำหรับผู้ดูแล (Test Accounts) */
+const TEST_LECTURER_ACCOUNTS = [
+  "s6504062610188@kmutnb.ac.th",
+  "s6504062610188"
+];
+
+const isAllowedTestAccount = (email, username) => {
+  const cleanEmail = email ? email.trim().toLowerCase() : "";
+  const cleanUsername = username ? username.trim().toLowerCase() : "";
+  return TEST_LECTURER_ACCOUNTS.includes(cleanEmail) || TEST_LECTURER_ACCOUNTS.includes(cleanUsername);
+};
+
 /**
  * ค้นหาและตรวจสอบว่าผู้ใช้ตรงกับอาจารย์ประจำภาควิชา CS ในตาราง lecturers หรือไม่
  * เพื่อป้องกันอาจารย์นอกภาควิชา CS เข้าสู่ระบบ
@@ -208,8 +220,9 @@ router.get("/callback", async (req, res) => {
     const cleanEmail = email ? email.trim().toLowerCase() : "";
     const cleanUsername = username ? username.trim().toLowerCase() : "";
 
-    // 1) ตรวจสอบว่าเป็น Admin ที่กำหนดไว้หรือไม่ (เช่น ousanee.b@sci.kmutnb.ac.th)
+    // 1) ตรวจสอบว่าเป็น Admin หรือบัญชีทดสอบที่ได้รับอนุญาตหรือไม่
     const isAdminAccount = isDesignatedAdmin(cleanEmail, cleanUsername);
+    const isTestAccount = isAllowedTestAccount(cleanEmail, cleanUsername);
 
     // 2) ค้นหาบัญชีผู้ใช้ในตาราง users ว่ามีอยู่แล้วหรือไม่
     let user = await prisma.users.findFirst({
@@ -225,23 +238,36 @@ router.get("/callback", async (req, res) => {
     const finalIsAdmin = isAdminAccount || isExistingAdmin;
 
     // 3) ตรวจสอบความสอดคล้องกับตารางอาจารย์ภาควิชา CS (lecturers)
-    const lecturer = await findMatchingLecturer({
+    let lecturer = await findMatchingLecturer({
       email: cleanEmail,
       username: cleanUsername,
       displayName,
       personnelInfo,
-      personKey
+      personKey: personKey || user?.person_key
     });
 
-    // 4) หากไม่ใช่ Admin และไม่มีชื่อตรงกับอาจารย์ในภาควิชา CS -> ปฏิเสธการเข้าสู่ระบบ
-    if (!finalIsAdmin && !lecturer) {
+    // หากเป็นบัญชีทดสอบ (เช่น s6504062610188) และยังไม่พบอาจารย์ตรงตัว ให้ผูกกับอาจารย์ที่ระบุไว้ใน user (TNA) หรือคนแรก
+    if (isTestAccount && !lecturer) {
+      const fallbackCode = user?.person_key || "TNA";
+      lecturer = await prisma.lecturers.findFirst({
+        where: {
+          OR: [
+            { lecturer_code: { equals: fallbackCode, mode: "insensitive" } },
+            { id: 1 }
+          ]
+        }
+      });
+    }
+
+    // 4) หากไม่ใช่ Admin, ไม่ใช่บัญชีทดสอบ และไม่มีชื่อตรงกับอาจารย์ในภาควิชา CS -> ปฏิเสธการเข้าสู่ระบบ
+    if (!finalIsAdmin && !isTestAccount && !lecturer) {
       console.warn(`[SSO Security Denied] User: ${cleanEmail} (${displayName}) is not a CS lecturer or admin.`);
       const deniedMsg = "คุณไม่มีสิทธิ์เข้าใช้งานระบบ เนื่องจากบัญชีนี้ไม่ได้อยู่ในรายชื่ออาจารย์ภาควิชาวิทยาการคอมพิวเตอร์และสารสนเทศ";
       return res.redirect(`${frontendUrl}/admin/login?error=${encodeURIComponent(deniedMsg)}`);
     }
 
-    // 5) กำหนดบทบาท (Role): หากเป็น Admin ให้เป็น admin เสมอ, หากเป็นอาจารย์ให้เป็น lecturer
-    const targetRole = finalIsAdmin ? "admin" : "lecturer";
+    // 5) กำหนดบทบาท (Role): หากเป็น Admin ให้เป็น admin เสมอ, หากเป็นอาจารย์/บัญชีทดสอบให้เป็น lecturer (หรือตาม role เดิมใน user)
+    const targetRole = finalIsAdmin ? "admin" : (user?.role || "lecturer");
 
     /* 2.4 สร้างหรืออัปเดตข้อมูลผู้ใช้ในตาราง users */
     if (user) {
