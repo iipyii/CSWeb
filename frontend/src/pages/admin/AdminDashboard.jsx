@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Newspaper, GraduationCap, FileText, Users, TrendingUp, RefreshCw, Plus, Clock } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useAuth } from '../../context/AuthContext';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const userRole = 'admin'; // 'admin' หรือ 'teacher'
+  const { role } = useAuth();
+  const userRole = role || 'lecturer';
 
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({

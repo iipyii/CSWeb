@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import Placeholder from '@tiptap/extension-placeholder';
 import axios from 'axios';
 
 import {
@@ -43,8 +44,14 @@ export default function EditNews() {
 
   // 2. ตั้งค่า Editor ภาษาไทย
   const editor = useEditor({
-    extensions: [StarterKit],
-    content: '<p>กำลังโหลดเนื้อหา...</p>', // ข้อความระหว่างรอโหลด
+    extensions: [
+      StarterKit,
+      Placeholder.configure({
+        placeholder: 'พิมพ์รายละเอียดข่าวสารที่นี่...',
+        showOnlyCurrent: false,
+      }),
+    ],
+    content: '',
     editorProps: {
       attributes: {
         class: "prose prose-sm focus:outline-none w-full py-6 px-8 min-h-[300px] text-[15px] leading-[1.8] text-slate-700 max-w-none bg-white rounded-b-[2rem]",
@@ -54,8 +61,14 @@ export default function EditNews() {
 
   // 2. ตั้งค่า Editor ภาษาอังกฤษ
   const editorEn = useEditor({
-    extensions: [StarterKit],
-    content: '<p>Loading English content...</p>',
+    extensions: [
+      StarterKit,
+      Placeholder.configure({
+        placeholder: 'Enter English details here or click AI translate...',
+        showOnlyCurrent: false,
+      }),
+    ],
+    content: '',
     editorProps: {
       attributes: {
         class: "prose prose-sm focus:outline-none w-full py-6 px-8 min-h-[300px] text-[15px] leading-[1.8] text-slate-700 max-w-none bg-white rounded-b-[2rem]",
@@ -66,7 +79,7 @@ export default function EditNews() {
   // 🤖 ฟังก์ชันแปลข่าวสารเป็นภาษาอังกฤษอัตโนมัติด้วย AI
   const handleAiTranslate = async () => {
     const thaiContent = editor?.getHTML();
-    if (!title.trim() && (!thaiContent || thaiContent === '<p></p>' || thaiContent === '<p>กำลังโหลดเนื้อหา...</p>')) {
+    if (!title.trim() && (!thaiContent || thaiContent === '<p></p>' || editor?.isEmpty)) {
       alert("กรุณากรอกหัวข้อข่าวหรือเนื้อหาภาษาไทยก่อนกดแปลภาษาด้วย AI ครับ");
       return;
     }
@@ -215,6 +228,7 @@ export default function EditNews() {
         // เอาข้อมูลจาก DB มาใส่ฟอร์ม
         setTitle(data.title || "");
         setTitleEn(data.title_en || "");
+        setAuthor(data.author || data.users?.full_name || "Admin ภาควิชา");
         setSummary(data.summary || "");
         setSummaryEn(data.summary_en || "");
         setCategory(data.category || "department");
@@ -248,7 +262,7 @@ export default function EditNews() {
           editor.commands.setContent(data.content);
         }
         if (editorEn) {
-          editorEn.commands.setContent(data.content_en || '<p>Enter English details here or click AI translate...</p>');
+          editorEn.commands.setContent(data.content_en || '');
         }
 
       } catch (error) {
@@ -270,9 +284,10 @@ export default function EditNews() {
       formData.append("title", title);
       formData.append("title_en", titleEn.trim());
       formData.append("content", content);
+      formData.append("author", author.trim());
 
       const enHtml = editorEn?.getHTML();
-      if (enHtml && enHtml !== '<p></p>' && enHtml !== '<p>Loading English content...</p>' && enHtml !== '<p>Enter English details here or click AI translate...</p>') {
+      if (enHtml && enHtml !== '<p></p>' && !editorEn?.isEmpty) {
         formData.append("content_en", enHtml);
       } else {
         formData.append("content_en", "");

@@ -22,6 +22,115 @@ router.get("/login", (req, res) => {
   res.redirect(authUrl.toString());
 });
 
+/* รายชื่อบัญชีที่ได้รับสิทธิ์ Admin อัตโนมัติเมื่อล็อกอินผ่าน SSO */
+const ADMIN_EMAILS = [
+  "ousanee.b@sci.kmutnb.ac.th",
+  "admin@cs.com"
+];
+
+const ADMIN_USERNAMES = [
+  "ousanee.b",
+  "admin",
+  "admintest"
+];
+
+const isDesignatedAdmin = (email, username) => {
+  const cleanEmail = email ? email.trim().toLowerCase() : "";
+  const cleanUsername = username ? username.trim().toLowerCase() : "";
+  return ADMIN_EMAILS.includes(cleanEmail) || ADMIN_USERNAMES.includes(cleanUsername);
+};
+
+/**
+ * ค้นหาและตรวจสอบว่าผู้ใช้ตรงกับอาจารย์ประจำภาควิชา CS ในตาราง lecturers หรือไม่
+ * เพื่อป้องกันอาจารย์นอกภาควิชา CS เข้าสู่ระบบ
+ */
+const findMatchingLecturer = async ({ email, username, displayName, personnelInfo, personKey }) => {
+  // 1. Direct email match or email prefix
+  if (email) {
+    const cleanEmail = email.trim().toLowerCase();
+    const emailPrefix = cleanEmail.split("@")[0];
+
+    // ค้นหาอีเมลตรงตัวในตาราง lecturers
+    let match = await prisma.lecturers.findFirst({
+      where: { email: { equals: cleanEmail, mode: "insensitive" } }
+    });
+    if (match) return match;
+
+    // ค้นหาตาม prefix (เช่น tanapat.a@kmutnb.ac.th vs tanapat.a@sci.kmutnb.ac.th)
+    if (emailPrefix) {
+      match = await prisma.lecturers.findFirst({
+        where: { email: { startsWith: `${emailPrefix}@`, mode: "insensitive" } }
+      });
+      if (match) return match;
+    }
+  }
+
+  // 2. Person Key หรือ lecturer_code (ถ้ามี)
+  if (personKey) {
+    const match = await prisma.lecturers.findFirst({
+      where: {
+        OR: [
+          { lecturer_code: { equals: String(personKey).trim(), mode: "insensitive" } },
+          { id: !isNaN(Number(personKey)) ? Number(personKey) : -1 }
+        ]
+      }
+    });
+    if (match) return match;
+  }
+
+  // 3. ชื่อและนามสกุลภาษาไทยจาก personnelInfo (ต้องตรงทั้งชื่อและนามสกุล)
+  const fnTh = personnelInfo?.firstname_th?.trim();
+  const lnTh = personnelInfo?.lastname_th?.trim();
+  if (fnTh && lnTh) {
+    const match = await prisma.lecturers.findFirst({
+      where: {
+        AND: [
+          { fullname_th: { contains: fnTh } },
+          { fullname_th: { contains: lnTh } }
+        ]
+      }
+    });
+    if (match) return match;
+  }
+
+  // 4. ชื่อและนามสกุลภาษาอังกฤษจาก personnelInfo
+  const fnEn = personnelInfo?.firstname_en?.trim();
+  const lnEn = personnelInfo?.lastname_en?.trim();
+  if (fnEn && lnEn) {
+    const match = await prisma.lecturers.findFirst({
+      where: {
+        AND: [
+          { fullname_en: { contains: fnEn, mode: "insensitive" } },
+          { fullname_en: { contains: lnEn, mode: "insensitive" } }
+        ]
+      }
+    });
+    if (match) return match;
+  }
+
+  // 5. ค้นหาจาก displayName โดยตัดคำนำหน้าออก (ต้องมีทั้งชื่อและนามสกุลตรงกัน)
+  if (displayName) {
+    const cleanName = displayName
+      .replace(/^(นาย|นาง|นางสาว|ศ\.|รศ\.|ผศ\.|ดร\.|อาจารย์|อ\.|Prof\.|Assoc\. Prof\.|Asst\. Prof\.|Dr\.)\s*/gi, "")
+      .trim();
+
+    const parts = cleanName.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      const match = await prisma.lecturers.findFirst({
+        where: {
+          AND: [
+            { fullname_th: { contains: parts[0] } },
+            { fullname_th: { contains: parts[parts.length - 1] } }
+          ]
+        }
+      });
+      if (match) return match;
+    }
+  }
+
+  return null;
+};
+
 /* 2. CALLBACK FROM KMUTNB SSO */
 router.get("/callback", async (req, res) => {
   const { code, error, error_description, token } = req.query;
@@ -95,65 +204,64 @@ router.get("/callback", async (req, res) => {
     const accountType = profile.account_type || rawData.kmutnb_account_type || "";
     const personKey = profile.person_key || rawData.kmutnb_person_key || personnelInfo.person_key || null;
 
-    /* 2.3 ค้นหาผู้ใช้ในฐานข้อมูล users */
+    /* 2.3 ตรวจสอบสิทธิ์ Admin หรือ อาจารย์ประจำภาควิชา CS */
+    const cleanEmail = email ? email.trim().toLowerCase() : "";
+    const cleanUsername = username ? username.trim().toLowerCase() : "";
+
+    // 1) ตรวจสอบว่าเป็น Admin ที่กำหนดไว้หรือไม่ (เช่น ousanee.b@sci.kmutnb.ac.th)
+    const isAdminAccount = isDesignatedAdmin(cleanEmail, cleanUsername);
+
+    // 2) ค้นหาบัญชีผู้ใช้ในตาราง users ว่ามีอยู่แล้วหรือไม่
     let user = await prisma.users.findFirst({
       where: {
         OR: [
-          { email: email },
-          ...(username ? [{ username: username }] : [])
+          { email: cleanEmail },
+          ...(cleanUsername ? [{ username: cleanUsername }] : [])
         ]
       }
     });
 
+    const isExistingAdmin = user?.role === "admin";
+    const finalIsAdmin = isAdminAccount || isExistingAdmin;
+
+    // 3) ตรวจสอบความสอดคล้องกับตารางอาจารย์ภาควิชา CS (lecturers)
+    const lecturer = await findMatchingLecturer({
+      email: cleanEmail,
+      username: cleanUsername,
+      displayName,
+      personnelInfo,
+      personKey
+    });
+
+    // 4) หากไม่ใช่ Admin และไม่มีชื่อตรงกับอาจารย์ในภาควิชา CS -> ปฏิเสธการเข้าสู่ระบบ
+    if (!finalIsAdmin && !lecturer) {
+      console.warn(`[SSO Security Denied] User: ${cleanEmail} (${displayName}) is not a CS lecturer or admin.`);
+      const deniedMsg = "คุณไม่มีสิทธิ์เข้าใช้งานระบบ เนื่องจากบัญชีนี้ไม่ได้อยู่ในรายชื่ออาจารย์ภาควิชาวิทยาการคอมพิวเตอร์และสารสนเทศ";
+      return res.redirect(`${frontendUrl}/admin/login?error=${encodeURIComponent(deniedMsg)}`);
+    }
+
+    // 5) กำหนดบทบาท (Role): หากเป็น Admin ให้เป็น admin เสมอ, หากเป็นอาจารย์ให้เป็น lecturer
+    const targetRole = finalIsAdmin ? "admin" : "lecturer";
+
+    /* 2.4 สร้างหรืออัปเดตข้อมูลผู้ใช้ในตาราง users */
     if (user) {
-      // อัปเดตชื่อผู้ใช้ถ้ามีการเปลี่ยนแปลง
       user = await prisma.users.update({
         where: { id: user.id },
         data: {
           full_name: displayName || user.full_name,
-          username: username || user.username,
-          person_key: personKey || user.person_key
+          username: cleanUsername || user.username,
+          person_key: personKey || user.person_key,
+          role: targetRole // อัปเดต role เป็น admin ทันทีสำหรับ ousanee.b@sci.kmutnb.ac.th
         }
       });
     } else {
-      // กำหนดสิทธิ์เริ่มต้น: ถ้าเป็น admintest ให้เป็น admin ทันที, ถ้าทั่วไปให้เป็น lecturer
-      let initialRole = "lecturer";
-      if (username === "admintest") {
-        initialRole = "admin";
-      } else if (accountType === "student") {
-        initialRole = "student";
-      }
-
       user = await prisma.users.create({
         data: {
-          email: email,
-          username: username,
-          full_name: displayName,
-          role: initialRole,
-          person_key: profile.person_key || null
-        }
-      });
-    }
-
-    /* 2.4 ตรวจสอบว่าตรงกับอาจารย์ในตาราง lecturers หรือไม่ */
-    let lecturer = null;
-    if (user && user.person_key) {
-      lecturer = await prisma.lecturers.findFirst({
-        where: {
-          OR: [
-            { lecturer_code: { equals: user.person_key, mode: "insensitive" } },
-            { id: !isNaN(Number(user.person_key)) ? Number(user.person_key) : -1 }
-          ]
-        }
-      });
-    }
-    if (!lecturer && email) {
-      lecturer = await prisma.lecturers.findFirst({
-        where: {
-          OR: [
-            { email: { equals: email, mode: "insensitive" } },
-            { fullname_th: { contains: displayName.split(" ").slice(-1)[0] || displayName } }
-          ]
+          email: cleanEmail,
+          username: cleanUsername,
+          full_name: displayName || (cleanEmail === "ousanee.b@sci.kmutnb.ac.th" ? "นางสาวอุษณีย์ บัลลังน้อย" : "ผู้ใช้งาน KMUTNB"),
+          role: targetRole,
+          person_key: personKey || null
         }
       });
     }

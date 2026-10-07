@@ -59,8 +59,8 @@ router.get("/", async (req, res) => {
   }
 });
 
-// POST update all student guides (Admin / Lecturer)
-router.post("/", verifyToken, checkRole(["admin", "lecturer"]), async (req, res) => {
+// POST update all student guides (Admin)
+router.post("/", verifyToken, checkRole(["admin"]), async (req, res) => {
   try {
     const { data } = req.body;
     if (!data || !Array.isArray(data)) {
@@ -88,7 +88,7 @@ router.post("/", verifyToken, checkRole(["admin", "lecturer"]), async (req, res)
 });
 
 // POST upload guide PDF file
-router.post("/upload-file", verifyToken, checkRole(["admin", "lecturer"]), upload.single("file"), (req, res) => {
+router.post("/upload-file", verifyToken, checkRole(["admin"]), upload.single("file"), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: "กรุณาแนบไฟล์ PDF" });
   }

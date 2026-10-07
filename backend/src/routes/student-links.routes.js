@@ -45,7 +45,7 @@ router.get("/", async (req, res) => {
 });
 
 // POST update student links (Admin Only)
-router.post("/", verifyToken, checkRole(["admin", "lecturer"]), async (req, res) => {
+router.post("/", verifyToken, checkRole(["admin"]), async (req, res) => {
   try {
     const { data } = req.body;
     if (!data || !Array.isArray(data)) {

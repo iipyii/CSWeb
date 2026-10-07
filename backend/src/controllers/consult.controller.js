@@ -952,9 +952,14 @@ export const importConsultantsExcel = async (req, res) => {
           }
         }
 
-        // Fallback จาก sheetYear, defaultYear, หรือ 2 หลักแรกของรหัสนักศึกษา (เช่น 69 -> 2569)
+        // กำหนดปีการศึกษา/รหัสรุ่น โดยดึงจาก 2 หลักแรกของรหัสนักศึกษาเป็นหลัก (เช่น 66xxxxxxx -> 2566)
         if (!academicYear) {
-          academicYear = sheetYear || defaultYear || (parseInt(rawId.slice(0, 2)) + 2500);
+          const cohortPrefix = rawId ? parseInt(rawId.slice(0, 2)) : NaN;
+          if (!isNaN(cohortPrefix) && cohortPrefix > 40 && cohortPrefix < 99) {
+            academicYear = cohortPrefix + 2500;
+          } else {
+            academicYear = sheetYear || defaultYear || (new Date().getFullYear() + 543);
+          }
         }
 
         let level = colIdxMap.level !== -1 ? String(row[colIdxMap.level] || "").trim().toLowerCase() : "";

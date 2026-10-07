@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import Placeholder from '@tiptap/extension-placeholder';
 import axios from "axios";
 import {
   Save, Image as ImageIcon, FileText, Upload, ChevronLeft, CheckCircle2,
@@ -8,13 +9,23 @@ import {
   Sparkles, Loader2, Globe
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 export default function CreateNews() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const defaultAuthorName = user?.lecturer?.fullname_th || user?.full_name || (user?.role === 'lecturer' ? "อาจารย์ประจำภาควิชา" : "Admin ภาควิชา");
+
   const [isUrgent, setIsUrgent] = useState(false);
   const [title, setTitle] = useState("");
   const [titleEn, setTitleEn] = useState("");
-  const [author, setAuthor] = useState("Admin");
+  const [author, setAuthor] = useState(defaultAuthorName || "Admin ภาควิชา");
+
+  useEffect(() => {
+    if (defaultAuthorName && (!author || author === 'Admin')) {
+      setAuthor(defaultAuthorName);
+    }
+  }, [defaultAuthorName]);
   const [summary, setSummary] = useState("");
   const [summaryEn, setSummaryEn] = useState("");
   const [category, setCategory] = useState("department");
@@ -32,8 +43,14 @@ export default function CreateNews() {
   const [translateSuccess, setTranslateSuccess] = useState(false);
 
   const editor = useEditor({
-    extensions: [StarterKit],
-    content: '<p>พิมพ์รายละเอียดข่าวสารที่นี่...</p>',
+    extensions: [
+      StarterKit,
+      Placeholder.configure({
+        placeholder: 'พิมพ์รายละเอียดข่าวสารที่นี่...',
+        showOnlyCurrent: false,
+      }),
+    ],
+    content: '',
     editorProps: {
       attributes: {
         class: "prose prose-sm focus:outline-none w-full py-6 px-8 min-h-[300px] text-[15px] leading-[1.8] text-slate-700 max-w-none bg-white rounded-b-[2rem]",
@@ -42,8 +59,14 @@ export default function CreateNews() {
   });
 
   const editorEn = useEditor({
-    extensions: [StarterKit],
-    content: '<p>Enter English details here or click AI translate...</p>',
+    extensions: [
+      StarterKit,
+      Placeholder.configure({
+        placeholder: 'Enter English details here or click AI translate...',
+        showOnlyCurrent: false,
+      }),
+    ],
+    content: '',
     editorProps: {
       attributes: {
         class: "prose prose-sm focus:outline-none w-full py-6 px-8 min-h-[300px] text-[15px] leading-[1.8] text-slate-700 max-w-none bg-white rounded-b-[2rem]",
@@ -54,7 +77,7 @@ export default function CreateNews() {
   // 🤖 ฟังก์ชันแปลข่าวสารเป็นภาษาอังกฤษอัตโนมัติด้วย AI
   const handleAiTranslate = async () => {
     const thaiContent = editor?.getHTML();
-    if (!title.trim() && (!thaiContent || thaiContent === '<p></p>' || thaiContent === '<p>พิมพ์รายละเอียดข่าวสารที่นี่...</p>')) {
+    if (!title.trim() && (!thaiContent || thaiContent === '<p></p>' || editor?.isEmpty)) {
       alert("กรุณากรอกหัวข้อข่าวหรือเนื้อหาภาษาไทยก่อนกดแปลภาษาด้วย AI ครับ");
       return;
     }
@@ -95,7 +118,7 @@ export default function CreateNews() {
       }
 
       const content = editor?.getHTML();
-      if (!content || content === '<p></p>') {
+      if (!content || content === '<p></p>' || editor?.isEmpty) {
         alert("กรุณากรอกรายละเอียดข่าวสาร");
         return;
       }
@@ -107,7 +130,7 @@ export default function CreateNews() {
       formData.append("content", content);
       
       const enHtml = editorEn?.getHTML();
-      if (enHtml && enHtml !== '<p></p>' && enHtml !== '<p>Enter English details here or click AI translate...</p>') {
+      if (enHtml && enHtml !== '<p></p>' && !editorEn?.isEmpty) {
         formData.append("content_en", enHtml);
       }
 

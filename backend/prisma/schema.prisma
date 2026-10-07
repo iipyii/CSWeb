@@ -67,6 +67,7 @@ model news {
   end_date   DateTime? @db.Date
   
   is_urgent         Boolean  @default(false)
+  author            String?  @db.VarChar(255)
   created_by Int
   created_at DateTime @default(now()) @db.Timestamp(6)
 

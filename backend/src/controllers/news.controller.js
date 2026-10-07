@@ -121,7 +121,8 @@ export const createNews = async (req, res) => {
       category,
       start_date,
       end_date,
-      is_urgent
+      is_urgent,
+      author
     } = req.body;
 
     // 1. ดึงไฟล์รูปหน้าปก (ถ้ามี)
@@ -171,6 +172,7 @@ export const createNews = async (req, res) => {
         summary: summary || null,
         summary_en: summary_en || null,
         category,
+        author: author ? String(author).trim() : null,
         image: imagePath,
         status: finalStatus,
         additional_images: additionalImages,
@@ -234,6 +236,7 @@ export const updateNews = async (req, res) => {
       start_date,
       end_date,
       is_urgent,
+      author,
       existing_additional_images,
       existing_attachments
     } = req.body;
@@ -333,6 +336,7 @@ export const updateNews = async (req, res) => {
       summary: summary !== undefined ? summary : existing.summary,
       summary_en: summary_en !== undefined ? (summary_en || null) : existing.summary_en,
       category: category !== undefined ? category : existing.category,
+      author: author !== undefined ? (author ? String(author).trim() : null) : existing.author,
       status: finalStatus,
       start_date: finalStartDate,
       end_date: finalEndDate,
@@ -431,6 +435,15 @@ export const getNewsById = async (req, res) => {
 
     const news = await prisma.news.findUnique({
       where: { id: Number(id) },
+      include: {
+        users: {
+          select: {
+            id: true,
+            full_name: true,
+            role: true
+          }
+        }
+      }
     });
 
     if (!news) {

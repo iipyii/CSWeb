@@ -66,7 +66,7 @@ router.get("/config", async (req, res) => {
 });
 
 // POST save external links
-router.post("/links", verifyToken, checkRole(["admin", "lecturer"]), async (req, res) => {
+router.post("/links", verifyToken, checkRole(["admin"]), async (req, res) => {
   try {
     const { docsUrl, placesUrl } = req.body;
     const configData = { docsUrl: docsUrl || "", placesUrl: placesUrl || "" };
@@ -85,7 +85,7 @@ router.post("/links", verifyToken, checkRole(["admin", "lecturer"]), async (req,
 });
 
 // POST save evaluation criteria
-router.post("/evaluation", verifyToken, checkRole(["admin", "lecturer"]), async (req, res) => {
+router.post("/evaluation", verifyToken, checkRole(["admin"]), async (req, res) => {
   try {
     const { items, note } = req.body;
     const configData = {
@@ -107,7 +107,7 @@ router.post("/evaluation", verifyToken, checkRole(["admin", "lecturer"]), async 
 });
 
 // POST create single item
-router.post("/item", verifyToken, checkRole(["admin", "lecturer"]), async (req, res) => {
+router.post("/item", verifyToken, checkRole(["admin"]), async (req, res) => {
   try {
     const { section, title, content } = req.body;
     if (!section || !content) {
@@ -130,7 +130,7 @@ router.post("/item", verifyToken, checkRole(["admin", "lecturer"]), async (req, 
 });
 
 // PUT update single item
-router.put("/item/:id", verifyToken, checkRole(["admin", "lecturer"]), async (req, res) => {
+router.put("/item/:id", verifyToken, checkRole(["admin"]), async (req, res) => {
   try {
     const { id } = req.params;
     const { section, title, content } = req.body;
@@ -152,7 +152,7 @@ router.put("/item/:id", verifyToken, checkRole(["admin", "lecturer"]), async (re
 });
 
 // DELETE single item
-router.delete("/item/:id", verifyToken, checkRole(["admin", "lecturer"]), async (req, res) => {
+router.delete("/item/:id", verifyToken, checkRole(["admin"]), async (req, res) => {
   try {
     const { id } = req.params;
     await prisma.internships.delete({

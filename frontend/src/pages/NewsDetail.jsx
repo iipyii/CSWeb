@@ -51,7 +51,7 @@ const NewsDetail = () => {
           rawDate: data.start_date || data.created_at,
           date: formatThaiDate(data.start_date || data.created_at),
           tag: data.category === 'department' ? 'ข่าวภาควิชาฯ' : 'ข่าวสาร',
-          author: 'ผู้ดูแลระบบ', 
+          author: data.author || data.users?.full_name || (lang === 'EN' ? 'Administrator' : 'ผู้ดูแลระบบ'), 
         });
       } catch (error) {
         console.error("Error fetching news detail:", error);
@@ -184,7 +184,7 @@ const NewsDetail = () => {
               </div>
               <div className="flex items-center bg-indigo-50/50 px-3 py-1.5 rounded-lg border border-indigo-100/50 text-[#3F51B5]">
                 <User size={14} className="mr-2" />
-                <span>{lang === 'EN' ? 'Administrator' : news.author}</span>
+                <span>{news.author || (lang === 'EN' ? 'Administrator' : 'ผู้ดูแลระบบ')}</span>
               </div>
             </div>
 

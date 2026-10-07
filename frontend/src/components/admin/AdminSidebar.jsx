@@ -34,9 +34,9 @@ export default function AdminSidebar({ onNavigate }) {
   const studentSubItems = [
     { label: 'โครงงานนักศึกษา', icon: <FolderGit2 size={18} />, path: '/admin/projects', roles: ['admin'] },
     { label: 'นักศึกษาในที่ปรึกษา', icon: <UserCheck size={18} />, path: '/admin/consultants', roles: ['admin', 'lecturer'] },
-    { label: 'จัดการข้อมูลการฝึกงาน', icon: <ClipboardCheck size={18} />, path: '/admin/internship', roles: ['admin', 'lecturer'] },
-    { label: 'จัดการขบวนวิชา', icon: <BookOpenCheck size={18} />, path: '/admin/subject-courses', roles: ['admin', 'lecturer'] },
-    { label: 'จัดการคู่มือนักศึกษา', icon: <Bookmark size={18} />, path: '/admin/student-guide', roles: ['admin', 'lecturer'] },
+    { label: 'จัดการข้อมูลการฝึกงาน', icon: <ClipboardCheck size={18} />, path: '/admin/internship', roles: ['admin'] },
+    { label: 'จัดการขบวนวิชา', icon: <BookOpenCheck size={18} />, path: '/admin/subject-courses', roles: ['admin'] },
+    { label: 'จัดการคู่มือนักศึกษา', icon: <Bookmark size={18} />, path: '/admin/student-guide', roles: ['admin'] },
     { label: 'จัดการลิงก์สำหรับนักศึกษา', icon: <Link2 size={18} />, path: '/admin/student-links', roles: ['admin'] },
   ];
 

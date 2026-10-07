@@ -123,21 +123,27 @@ router.post("/", verifyToken, checkRole(["admin"]), async (req, res) => {
   }
 });
 
+// Helper to resolve lecturerId for current user
+const resolveLecturerId = async (user) => {
+  let lecturerId = user.lecturer_id;
+  if (!lecturerId && user.email) {
+    const match = await prisma.lecturers.findFirst({
+      where: {
+        OR: [
+          { email: { equals: user.email, mode: "insensitive" } },
+          { fullname_th: { contains: user.full_name?.split(" ").slice(-1)[0] || user.full_name } }
+        ]
+      }
+    });
+    if (match) lecturerId = match.id;
+  }
+  return lecturerId;
+};
+
 // GET my lecturer profile (สำหรับอาจารย์ที่ล็อกอินอยู่)
 router.get("/profile/me", verifyToken, async (req, res) => {
   try {
-    let lecturerId = req.user.lecturer_id;
-    if (!lecturerId && req.user.email) {
-      const match = await prisma.lecturers.findFirst({
-        where: {
-          OR: [
-            { email: { equals: req.user.email, mode: "insensitive" } },
-            { fullname_th: { contains: req.user.full_name.split(" ").slice(-1)[0] || req.user.full_name } }
-          ]
-        }
-      });
-      if (match) lecturerId = match.id;
-    }
+    const lecturerId = await resolveLecturerId(req.user);
 
     if (!lecturerId) {
       return res.status(404).json({ error: "ไม่พบข้อมูลโปรไฟล์อาจารย์ที่เชื่อมโยงกับบัญชีนี้" });
@@ -164,18 +170,7 @@ router.get("/profile/me", verifyToken, async (req, res) => {
 // PUT my lecturer profile
 router.put("/profile/me", verifyToken, async (req, res) => {
   try {
-    let lecturerId = req.user.lecturer_id;
-    if (!lecturerId && req.user.email) {
-      const match = await prisma.lecturers.findFirst({
-        where: {
-          OR: [
-            { email: { equals: req.user.email, mode: "insensitive" } },
-            { fullname_th: { contains: req.user.full_name.split(" ").slice(-1)[0] || req.user.full_name } }
-          ]
-        }
-      });
-      if (match) lecturerId = match.id;
-    }
+    const lecturerId = await resolveLecturerId(req.user);
 
     if (!lecturerId) {
       return res.status(404).json({ error: "ไม่พบข้อมูลโปรไฟล์อาจารย์ที่เชื่อมโยงกับบัญชีนี้" });
@@ -211,6 +206,161 @@ router.put("/profile/me", verifyToken, async (req, res) => {
   } catch (err) {
     console.error("Update my lecturer profile error:", err);
     res.status(500).json({ error: "Failed to update profile: " + err.message });
+  }
+});
+
+// POST create research publication for logged in lecturer
+router.post("/profile/publications", verifyToken, async (req, res) => {
+  try {
+    const lecturerId = await resolveLecturerId(req.user);
+
+    if (!lecturerId) {
+      return res.status(404).json({ error: "ไม่พบข้อมูลโปรไฟล์อาจารย์ที่เชื่อมโยงกับบัญชีนี้" });
+    }
+
+    const {
+      title,
+      authors,
+      publication_type,
+      venue,
+      publication_year,
+      volume,
+      issue,
+      pages,
+      doi,
+      url,
+      abstract,
+      is_published
+    } = req.body;
+
+    if (!title || !title.trim()) {
+      return res.status(400).json({ error: "กรุณากรอกชื่องานวิจัยหรือผลงานตีพิมพ์" });
+    }
+
+    const newPublication = await prisma.research_publications.create({
+      data: {
+        lecturer_id: lecturerId,
+        title: title.trim(),
+        authors: authors?.trim() || null,
+        publication_type: publication_type?.trim() || null,
+        venue: venue?.trim() || null,
+        publication_year: publication_year ? parseInt(publication_year) : null,
+        volume: volume?.trim() || null,
+        issue: issue?.trim() || null,
+        pages: pages?.trim() || null,
+        doi: doi?.trim() || null,
+        url: url?.trim() || null,
+        abstract: abstract?.trim() || null,
+        is_published: is_published !== undefined ? Boolean(is_published) : true
+      }
+    });
+
+    res.status(201).json({ message: "เพิ่มผลงานวิจัยสำเร็จ", publication: newPublication });
+  } catch (err) {
+    console.error("Create publication error:", err);
+    res.status(500).json({ error: "เกิดข้อผิดพลาดในการเพิ่มผลงานวิจัย: " + err.message });
+  }
+});
+
+// PUT update research publication
+router.put("/profile/publications/:id", verifyToken, async (req, res) => {
+  try {
+    const pubId = parseInt(req.params.id);
+    if (isNaN(pubId)) {
+      return res.status(400).json({ error: "รหัสผลงานวิจัยไม่ถูกต้อง" });
+    }
+
+    const existing = await prisma.research_publications.findUnique({
+      where: { id: pubId }
+    });
+
+    if (!existing) {
+      return res.status(404).json({ error: "ไม่พบข้อมูลผลงานวิจัยนี้" });
+    }
+
+    const lecturerId = await resolveLecturerId(req.user);
+
+    // Permission check: must be owner or admin
+    if (req.user.role !== "admin" && existing.lecturer_id !== lecturerId) {
+      return res.status(403).json({ error: "คุณไม่มีสิทธิ์แก้ไขผลงานวิจัยนี้" });
+    }
+
+    const {
+      title,
+      authors,
+      publication_type,
+      venue,
+      publication_year,
+      volume,
+      issue,
+      pages,
+      doi,
+      url,
+      abstract,
+      is_published
+    } = req.body;
+
+    if (title !== undefined && (!title || !title.trim())) {
+      return res.status(400).json({ error: "กรุณากรอกชื่องานวิจัยหรือผลงานตีพิมพ์" });
+    }
+
+    const updated = await prisma.research_publications.update({
+      where: { id: pubId },
+      data: {
+        title: title !== undefined ? title.trim() : undefined,
+        authors: authors !== undefined ? (authors?.trim() || null) : undefined,
+        publication_type: publication_type !== undefined ? (publication_type?.trim() || null) : undefined,
+        venue: venue !== undefined ? (venue?.trim() || null) : undefined,
+        publication_year: publication_year !== undefined ? (publication_year ? parseInt(publication_year) : null) : undefined,
+        volume: volume !== undefined ? (volume?.trim() || null) : undefined,
+        issue: issue !== undefined ? (issue?.trim() || null) : undefined,
+        pages: pages !== undefined ? (pages?.trim() || null) : undefined,
+        doi: doi !== undefined ? (doi?.trim() || null) : undefined,
+        url: url !== undefined ? (url?.trim() || null) : undefined,
+        abstract: abstract !== undefined ? (abstract?.trim() || null) : undefined,
+        is_published: is_published !== undefined ? Boolean(is_published) : undefined,
+        updated_at: new Date()
+      }
+    });
+
+    res.json({ message: "แก้ไขผลงานวิจัยสำเร็จ", publication: updated });
+  } catch (err) {
+    console.error("Update publication error:", err);
+    res.status(500).json({ error: "เกิดข้อผิดพลาดในการแก้ไขผลงานวิจัย: " + err.message });
+  }
+});
+
+// DELETE research publication
+router.delete("/profile/publications/:id", verifyToken, async (req, res) => {
+  try {
+    const pubId = parseInt(req.params.id);
+    if (isNaN(pubId)) {
+      return res.status(400).json({ error: "รหัสผลงานวิจัยไม่ถูกต้อง" });
+    }
+
+    const existing = await prisma.research_publications.findUnique({
+      where: { id: pubId }
+    });
+
+    if (!existing) {
+      return res.status(404).json({ error: "ไม่พบข้อมูลผลงานวิจัยนี้" });
+    }
+
+    const lecturerId = await resolveLecturerId(req.user);
+
+    // Permission check: must be owner or admin
+    if (req.user.role !== "admin" && existing.lecturer_id !== lecturerId) {
+      return res.status(403).json({ error: "คุณไม่มีสิทธิ์ลบผลงานวิจัยนี้" });
+    }
+
+    await prisma.research_publications.delete({
+      where: { id: pubId }
+    });
+
+    res.json({ message: "ลบผลงานวิจัยสำเร็จ" });
+  } catch (err) {
+    console.error("Delete publication error:", err);
+    res.status(500).json({ error: "เกิดข้อผิดพลาดในการลบผลงานวิจัย: " + err.message });
   }
 });
 

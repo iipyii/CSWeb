@@ -43,7 +43,6 @@ export default function ManageConsultants() {
 
   // Import states
   const [importFile, setImportFile] = useState(null);
-  const [defaultImportYear, setDefaultImportYear] = useState("69");
   const [importing, setImporting] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
   const [importStatusText, setImportStatusText] = useState("");
@@ -113,8 +112,6 @@ export default function ManageConsultants() {
       setStudents(list);
       if (res.data?.years && Array.isArray(res.data.years) && res.data.years.length > 0) {
         setAvailableYears(res.data.years);
-        const topCohort = String(res.data.years[0]).slice(-2);
-        setDefaultImportYear(topCohort);
       }
     } catch (error) {
       console.error("Failed to load consultants:", error);
@@ -234,7 +231,6 @@ export default function ManageConsultants() {
 
     const data = new FormData();
     data.append("file", importFile);
-    data.append("default_year", defaultImportYear);
 
     setImporting(true);
     setImportResult(null);
@@ -615,22 +611,6 @@ export default function ManageConsultants() {
                   </a>
                 </div>
 
-                {/* Default Cohort / Academic Year */}
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1.5">
-                    รหัสรุ่นเริ่มต้น (กรณีในไฟล์ Excel ไม่ได้ระบุคอลัมน์รหัส/ปีการศึกษา)
-                  </label>
-                  <select
-                    value={defaultImportYear}
-                    onChange={(e) => setDefaultImportYear(e.target.value)}
-                    disabled={importing}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
-                  >
-                    {cohortList.map(c => (
-                      <option key={c} value={c}>รหัส {c} (ปีการศึกษา 25{c})</option>
-                    ))}
-                  </select>
-                </div>
 
                 {/* File Drag & Drop / Input */}
                 <div>

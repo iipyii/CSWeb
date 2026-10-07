@@ -15,9 +15,9 @@ const router = express.Router();
 router.get("/", getHandbooks);
 router.get("/:id", getHandbookById);
 
-// Management routes (Admin and Lecturer)
-router.post("/", verifyToken, checkRole(["admin", "lecturer"]), createHandbook);
-router.put("/:id", verifyToken, checkRole(["admin", "lecturer"]), updateHandbook);
-router.delete("/:id", verifyToken, checkRole(["admin", "lecturer"]), deleteHandbook);
+// Management routes (Admin only)
+router.post("/", verifyToken, checkRole(["admin"]), createHandbook);
+router.put("/:id", verifyToken, checkRole(["admin"]), updateHandbook);
+router.delete("/:id", verifyToken, checkRole(["admin"]), deleteHandbook);
 
 export default router;

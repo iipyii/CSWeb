@@ -269,14 +269,39 @@ export default function App() {
             <Route path="news/create" element={<CreateNews />} />
             <Route path="news/edit/:id" element={<EditNews />} />
             <Route path="news/archive" element={<NewsArchive />} />
-
-            <Route path="projects" element={<ManageProjects />} />
-            <Route path="subjects" element={<ManageSubjects />} />
             <Route path="consultants" element={<ManageConsultants />} />
-            <Route path="internship" element={<ManageInternship />} />
-            <Route path="subject-courses" element={<ManageSubjectCourses />} />
-            <Route path="student-guide" element={<ManageStudentGuide />} />
-            <Route path="student-links" element={<ManageStudentLinks />} />
+
+            {/* เมนูสำหรับ Admin เท่านั้น */}
+            <Route path="projects" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <ManageProjects />
+              </ProtectedRoute>
+            } />
+            <Route path="subjects" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <ManageSubjects />
+              </ProtectedRoute>
+            } />
+            <Route path="internship" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <ManageInternship />
+              </ProtectedRoute>
+            } />
+            <Route path="subject-courses" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <ManageSubjectCourses />
+              </ProtectedRoute>
+            } />
+            <Route path="student-guide" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <ManageStudentGuide />
+              </ProtectedRoute>
+            } />
+            <Route path="student-links" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <ManageStudentLinks />
+              </ProtectedRoute>
+            } />
           </Route>
         </Routes>
       </AuthProvider>

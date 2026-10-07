@@ -40,12 +40,12 @@ router.get("/years", getCourseYears);
 router.get("/all", getAllCourses);
 router.get("/:year/:semester", getCourses);
 
-/* ---------- protected admin / lecturer routes ---------- */
-router.post("/years", verifyToken, checkRole(["admin", "lecturer"]), createCourseYear);
-router.delete("/years/:id", verifyToken, checkRole(["admin", "lecturer"]), deleteCourseYear);
+/* ---------- protected admin routes ---------- */
+router.post("/years", verifyToken, checkRole(["admin"]), createCourseYear);
+router.delete("/years/:id", verifyToken, checkRole(["admin"]), deleteCourseYear);
 
-router.post("/upload", verifyToken, checkRole(["admin", "lecturer"]), upload.single("file"), uploadCourse);
-router.put("/:id", verifyToken, checkRole(["admin", "lecturer"]), upload.single("file"), updateCourse);
-router.delete("/:id", verifyToken, checkRole(["admin", "lecturer"]), deleteCourse);
+router.post("/upload", verifyToken, checkRole(["admin"]), upload.single("file"), uploadCourse);
+router.put("/:id", verifyToken, checkRole(["admin"]), upload.single("file"), updateCourse);
+router.delete("/:id", verifyToken, checkRole(["admin"]), deleteCourse);
 
 export default router;

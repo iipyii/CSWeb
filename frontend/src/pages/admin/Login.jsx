@@ -56,7 +56,11 @@ export default function Login() {
       case 'failed_to_fetch_user_profile':
         return 'ไม่สามารถดึงข้อมูลโปรไฟล์ผู้ใช้จาก KMUTNB ได้';
       default:
-        return code ? `เกิดข้อผิดพลาดในการเข้าสู่ระบบ: ${code}` : null;
+        if (!code) return null;
+        if (code.includes('สิทธิ์') || code.includes('อาจารย์') || code.includes('ไม่พบ') || code.startsWith('เกิดข้อผิดพลาด')) {
+          return code;
+        }
+        return `เกิดข้อผิดพลาดในการเข้าสู่ระบบ: ${code}`;
     }
   };
 
