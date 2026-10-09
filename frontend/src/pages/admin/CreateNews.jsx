@@ -144,7 +144,6 @@ export default function CreateNews() {
       Color,
       Placeholder.configure({
         placeholder: 'พิมพ์รายละเอียดข่าวสารที่นี่...',
-        showOnlyCurrent: false,
       }),
     ],
     content: '',
@@ -162,7 +161,6 @@ export default function CreateNews() {
       Color,
       Placeholder.configure({
         placeholder: 'Enter English details here or click AI translate...',
-        showOnlyCurrent: false,
       }),
     ],
     content: '',

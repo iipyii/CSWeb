@@ -64,11 +64,11 @@ textarea {
   cursor: inherit;
 }
 
-/* 📝 Tiptap Placeholder */
+/* 📝 Tiptap Placeholder: แสดงเฉพาะเมื่อ Editor ว่างเปล่าเท่านั้น */
+.tiptap.is-editor-empty p:first-child::before,
 .tiptap p.is-editor-empty:first-child::before,
-.tiptap p.is-empty::before,
-.ProseMirror p.is-editor-empty:first-child::before,
-.ProseMirror p.is-empty::before {
+.ProseMirror.is-editor-empty p:first-child::before,
+.ProseMirror p.is-editor-empty:first-child::before {
   color: #94a3b8 !important;
   content: attr(data-placeholder);
   float: left;
