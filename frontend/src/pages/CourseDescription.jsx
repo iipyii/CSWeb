@@ -199,7 +199,11 @@ export default function CourseDescription() {
     }
   }, [selectedDegree]);
 
-  // ดึงข้อมูลรายวิชา
+  useEffect(() => {
+    setActiveDegreeTab("all");
+  }, [selectedDegree, selectedYear]);
+
+  // ดึงข้อมูลรายวิชาตามตัวกรองที่เลือกอย่างเคร่งครัด
   const fetchSubjects = async () => {
     setIsLoading(true);
     try {
@@ -210,39 +214,19 @@ export default function CourseDescription() {
         params.keyword = q;
       }
 
-      // เมื่อมีการค้นหาด้วยคำสำคัญ (Keyword search):
-      // หากผู้ใช้ไม่ได้เลือกระดับปริญญาเฉพาะเจาะจง (เช่น อยู่ที่ all หรือ bachelor-all)
-      // ให้สืบค้นครอบคลุมทุกระดับการศึกษา เพื่อให้ค้นพบทั้ง ปริญญาตรี ปริญญาโท และปริญญาเอก ได้ทันที
-      const isSearching = Boolean(q);
+      // กรองตามระดับการศึกษา (ถ้าไม่ได้เลือก 'all')
+      if (currentDegreeConfig && currentDegreeConfig.degree_level !== "all") {
+        params.degree_level = currentDegreeConfig.degree_level;
+      }
 
-      if (isSearching) {
-        // หากผู้ใช้จงใจเลือกระดับ ป.โท หรือ ป.เอก ใน dropdown
-        if (selectedDegree.startsWith("master")) {
-          params.degree_level = "master";
-          if (currentDegreeConfig?.curriculum_code) {
-            params.curriculum_code = currentDegreeConfig.curriculum_code;
-          }
-        } else if (selectedDegree.startsWith("doctor")) {
-          params.degree_level = "doctor";
-        } else if (selectedDegree === "bachelor-inter") {
-          params.curriculum_code = "CS-Inter";
-        }
+      // กรองตามรหัสหลักสูตรเฉพาะทาง (เช่น CS-Inter, MS-CS, MS-SE)
+      if (currentDegreeConfig?.curriculum_code) {
+        params.curriculum_code = currentDegreeConfig.curriculum_code;
+      }
 
-        // หากผู้ใช้เลือกปีที่ไม่ใช่ all และไม่ใช่ปีดีฟอลต์
-        if (selectedYear !== "all" && selectedYear !== "2569") {
-          params.curriculum_year = selectedYear;
-        }
-      } else {
-        // โหมดการเลือกดูรายวิชาตามหลักสูตรปกติ (ไม่มีคำค้นหา)
-        if (currentDegreeConfig && currentDegreeConfig.degree_level !== "all") {
-          params.degree_level = currentDegreeConfig.degree_level;
-        }
-        if (currentDegreeConfig?.curriculum_code) {
-          params.curriculum_code = currentDegreeConfig.curriculum_code;
-        }
-        if (selectedYear && selectedYear !== "all") {
-          params.curriculum_year = selectedYear;
-        }
+      // กรองตามปีหลักสูตรอย่างเคร่งครัดตามที่ผู้ใช้เลือก (รวมทั้ง 2569)
+      if (selectedYear && selectedYear !== "all") {
+        params.curriculum_year = selectedYear;
       }
 
       if (selectedTrack !== "all") {
@@ -253,28 +237,11 @@ export default function CourseDescription() {
       }
 
       const res = await axios.get("/api/subjects", { params });
-      let data = (res.data || []).map(s => ({
+      const data = (res.data || []).map(s => ({
         ...s,
         title_th: cleanThaiDisplay(s.title_th),
         description_th: cleanThaiDisplay(s.description_th)
       }));
-
-      // 🌟 Smart Search Fallback:
-      // ถ้าค้นหาด้วยคำสำคัญแล้วไม่พบในตัวกรองที่เลือก ให้ค้นหาข้ามทุกหลักสูตรทันที
-      if (data.length === 0 && q) {
-        try {
-          const fallbackRes = await axios.get("/api/subjects", { params: { keyword: q } });
-          if (fallbackRes.data && fallbackRes.data.length > 0) {
-            data = fallbackRes.data.map(s => ({
-              ...s,
-              title_th: cleanThaiDisplay(s.title_th),
-              description_th: cleanThaiDisplay(s.description_th)
-            }));
-          }
-        } catch (e) {
-          console.warn("Global subject search fallback error:", e);
-        }
-      }
 
       setSubjects(data);
     } catch (err) {
@@ -644,7 +611,50 @@ export default function CourseDescription() {
                 ) : (
                   <tr>
                     <td colSpan="6" className="py-16 text-center text-slate-400">
-                      ไม่พบข้อมูลรายวิชาตามเงื่อนไขหรือคำค้นหาที่ระบุ
+                      <div className="max-w-md mx-auto space-y-3 px-4">
+                        <div className="w-12 h-12 bg-slate-100 text-slate-400 rounded-2xl flex items-center justify-center mx-auto mb-2">
+                          <Info size={24} />
+                        </div>
+                        <p className="text-slate-700 font-bold text-base">
+                          ไม่พบข้อมูลรายวิชาที่ตรงกับเงื่อนไข
+                        </p>
+                        <p className="text-xs text-slate-500 leading-relaxed">
+                          {searchTerm && (
+                            <>
+                              คำค้นหา <strong className="text-slate-800 font-mono">"{searchTerm}"</strong>{" "}
+                            </>
+                          )}
+                          {selectedYear !== 'all' ? (
+                            <>ไม่มีอยู่ในหลักสูตรปี <strong className="text-slate-800 font-semibold">{selectedYear}</strong></>
+                          ) : (
+                            <>ไม่พบในตัวกรองหลักสูตรที่เลือก</>
+                          )}
+                        </p>
+                        {(selectedYear !== 'all' || selectedDegree !== 'all' || selectedTrack !== 'all' || selectedCategory !== 'all' || searchTerm) && (
+                          <div className="pt-2 flex flex-wrap justify-center gap-2">
+                            {selectedYear !== 'all' && (
+                              <button
+                                onClick={() => setSelectedYear("all")}
+                                className="px-3.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-[#3F51B5] text-xs font-bold rounded-xl transition-all shadow-sm"
+                              >
+                                ลองค้นหาในทุกปีหลักสูตร
+                              </button>
+                            )}
+                            <button
+                              onClick={() => {
+                                setSelectedDegree("all");
+                                setSelectedYear("all");
+                                setSelectedTrack("all");
+                                setSelectedCategory("all");
+                                setSearchTerm("");
+                              }}
+                              className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-xl transition-all"
+                            >
+                              ล้างตัวกรองทั้งหมด
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 )}
