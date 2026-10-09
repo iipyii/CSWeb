@@ -2,14 +2,109 @@ import React, { useState, useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
+import { TextStyle } from '@tiptap/extension-text-style';
+import { Color } from '@tiptap/extension-color';
 import axios from "axios";
 import {
   Save, Image as ImageIcon, FileText, Upload, ChevronLeft, CheckCircle2,
   User, Layout, Plus, Calendar, Bold, Italic, List, AlertCircle, X, File,
-  Sparkles, Loader2, Globe
+  Sparkles, Loader2, Globe, Palette
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+
+function EditorToolbar({ editor, label }) {
+  const colors = [
+    { label: 'สีดำ (ค่าเริ่มต้น)', value: '#1e293b', bg: 'bg-[#1e293b]' },
+    { label: 'สีน้ำเงินภาควิชา', value: '#3F51B5', bg: 'bg-[#3F51B5]' },
+    { label: 'สีแดงเน้นย้ำ', value: '#e11d48', bg: 'bg-[#e11d48]' },
+    { label: 'สีส้มแจ้งเตือน', value: '#ea580c', bg: 'bg-[#ea580c]' },
+    { label: 'สีเขียว', value: '#16a34a', bg: 'bg-[#16a34a]' },
+    { label: 'สีฟ้า', value: '#0284c7', bg: 'bg-[#0284c7]' },
+  ];
+
+  return (
+    <div 
+      className="p-5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 bg-slate-50/70 cursor-default"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <label className="text-sm font-black text-slate-700 ml-2">{label}</label>
+      
+      <div className="flex flex-wrap items-center gap-2">
+        {/* Basic formatting */}
+        <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200/80 shadow-xs">
+          <button 
+            type="button" 
+            title="ตัวหนา (Bold)"
+            onClick={() => editor?.chain().focus().toggleBold().run()} 
+            className={`p-2 rounded-lg transition-colors cursor-pointer ${editor?.isActive('bold') ? 'bg-indigo-50 text-[#3F51B5]' : 'hover:bg-slate-100 text-slate-600'}`}
+          >
+            <Bold size={15} />
+          </button>
+          <button 
+            type="button" 
+            title="ตัวเอียง (Italic)"
+            onClick={() => editor?.chain().focus().toggleItalic().run()} 
+            className={`p-2 rounded-lg transition-colors cursor-pointer ${editor?.isActive('italic') ? 'bg-indigo-50 text-[#3F51B5]' : 'hover:bg-slate-100 text-slate-600'}`}
+          >
+            <Italic size={15} />
+          </button>
+          <button 
+            type="button" 
+            title="รายการแบบจุด (Bullet List)"
+            onClick={() => editor?.chain().focus().toggleBulletList().run()} 
+            className={`p-2 rounded-lg transition-colors cursor-pointer ${editor?.isActive('bulletList') ? 'bg-indigo-50 text-[#3F51B5]' : 'hover:bg-slate-100 text-slate-600'}`}
+          >
+            <List size={15} />
+          </button>
+        </div>
+
+        {/* Color Palette Controls */}
+        <div className="flex items-center gap-1.5 bg-white p-1.5 rounded-xl border border-slate-200/80 shadow-xs">
+          <span className="text-[11px] font-bold text-slate-400 px-1 hidden sm:inline">สีข้อความ:</span>
+          {colors.map((c) => (
+            <button
+              key={c.value}
+              type="button"
+              title={c.label}
+              onClick={() => editor?.chain().focus().setColor(c.value).run()}
+              className={`w-5 h-5 rounded-full ${c.bg} border-2 transition-transform hover:scale-125 cursor-pointer ${
+                editor?.isActive('textStyle', { color: c.value })
+                  ? 'border-white ring-2 ring-[#3F51B5] scale-110 shadow-xs'
+                  : 'border-white/80'
+              }`}
+            />
+          ))}
+
+          {/* Custom color input with Palette icon */}
+          <label 
+            title="เลือกสีข้อความเพิ่มเติม..."
+            className="relative w-6 h-6 rounded-lg bg-slate-50 border border-slate-200 hover:border-[#3F51B5] flex items-center justify-center cursor-pointer transition-colors ml-0.5"
+          >
+            <Palette size={13} className="text-slate-600" />
+            <input
+              type="color"
+              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+              onChange={(e) => editor?.chain().focus().setColor(e.target.value).run()}
+            />
+          </label>
+
+          {/* Reset Color */}
+          {editor?.isActive('textStyle') && (
+            <button
+              type="button"
+              title="ล้างสีข้อความ (กลับเป็นค่าเริ่มต้น)"
+              onClick={() => editor?.chain().focus().unsetColor().run()}
+              className="px-2 py-0.5 text-[11px] font-bold text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors cursor-pointer"
+            >
+              ล้างสี
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function CreateNews() {
   const navigate = useNavigate();
@@ -45,6 +140,8 @@ export default function CreateNews() {
   const editor = useEditor({
     extensions: [
       StarterKit,
+      TextStyle,
+      Color,
       Placeholder.configure({
         placeholder: 'พิมพ์รายละเอียดข่าวสารที่นี่...',
         showOnlyCurrent: false,
@@ -61,6 +158,8 @@ export default function CreateNews() {
   const editorEn = useEditor({
     extensions: [
       StarterKit,
+      TextStyle,
+      Color,
       Placeholder.configure({
         placeholder: 'Enter English details here or click AI translate...',
         showOnlyCurrent: false,
@@ -349,17 +448,7 @@ export default function CreateNews() {
                 className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden cursor-text"
                 onClick={() => editor?.chain().focus().run()}
               >
-                <div 
-                  className="p-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/50 cursor-default"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <label className="text-sm font-black text-slate-700 ml-2">รายละเอียดฉบับเต็ม (ภาษาไทย)</label>
-                  <div className="flex gap-2">
-                    <button type="button" onClick={() => editor?.chain().focus().toggleBold().run()} className="p-2 hover:bg-white rounded-lg"><Bold size={16} /></button>
-                    <button type="button" onClick={() => editor?.chain().focus().toggleItalic().run()} className="p-2 hover:bg-white rounded-lg"><Italic size={16} /></button>
-                    <button type="button" onClick={() => editor?.chain().focus().toggleBulletList().run()} className="p-2 hover:bg-white rounded-lg"><List size={16} /></button>
-                  </div>
-                </div>
+                <EditorToolbar editor={editor} label="รายละเอียดฉบับเต็ม (ภาษาไทย)" />
                 <EditorContent editor={editor} />
               </div>
             </div>
@@ -409,17 +498,7 @@ export default function CreateNews() {
                 className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden cursor-text"
                 onClick={() => editorEn?.chain().focus().run()}
               >
-                <div 
-                  className="p-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/50 cursor-default"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <label className="text-sm font-black text-slate-700 ml-2">Full Content (English)</label>
-                  <div className="flex gap-2">
-                    <button type="button" onClick={() => editorEn?.chain().focus().toggleBold().run()} className="p-2 hover:bg-white rounded-lg"><Bold size={16} /></button>
-                    <button type="button" onClick={() => editorEn?.chain().focus().toggleItalic().run()} className="p-2 hover:bg-white rounded-lg"><Italic size={16} /></button>
-                    <button type="button" onClick={() => editorEn?.chain().focus().toggleBulletList().run()} className="p-2 hover:bg-white rounded-lg"><List size={16} /></button>
-                  </div>
-                </div>
+                <EditorToolbar editor={editorEn} label="Full Content (English)" />
                 <EditorContent editor={editorEn} />
               </div>
             </div>
