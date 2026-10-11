@@ -152,13 +152,19 @@ export default function ManageInternship() {
 
   // Save Evaluation Config
   const handleSaveEvaluation = async () => {
+    if (totalScore !== 100) {
+      showAlert('error', `คะแนนรวมต้องเท่ากับ 100 คะแนน (ปัจจุบันรวมได้ ${totalScore} คะแนน)`);
+      return;
+    }
+
     try {
       setSaving(true);
       await axios.post('/api/internships/evaluation', config.evaluation, { withCredentials: true });
       showAlert('success', 'บันทึกเกณฑ์การประเมินคะแนนสำเร็จ');
     } catch (error) {
       console.error('Save evaluation error:', error);
-      showAlert('error', 'บันทึกเกณฑ์การประเมินไม่สำเร็จ');
+      const errMsg = error.response?.data?.error || 'บันทึกเกณฑ์การประเมินไม่สำเร็จ';
+      showAlert('error', errMsg);
     } finally {
       setSaving(false);
     }
@@ -533,11 +539,27 @@ export default function ManageInternship() {
               />
             </div>
 
-            <div className="pt-4 flex justify-end">
+            <div className="pt-4 flex items-center justify-between flex-wrap gap-3">
+              {totalScore !== 100 ? (
+                <div className="flex items-center gap-2 text-xs font-bold text-rose-600 bg-rose-50 px-3 py-2 rounded-xl border border-rose-200">
+                  <AlertCircle size={15} />
+                  <span>คะแนนรวมต้องเท่ากับ 100 คะแนน จึงจะสามารถบันทึกได้ (ปัจจุบัน {totalScore} คะแนน)</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-2 rounded-xl border border-emerald-200">
+                  <CheckCircle size={15} />
+                  <span>คะแนนรวมครบ 100 คะแนน พร้อมบันทึก</span>
+                </div>
+              )}
+
               <button
                 onClick={handleSaveEvaluation}
-                disabled={saving}
-                className="px-6 py-3 bg-[#3F51B5] hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-indigo-100"
+                disabled={saving || totalScore !== 100}
+                className={`px-6 py-3 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-lg ${
+                  totalScore === 100 && !saving
+                    ? 'bg-[#3F51B5] hover:bg-indigo-700 text-white shadow-indigo-100 cursor-pointer'
+                    : 'bg-slate-200 text-slate-400 shadow-none cursor-not-allowed'
+                }`}
               >
                 <Save size={16} /> {saving ? 'กำลังบันทึก...' : 'บันทึกเกณฑ์การประเมิน'}
               </button>

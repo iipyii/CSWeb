@@ -135,7 +135,7 @@ export const getAllConsultants = async (req, res) => {
 
 export const addStudentConsultant = async (req, res) => {
   try {
-    const { student_id, name, year, advisor_id } = req.body;
+    const { student_id, name, year, advisor_id, room } = req.body;
     if (!student_id || !name) {
       return res.status(400).json({ error: "Student ID and name are required" });
     }
@@ -174,14 +174,15 @@ export const addStudentConsultant = async (req, res) => {
         title,
         firstname,
         lastname,
-        year: academicYear
+        year: academicYear,
+        ...(room !== undefined && room !== null ? { room: String(room).trim() || "-" } : {})
       },
       create: {
         student_id: rawId,
         title,
         firstname,
         lastname,
-        room: "-",
+        room: room ? String(room).trim() || "-" : "-",
         year: academicYear
       }
     });

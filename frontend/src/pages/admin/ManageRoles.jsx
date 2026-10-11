@@ -1,12 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Shield, Lock, Save, Search, UserCog, RefreshCw, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Shield, Lock, Save, Search, UserCog, RefreshCw, Loader2, AlertCircle, CheckCircle2, ShieldAlert } from 'lucide-react';
 
 export default function ManageRoles() {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState(null);
   const [users, setUsers] = useState([]);
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    user: null,
+    newRole: ''
+  });
+
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast({ show: false, message: '', type: 'success' });
+    }, 4000);
+  };
 
   const fetchUsers = async () => {
     try {
@@ -24,17 +38,35 @@ export default function ManageRoles() {
     fetchUsers();
   }, []);
 
-  const handleRoleChange = async (id, newRole) => {
+  const handleSelectRole = (targetUser, newRole) => {
+    if (targetUser.role === newRole) return;
+    setConfirmModal({
+      isOpen: true,
+      user: targetUser,
+      newRole
+    });
+  };
+
+  const handleConfirmRoleChange = async () => {
+    if (!confirmModal.user || !confirmModal.newRole) return;
+    const { user, newRole } = confirmModal;
+    setConfirmModal({ isOpen: false, user: null, newRole: '' });
+
     try {
-      setSavingId(id);
-      await axios.put(`/api/users/${id}/role`, { role: newRole });
-      setUsers(users.map(u => u.id === id ? { ...u, role: newRole } : u));
+      setSavingId(user.id);
+      await axios.put(`/api/users/${user.id}/role`, { role: newRole });
+      setUsers(users.map(u => u.id === user.id ? { ...u, role: newRole } : u));
+      showToast(`เปลี่ยนบทบาทของ ${user.full_name} เป็น ${newRole === 'admin' ? 'Administrator' : 'Lecturer'} สำเร็จ`, 'success');
     } catch (error) {
       console.error("Failed to update role:", error);
-      alert("เกิดข้อผิดพลาดในการเปลี่ยนสิทธิ์");
+      showToast("เกิดข้อผิดพลาดในการเปลี่ยนสิทธิ์", 'error');
     } finally {
       setSavingId(null);
     }
+  };
+
+  const handleCancelRoleChange = () => {
+    setConfirmModal({ isOpen: false, user: null, newRole: '' });
   };
 
   const filteredUsers = users.filter(u => 
@@ -125,7 +157,7 @@ export default function ManageRoles() {
                         <select 
                           value={user.role}
                           disabled={savingId === user.id}
-                          onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                          onChange={(e) => handleSelectRole(user, e.target.value)}
                           className={`text-xs font-bold px-4 py-2 rounded-xl outline-none border-none shadow-sm cursor-pointer disabled:opacity-50
                             ${user.role === 'admin' ? 'bg-[#3F51B5] text-white' : 'bg-white text-slate-600 border border-slate-100'}`}
                         >
@@ -158,6 +190,108 @@ export default function ManageRoles() {
           </table>
         </div>
       </div>
+
+      {/* 🔔 Toast Notification */}
+      <AnimatePresence>
+        {toast.show && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className={`fixed bottom-6 right-6 z-50 px-5 py-3.5 rounded-2xl shadow-xl flex items-center gap-3 text-sm font-bold border ${
+              toast.type === 'success'
+                ? 'bg-emerald-600 text-white border-emerald-500 shadow-emerald-600/20'
+                : 'bg-rose-600 text-white border-rose-500 shadow-rose-600/20'
+            }`}
+          >
+            {toast.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+            <span>{toast.message}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ⚠️ Role Change Confirmation Modal */}
+      <AnimatePresence>
+        {confirmModal.isOpen && confirmModal.user && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={handleCancelRoleChange}
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-white rounded-[2rem] shadow-2xl border border-slate-100 p-8 w-full max-w-md relative z-10 space-y-5 text-left"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100">
+                  <ShieldAlert size={24} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-800">
+                    ยืนยันการเปลี่ยนบทบาทผู้ใช้
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    เพื่อป้องกันการเลือกเปลี่ยนสิทธิ์โดยไม่ตั้งใจ
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-xs space-y-2 text-slate-600">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">ผู้ใช้งาน:</span>
+                  <span className="font-bold text-slate-800">{confirmModal.user.full_name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">อีเมล:</span>
+                  <span className="font-mono text-slate-700">{confirmModal.user.email}</span>
+                </div>
+                <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">บทบาทเดิม</span>
+                    <span className="font-bold text-slate-700">
+                      {confirmModal.user.role === 'admin' ? 'Administrator' : 'Lecturer'}
+                    </span>
+                  </div>
+                  <span className="text-slate-400">➔</span>
+                  <div className="text-right">
+                    <span className="text-[10px] text-indigo-500 font-bold block">บทบาทใหม่</span>
+                    <span className="font-bold text-[#3F51B5]">
+                      {confirmModal.newRole === 'admin' ? 'Administrator' : 'Lecturer'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-3 bg-amber-50/70 border border-amber-200/60 rounded-xl text-[11px] text-amber-800 flex items-start gap-2">
+                <AlertCircle size={14} className="shrink-0 mt-0.5 text-amber-600" />
+                <span>การเปลี่ยนบทบาทนี้จะมีผลทันทีต่อสิทธิ์การเข้าถึงเมนูและข้อมูลในระบบหลังบ้าน</span>
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={handleConfirmRoleChange}
+                  className="flex-1 py-3 bg-[#3F51B5] hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-100 flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <CheckCircle2 size={16} /> ยืนยันการเปลี่ยนบทบาท
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCancelRoleChange}
+                  className="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                >
+                  ยกเลิก
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

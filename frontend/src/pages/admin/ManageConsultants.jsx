@@ -35,6 +35,7 @@ export default function ManageConsultants() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedYear, setSelectedYear] = useState("all");
   const [selectedAdvisor, setSelectedAdvisor] = useState("all");
+  const [selectedRoom, setSelectedRoom] = useState("all");
   const [availableYears, setAvailableYears] = useState([2570, 2569, 2568, 2567, 2566, 2565, 2564, 2563, 2562, 2561, 2560, 2559, 2558]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -51,6 +52,7 @@ export default function ManageConsultants() {
   const [formData, setFormData] = useState({
     student_id: "",
     name: "",
+    room: "",
     year: "69",
     advisor_id: ""
   });
@@ -104,6 +106,12 @@ export default function ManageConsultants() {
   ])).filter(c => c && c.length === 2 && !isNaN(parseInt(c)))
     .sort((a, b) => parseInt(b) - parseInt(a));
 
+  const availableRooms = Array.from(new Set(
+    students
+      .map(s => s.room ? String(s.room).trim() : "")
+      .filter(r => r && r !== "-" && r.toLowerCase() !== "null" && r.toLowerCase() !== "undefined")
+  )).sort();
+
   const fetchStudents = async () => {
     try {
       setLoading(true);
@@ -151,6 +159,7 @@ export default function ManageConsultants() {
     setFormData({ 
       student_id: "", 
       name: "", 
+      room: "",
       year: cohortList[0] || "68", 
       advisor_id: !isUserAdmin ? (myLecturerId || "") : "" 
     });
@@ -168,6 +177,7 @@ export default function ManageConsultants() {
       setSubmitting(true);
       const payload = {
         ...formData,
+        room: formData.room?.trim() || "-",
         advisor_id: !isUserAdmin ? (myLecturerId || formData.advisor_id) : formData.advisor_id
       };
       await axios.post("/api/consult/students", payload);
@@ -176,6 +186,7 @@ export default function ManageConsultants() {
       setFormData({ 
         student_id: "", 
         name: "", 
+        room: "",
         year: cohortList[0] || "68", 
         advisor_id: !isUserAdmin ? (myLecturerId || "") : "" 
       });
@@ -304,13 +315,16 @@ export default function ManageConsultants() {
     const matchSearch = !q || 
       (s.name || "").toLowerCase().includes(q) || 
       (s.student_id || "").includes(q) ||
+      (s.room || "").toLowerCase().includes(q) ||
       (s.advisor || "").toLowerCase().includes(q);
 
     const cohort = getCohort(s);
     const targetCohort = selectedYear === "all" ? "all" : String(selectedYear).slice(-2);
     const matchCohort = targetCohort === "all" || cohort === targetCohort;
 
-    return matchSearch && matchCohort;
+    const matchRoom = selectedRoom === "all" || (s.room && s.room.trim().toUpperCase() === selectedRoom.trim().toUpperCase());
+
+    return matchSearch && matchCohort && matchRoom;
   });
 
   return (
@@ -439,6 +453,25 @@ export default function ManageConsultants() {
               </div>
             </div>
 
+            {/* ฟิลเตอร์เลือกห้อง/ตอนเรียน */}
+            <div className="relative min-w-[160px]">
+              <select
+                value={selectedRoom}
+                onChange={(e) => setSelectedRoom(e.target.value)}
+                className="w-full pl-4 pr-8 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-[#3F51B5]/20 focus:border-[#3F51B5] transition-all cursor-pointer appearance-none"
+              >
+                <option value="all">ห้อง/ตอนเรียน (ทั้งหมด)</option>
+                {Array.from(new Set(['RA', 'RB', 'RC', ...availableRooms])).map(r => (
+                  <option key={r} value={r}>
+                    ห้อง {r}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                <ChevronDown size={15} />
+              </div>
+            </div>
+
             {/* ฟิลเตอร์เลือกอาจารย์ที่ปรึกษา (เฉพาะผู้ดูแลระบบ Admin) */}
             {isUserAdmin && (
               <div className="relative min-w-[210px]">
@@ -481,11 +514,12 @@ export default function ManageConsultants() {
           <table className="w-full min-w-[720px] text-left border-collapse">
             <thead className="bg-slate-50 text-slate-400 text-[11px] uppercase tracking-widest font-black">
               <tr>
-                <th className="px-8 py-5">รหัสนักศึกษา</th>
-                <th className="px-8 py-5">ชื่อ-นามสกุล</th>
-                <th className="px-8 py-5">รหัสรุ่น</th>
-                <th className="px-8 py-5">อาจารย์ที่ปรึกษา</th>
-                <th className="px-8 py-5 text-center">จัดการ</th>
+                <th className="px-6 py-5">รหัสนักศึกษา</th>
+                <th className="px-6 py-5">ชื่อ-นามสกุล</th>
+                <th className="px-6 py-5">รหัสรุ่น</th>
+                <th className="px-6 py-5">ห้อง/ตอนเรียน</th>
+                <th className="px-6 py-5">อาจารย์ที่ปรึกษา</th>
+                <th className="px-6 py-5 text-center">จัดการ</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -494,21 +528,26 @@ export default function ManageConsultants() {
                   const cohort = getCohort(student);
                   return (
                     <tr key={student.id} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="px-8 py-5 font-bold text-[#3F51B5] text-sm tracking-wide">
+                      <td className="px-6 py-5 font-bold text-[#3F51B5] text-sm tracking-wide">
                         {student.student_id}
                       </td>
-                      <td className="px-8 py-5 font-bold text-slate-700 text-sm">
+                      <td className="px-6 py-5 font-bold text-slate-700 text-sm">
                         {student.name}
                       </td>
-                      <td className="px-8 py-5 text-sm">
+                      <td className="px-6 py-5 text-sm">
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-[#3F51B5] border border-indigo-100/70">
                           รหัส {cohort}
                         </span>
                       </td>
-                      <td className="px-8 py-5 text-sm text-slate-600 font-medium">
+                      <td className="px-6 py-5 text-sm font-semibold text-slate-700">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                          {student.room || "-"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-5 text-sm text-slate-600 font-medium">
                         {student.advisor}
                       </td>
-                      <td className="px-8 py-5 text-center">
+                      <td className="px-6 py-5 text-center">
                         <div className="flex items-center justify-center gap-1">
                           <button 
                             onClick={() => handleOpenEditModal(student)}
@@ -531,7 +570,7 @@ export default function ManageConsultants() {
                 })
               ) : (
                 <tr>
-                  <td colSpan="5" className="text-center py-16 text-slate-400 text-sm">
+                  <td colSpan="6" className="text-center py-16 text-slate-400 text-sm">
                     {loading ? (
                       <div className="flex items-center justify-center gap-2">
                         <Loader2 size={18} className="animate-spin text-[#3F51B5]" />
@@ -839,19 +878,46 @@ export default function ManageConsultants() {
                   />
                 </div>
 
-                <div>
-                  <label className="text-xs font-bold text-slate-600 block mb-1">
-                    รหัสรุ่น (เช่น รหัส 68) *
-                  </label>
-                  <select 
-                    value={formData.year}
-                    onChange={(e) => setFormData({ ...formData, year: e.target.value })}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-[#3F51B5] focus:ring-2 focus:ring-[#3F51B5]/20 font-semibold text-slate-700"
-                  >
-                    {cohortList.map(c => (
-                      <option key={c} value={c}>รหัส {c}</option>
-                    ))}
-                  </select>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-slate-600 block mb-1">
+                      รหัสรุ่น (เช่น รหัส 68) *
+                    </label>
+                    <select 
+                      value={formData.year}
+                      onChange={(e) => setFormData({ ...formData, year: e.target.value })}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-[#3F51B5] focus:ring-2 focus:ring-[#3F51B5]/20 font-semibold text-slate-700"
+                    >
+                      {cohortList.map(c => (
+                        <option key={c} value={c}>รหัส {c}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-600 block mb-1">
+                      ห้อง / ตอนเรียน
+                    </label>
+                    <div className="relative">
+                      <input 
+                        type="text" 
+                        list="room-options-add"
+                        value={formData.room}
+                        onChange={(e) => setFormData({ ...formData, room: e.target.value })}
+                        placeholder="เช่น RA, RB หรือ -"
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-[#3F51B5] focus:ring-2 focus:ring-[#3F51B5]/20 font-medium"
+                      />
+                      <datalist id="room-options-add">
+                        <option value="RA" />
+                        <option value="RB" />
+                        <option value="RC" />
+                        <option value="M" />
+                        <option value="D" />
+                        {availableRooms.map(r => (
+                          <option key={r} value={r} />
+                        ))}
+                      </datalist>
+                    </div>
+                  </div>
                 </div>
 
                 <div>

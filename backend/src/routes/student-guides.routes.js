@@ -26,15 +26,22 @@ if (!fs.existsSync(uploadDir)) {
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/guides");
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, "guide-" + Date.now() + ext);
+    const ext = path.extname(file.originalname) || ".pdf";
+    const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, `guide-${unique}${ext}`);
   },
 });
 
-const upload = multer({ storage });
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 50 * 1024 * 1024 }
+});
 
 // GET all student guides (Public)
 router.get("/", async (req, res) => {
@@ -88,12 +95,18 @@ router.post("/", verifyToken, checkRole(["admin"]), async (req, res) => {
 });
 
 // POST upload guide PDF file
-router.post("/upload-file", verifyToken, checkRole(["admin"]), upload.single("file"), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: "กรุณาแนบไฟล์ PDF" });
-  }
-  const fileUrl = `/uploads/guides/${req.file.filename}`;
-  res.json({ fileUrl, originalName: req.file.originalname });
+router.post("/upload-file", verifyToken, checkRole(["admin"]), (req, res) => {
+  upload.single("file")(req, res, (err) => {
+    if (err) {
+      console.error("Upload guide PDF error:", err);
+      return res.status(400).json({ error: err.message || "เกิดข้อผิดพลาดในการอัปโหลดไฟล์ PDF" });
+    }
+    if (!req.file) {
+      return res.status(400).json({ error: "กรุณาแนบไฟล์ PDF" });
+    }
+    const fileUrl = `/uploads/guides/${req.file.filename}`;
+    res.json({ fileUrl, originalName: req.file.originalname });
+  });
 });
 
 export default router;

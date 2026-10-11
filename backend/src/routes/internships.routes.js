@@ -88,8 +88,17 @@ router.post("/links", verifyToken, checkRole(["admin"]), async (req, res) => {
 router.post("/evaluation", verifyToken, checkRole(["admin"]), async (req, res) => {
   try {
     const { items, note } = req.body;
+    const evalItems = Array.isArray(items) ? items : defaultEvaluation;
+
+    const totalScore = evalItems.reduce((sum, item) => sum + (Number(item.score) || 0), 0);
+    if (totalScore !== 100) {
+      return res.status(400).json({ 
+        error: `คะแนนรวมต้องเท่ากับ 100 (ปัจจุบันรวมได้ ${totalScore} คะแนน)` 
+      });
+    }
+
     const configData = {
-      items: Array.isArray(items) ? items : defaultEvaluation,
+      items: evalItems,
       note: note || "นิสิตจะไม่ผ่านการฝึกงานในกรณีดังต่อไปนี้: คะแนนประเมินรวมจากสถานประกอบการทั้งหมด ได้น้อยกว่า 70 คะแนน"
     };
 

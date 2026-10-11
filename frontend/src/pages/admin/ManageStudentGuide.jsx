@@ -103,7 +103,6 @@ export default function ManageStudentGuide() {
         const uploadData = new FormData();
         uploadData.append('file', formData.file);
         const uploadRes = await axios.post('/api/student-guides/upload-file', uploadData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
           withCredentials: true
         });
         targetUrl = uploadRes.data.fileUrl;
@@ -140,7 +139,8 @@ export default function ManageStudentGuide() {
       setModalOpen(false);
     } catch (error) {
       console.error('Save guide error:', error);
-      showAlert('error', 'เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+      const errMsg = error.response?.data?.error || error.response?.data?.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล';
+      showAlert('error', errMsg);
     } finally {
       setSaving(false);
     }
