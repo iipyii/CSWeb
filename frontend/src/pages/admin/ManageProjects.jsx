@@ -27,7 +27,15 @@ export default function ManageProjects() {
   const [importError, setImportError] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [importStatusText, setImportStatusText] = useState("");
+  const [successToast, setSuccessToast] = useState("");
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    if (successToast) {
+      const timer = setTimeout(() => setSuccessToast(""), 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [successToast]);
 
   const years = ["2569", "2568", "2567", "2566", "2565"];
   const [projects, setProjects] = useState([]);
@@ -379,12 +387,25 @@ export default function ManageProjects() {
       return;
     }
 
+    let progressInterval = null;
     try {
       setImporting(true);
       setImportError("");
       setImportResult(null);
-      setUploadProgress(15);
+      setUploadProgress(20);
       setImportStatusText("กำลังอัปโหลดไฟล์ Excel ขึ้นสู่เซิร์ฟเวอร์...");
+
+      // Smooth animated progress while server processes sheets and database
+      let currentProg = 20;
+      progressInterval = setInterval(() => {
+        currentProg = Math.min(94, currentProg + Math.floor(Math.random() * 6) + 3);
+        setUploadProgress(currentProg);
+        if (currentProg > 45 && currentProg < 75) {
+          setImportStatusText("อัปโหลดสำเร็จ กำลังอ่านและวิเคราะห์ Sheet ในไฟล์ Excel...");
+        } else if (currentProg >= 75) {
+          setImportStatusText("กำลังจับคู่นักศึกษา อาจารย์ที่ปรึกษา และบันทึกลงฐานข้อมูล...");
+        }
+      }, 250);
 
       const formDataUpload = new FormData();
       formDataUpload.append("file", importFile);
@@ -393,24 +414,24 @@ export default function ManageProjects() {
         headers: { "Content-Type": "multipart/form-data" },
         onUploadProgress: (progressEvent) => {
           if (progressEvent.total) {
-            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            setUploadProgress(percentCompleted);
-            if (percentCompleted >= 100) {
-              setImportStatusText("อัปโหลดสำเร็จ กำลังอ่าน Sheet และประมวลผลข้อมูลในฐานข้อมูล...");
-            } else {
-              setImportStatusText(`กำลังอัปโหลดไฟล์ (${percentCompleted}%)...`);
-            }
+            const uploadPercent = Math.round((progressEvent.loaded * 40) / progressEvent.total);
+            setUploadProgress(prev => Math.max(prev, uploadPercent));
           }
         }
       });
 
+      if (progressInterval) clearInterval(progressInterval);
       setUploadProgress(100);
-      setImportStatusText("นำเข้าข้อมูลสำเร็จ!");
+      setImportStatusText("นำเข้าข้อมูลเสร็จสมบูรณ์ 100%!");
       setImportResult(res.data);
+      setSuccessToast(res.data?.message || `นำเข้าโครงงานสำเร็จเรียบร้อย (${res.data?.totalImported || res.data?.totalCreated || 0} รายการ)`);
       fetchProjects();
     } catch (error) {
+      if (progressInterval) clearInterval(progressInterval);
       console.error("Excel import error:", error);
       setImportError(error.response?.data?.error || "เกิดข้อผิดพลาดในการนำเข้าไฟล์ Excel");
+      setUploadProgress(0);
+      setImportStatusText("");
     } finally {
       setImporting(false);
     }
@@ -484,6 +505,35 @@ export default function ManageProjects() {
           </button>
         </div>
       </header>
+
+      {/* 🎉 Success Notification Banner */}
+      <AnimatePresence>
+        {successToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.98 }}
+            className="p-4 bg-emerald-50 border-2 border-emerald-300 rounded-2xl flex items-center justify-between shadow-sm text-emerald-800"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-500/20 shrink-0">
+                <CheckCircle2 size={22} />
+              </div>
+              <div>
+                <p className="font-bold text-sm text-emerald-950">นำเข้าข้อมูลโครงงานสำเร็จแล้ว!</p>
+                <p className="text-xs text-emerald-700 font-medium mt-0.5">{successToast}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setSuccessToast("")}
+              className="p-2 hover:bg-emerald-100 rounded-xl text-emerald-600 transition-colors"
+              title="ปิดการแจ้งเตือน"
+            >
+              <X size={18} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* 🔍 Search & Filter Bar */}
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col md:flex-row gap-4 items-center">
@@ -685,149 +735,250 @@ export default function ManageProjects() {
               </div>
 
               <div className="p-6 md:p-8 overflow-y-auto space-y-6">
-                {/* คำแนะนำและฟอร์แมต */}
-                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                      <FileText size={16} className="text-emerald-600" /> รูปแบบไฟล์ที่รองรับ
-                    </h3>
-                    <button 
-                      onClick={handleDownloadTemplate}
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-lg transition-all"
+                {!importResult ? (
+                  <>
+                    {/* คำแนะนำและฟอร์แมต */}
+                    <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                          <FileText size={16} className="text-emerald-600" /> รูปแบบไฟล์ที่รองรับ
+                        </h3>
+                        <button 
+                          onClick={handleDownloadTemplate}
+                          className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-lg transition-all"
+                        >
+                          <Download size={14} /> ดาวน์โหลดไฟล์ตัวอย่าง (.xlsx)
+                        </button>
+                      </div>
+                      <ul className="text-xs text-slate-500 space-y-1.5 list-disc list-inside">
+                        <li>รองรับไฟล์ <span className="font-semibold text-slate-700">.xlsx</span> หรือ <span className="font-semibold text-slate-700">.xls</span></li>
+                        <li>สามารถมีหลาย Sheet แยกตามเทอม เช่น <span className="font-mono bg-slate-200/80 px-1 py-0.5 rounded text-slate-700">1-2566</span>, <span className="font-mono bg-slate-200/80 px-1 py-0.5 rounded text-slate-700">2-2566</span>, <span className="font-mono bg-slate-200/80 px-1 py-0.5 rounded text-slate-700">1-2567</span> ระบบจะอ่านทุก Sheet ให้อัตโนมัติ</li>
+                        <li>คอลัมน์มาตรฐาน: <span className="font-semibold text-slate-700">ลำดับ, ชื่อหัวข้อ, รหัสนักศึกษา, ชื่อ-นามสกุล, ที่ปรึกษาหลัก, ที่ปรึกษาร่วม</span></li>
+                        <li>ระบบตรวจจับรหัสย่ออาจารย์ เช่น <span className="font-mono bg-slate-200/80 px-1 py-0.5 rounded text-slate-700">SWK</span>, <span className="font-mono bg-slate-200/80 px-1 py-0.5 rounded text-slate-700">SRS</span>, <span className="font-mono bg-slate-200/80 px-1 py-0.5 rounded text-slate-700">NJR</span> ให้โดยอัตโนมัติ</li>
+                      </ul>
+                    </div>
+
+                    {/* Dropzone */}
+                    <div 
+                      onDragOver={(e) => { e.preventDefault(); if (!importing) setIsDragging(true); }}
+                      onDragLeave={() => setIsDragging(false)}
+                      onDrop={importing ? undefined : handleFileDrop}
+                      onClick={() => !importing && fileInputRef.current?.click()}
+                      className={`border-2 border-dashed rounded-3xl p-8 text-center transition-all ${
+                        importing
+                          ? 'opacity-60 cursor-not-allowed border-slate-200 bg-slate-50'
+                          : isDragging 
+                            ? 'border-emerald-500 bg-emerald-50/50 scale-[0.99] cursor-pointer' 
+                            : importFile 
+                              ? 'border-emerald-400 bg-emerald-50/20 cursor-pointer' 
+                              : 'border-slate-200 hover:border-emerald-400 hover:bg-slate-50/60 cursor-pointer'
+                      }`}
                     >
-                      <Download size={14} /> ดาวน์โหลดไฟล์ตัวอย่าง (.xlsx)
-                    </button>
-                  </div>
-                  <ul className="text-xs text-slate-500 space-y-1.5 list-disc list-inside">
-                    <li>รองรับไฟล์ <span className="font-semibold text-slate-700">.xlsx</span> หรือ <span className="font-semibold text-slate-700">.xls</span></li>
-                    <li>สามารถมีหลาย Sheet แยกตามเทอม เช่น <span className="font-mono bg-slate-200/80 px-1 py-0.5 rounded text-slate-700">1-2566</span>, <span className="font-mono bg-slate-200/80 px-1 py-0.5 rounded text-slate-700">2-2566</span>, <span className="font-mono bg-slate-200/80 px-1 py-0.5 rounded text-slate-700">1-2567</span> ระบบจะอ่านทุก Sheet ให้อัตโนมัติ</li>
-                    <li>คอลัมน์มาตรฐาน: <span className="font-semibold text-slate-700">ลำดับ, ชื่อหัวข้อ, รหัสนักศึกษา, ชื่อ-นามสกุล, ที่ปรึกษาหลัก, ที่ปรึกษาร่วม</span> (รองรับนักศึกษา 1-3 คน ทั้งแบบแยกแถว ผสานเซลล์ หรืออยู่ในเซลล์เดียว)</li>
-                    <li>ระบบตรวจจับรหัสย่ออาจารย์ เช่น <span className="font-mono bg-slate-200/80 px-1 py-0.5 rounded text-slate-700">SWK</span>, <span className="font-mono bg-slate-200/80 px-1 py-0.5 rounded text-slate-700">SRS</span>, <span className="font-mono bg-slate-200/80 px-1 py-0.5 rounded text-slate-700">NJR</span> ให้โดยอัตโนมัติ</li>
-                  </ul>
-                </div>
+                      <input 
+                        ref={fileInputRef}
+                        type="file" 
+                        accept=".xlsx, .xls" 
+                        className="hidden" 
+                        disabled={importing}
+                        onChange={handleFileSelect}
+                      />
 
-                {/* Dropzone */}
-                <div 
-                  onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                  onDragLeave={() => setIsDragging(false)}
-                  onDrop={handleFileDrop}
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`border-2 border-dashed rounded-3xl p-8 text-center cursor-pointer transition-all ${
-                    isDragging 
-                      ? 'border-emerald-500 bg-emerald-50/50 scale-[0.99]' 
-                      : importFile 
-                        ? 'border-emerald-400 bg-emerald-50/20' 
-                        : 'border-slate-200 hover:border-emerald-400 hover:bg-slate-50/60'
-                  }`}
-                >
-                  <input 
-                    ref={fileInputRef}
-                    type="file" 
-                    accept=".xlsx, .xls" 
-                    className="hidden" 
-                    onChange={handleFileSelect}
-                  />
-
-                  {importFile ? (
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
-                        <FileSpreadsheet size={28} />
-                      </div>
-                      <div className="font-bold text-slate-800 text-sm">{importFile.name}</div>
-                      <div className="text-xs text-slate-400">{(importFile.size / 1024).toFixed(1)} KB</div>
-                      <span className="text-xs text-emerald-600 font-bold underline mt-1">คลิกเพื่อเปลี่ยนไฟล์</span>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center gap-2 text-slate-400">
-                      <div className="w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-1">
-                        <UploadCloud size={28} />
-                      </div>
-                      <div className="font-bold text-slate-700 text-sm">ลากไฟล์ Excel มาวางที่นี่ หรือ <span className="text-emerald-600 underline">คลิกเพื่อเลือกไฟล์</span></div>
-                      <div className="text-xs text-slate-400">รองรับไฟล์ .xlsx หรือ .xls (ขนาดไม่เกิน 10MB)</div>
-                    </div>
-                  )}
-                </div>
-
-                {/* 📊 Upload & Processing Progress Bar */}
-                {importing && (
-                  <div className="p-5 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/80 rounded-2xl space-y-3">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-emerald-800 flex items-center gap-2">
-                        <Loader2 size={16} className="animate-spin text-emerald-600 shrink-0" />
-                        <span>{importStatusText || "กำลังประมวลผล..."}</span>
-                      </span>
-                      <span className="font-mono font-bold text-emerald-700 bg-white/80 px-2 py-0.5 rounded-full border border-emerald-200 shadow-sm">
-                        {uploadProgress}%
-                      </span>
+                      {importFile ? (
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                            <FileSpreadsheet size={28} />
+                          </div>
+                          <div className="font-bold text-slate-800 text-sm">{importFile.name}</div>
+                          <div className="text-xs text-slate-400">{(importFile.size / 1024).toFixed(1)} KB</div>
+                          {!importing && (
+                            <span className="text-xs text-emerald-600 font-bold underline mt-1">คลิกเพื่อเปลี่ยนไฟล์</span>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center gap-2 text-slate-400">
+                          <div className="w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-1">
+                            <UploadCloud size={28} />
+                          </div>
+                          <div className="font-bold text-slate-700 text-sm">ลากไฟล์ Excel มาวางที่นี่ หรือ <span className="text-emerald-600 underline">คลิกเพื่อเลือกไฟล์</span></div>
+                          <div className="text-xs text-slate-400">รองรับไฟล์ .xlsx หรือ .xls (ขนาดไม่เกิน 10MB)</div>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Outer track */}
-                    <div className="w-full h-3 bg-emerald-100/80 rounded-full overflow-hidden p-0.5 border border-emerald-200/60 shadow-inner">
-                      {/* Inner bar */}
-                      <div 
-                        className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-300 ease-out relative"
-                        style={{ width: `${Math.max(5, uploadProgress)}%` }}
+                    {/* 📊 Upload & Processing Realtime Progress Bar */}
+                    {importing && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="p-5 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border-2 border-emerald-300 rounded-3xl space-y-3 shadow-md shadow-emerald-500/5"
                       >
-                        <div className="absolute inset-0 bg-white/20 animate-pulse" />
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-bold text-emerald-900 flex items-center gap-2">
+                            <Loader2 size={16} className="animate-spin text-emerald-600 shrink-0" />
+                            <span>{importStatusText || "กำลังประมวลผลข้อมูลโครงงาน..."}</span>
+                          </span>
+                          <span className="font-mono font-bold text-emerald-800 bg-white px-2.5 py-1 rounded-full border border-emerald-200 shadow-sm">
+                            {uploadProgress}%
+                          </span>
+                        </div>
+
+                        {/* Outer track */}
+                        <div className="w-full h-3.5 bg-emerald-100/80 rounded-full overflow-hidden p-0.5 border border-emerald-200 shadow-inner">
+                          {/* Inner bar */}
+                          <div 
+                            className="h-full bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 rounded-full transition-all duration-300 ease-out relative"
+                            style={{ width: `${Math.max(6, uploadProgress)}%` }}
+                          >
+                            <div className="absolute inset-0 bg-white/25 animate-pulse" />
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between items-center text-[11px] text-emerald-700 font-medium">
+                          <span>กรุณาอย่าเพิ่งปิดหน้าต่าง ระบบกำลังอ่านและเชื่อมโยงข้อมูล</span>
+                          <span>{uploadProgress < 100 ? "กำลังประมวลผล..." : "เสร็จสิ้น 100%"}</span>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {/* Error Alert */}
+                    {importError && (
+                      <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-600 text-xs flex items-center gap-2 font-medium">
+                        <AlertCircle size={18} className="shrink-0" />
+                        <span>{importError}</span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  /* 🎉 SUCCESS CELEBRATION VIEW */
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="py-4 space-y-6 text-center"
+                  >
+                    <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-xl shadow-emerald-500/20 border-4 border-emerald-50">
+                      <CheckCircle2 size={46} />
+                    </div>
+
+                    <div className="space-y-1">
+                      <h3 className="text-2xl font-black text-slate-800 tracking-tight">
+                        นำเข้าข้อมูลสำเร็จเรียบร้อย!
+                      </h3>
+                      <p className="text-sm text-slate-500 max-w-md mx-auto">
+                        {importResult.message || "ระบบประมวลผลและบันทึกข้อมูลโครงงานลงสู่ฐานข้อมูลเรียบร้อยแล้ว"}
+                      </p>
+                    </div>
+
+                    {/* 📊 Completed Progress Bar */}
+                    <div className="p-4 bg-emerald-50 border-2 border-emerald-200 rounded-2xl space-y-2 text-left">
+                      <div className="flex items-center justify-between text-xs font-bold text-emerald-800">
+                        <span className="flex items-center gap-1.5 text-emerald-700">
+                          <CheckCircle2 size={16} /> สถานะการประมวลผล
+                        </span>
+                        <span className="bg-emerald-600 text-white px-2.5 py-0.5 rounded-full font-mono text-[11px] font-bold shadow-sm">
+                          ✓ 100% เสร็จสมบูรณ์
+                        </span>
+                      </div>
+                      <div className="w-full h-3 bg-emerald-200/60 rounded-full overflow-hidden p-0.5">
+                        <div className="h-full bg-emerald-500 rounded-full w-full" />
                       </div>
                     </div>
 
-                    <div className="flex justify-between items-center text-[11px] text-emerald-600/80">
-                      <span>กรุณาอย่าเพิ่งปิดหน้าต่าง ระบบกำลังอ่านและเชื่อมโยงข้อมูล</span>
-                      <span>{uploadProgress < 100 ? "Uploading..." : "Processing DB..."}</span>
+                    {/* 📈 สรุปสถิติ (Stats Cards) */}
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl text-center">
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">ทั้งหมด</span>
+                        <span className="text-2xl font-black text-slate-800 font-mono">
+                          {importResult.totalImported ?? ((importResult.totalCreated || 0) + (importResult.totalUpdated || 0))}
+                        </span>
+                        <span className="text-[10px] text-slate-400 block mt-0.5">โครงงาน</span>
+                      </div>
+                      <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-center">
+                        <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider block mb-1">เพิ่มใหม่</span>
+                        <span className="text-2xl font-black text-emerald-700 font-mono">
+                          {importResult.totalCreated ?? 0}
+                        </span>
+                        <span className="text-[10px] text-emerald-600 block mt-0.5">โครงงาน</span>
+                      </div>
+                      <div className="p-4 bg-sky-50 border border-sky-200 rounded-2xl text-center">
+                        <span className="text-[11px] font-bold text-sky-600 uppercase tracking-wider block mb-1">อัปเดต</span>
+                        <span className="text-2xl font-black text-sky-700 font-mono">
+                          {importResult.totalUpdated ?? 0}
+                        </span>
+                        <span className="text-[10px] text-sky-600 block mt-0.5">โครงงาน</span>
+                      </div>
                     </div>
-                  </div>
-                )}
 
-                {/* Error Alert */}
-                {importError && (
-                  <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl text-rose-600 text-xs flex items-center gap-2 font-medium">
-                    <AlertCircle size={16} className="shrink-0" />
-                    <span>{importError}</span>
-                  </div>
-                )}
-
-                {/* Success Result */}
-                {importResult && (
-                  <div className="p-5 bg-emerald-50 border border-emerald-200 rounded-2xl space-y-2">
-                    <div className="flex items-center gap-2 text-emerald-700 font-bold text-sm">
-                      <CheckCircle2 size={18} />
-                      <span>{importResult.message}</span>
-                    </div>
+                    {/* รายละเอียดแต่ละ Sheet */}
                     {importResult.sheets && importResult.sheets.length > 0 && (
-                      <div className="text-xs text-emerald-800 space-y-1 pt-1 border-t border-emerald-200/60">
-                        <div className="font-semibold">รายละเอียดที่นำเข้า:</div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 pt-1">
+                      <div className="text-left bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2">
+                        <span className="text-xs font-bold text-slate-700 block">
+                          รายละเอียดแยกตาม Sheet:
+                        </span>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                           {importResult.sheets.map((sh, idx) => (
-                            <div key={idx} className="bg-white/80 px-2.5 py-1.5 rounded-lg border border-emerald-100">
-                              <span className="font-bold">Sheet {sh.sheetName}:</span> {sh.count} รายการ
+                            <div key={idx} className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm text-xs">
+                              <span className="font-bold text-slate-800 block">Sheet {sh.sheetName}</span>
+                              <span className="text-slate-500 text-[11px] mt-0.5 block">จำนวน {sh.count} รายการ</span>
                             </div>
                           ))}
                         </div>
                       </div>
                     )}
-                  </div>
+                  </motion.div>
                 )}
               </div>
 
               {/* Modal Footer */}
               <div className="p-6 border-t bg-slate-50/50 flex gap-3">
-                <button 
-                  type="button" 
-                  onClick={handleUploadExcel}
-                  disabled={!importFile || importing}
-                  className="flex-1 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-                >
-                  {importing ? <Loader2 size={18} className="animate-spin" /> : <UploadCloud size={18} />}
-                  {importing ? "กำลังนำเข้าข้อมูล..." : "เริ่มนำเข้าข้อมูล"}
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => setIsImportModalOpen(false)} 
-                  className="px-6 py-3.5 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold hover:bg-slate-100 transition-all text-sm"
-                >
-                  ปิดหน้าต่าง
-                </button>
+                {!importResult ? (
+                  <>
+                    <button 
+                      type="button" 
+                      onClick={handleUploadExcel}
+                      disabled={!importFile || importing}
+                      className="flex-1 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                    >
+                      {importing ? <Loader2 size={18} className="animate-spin" /> : <UploadCloud size={18} />}
+                      {importing ? "กำลังนำเข้าข้อมูล..." : "เริ่มนำเข้าข้อมูล"}
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => !importing && setIsImportModalOpen(false)} 
+                      disabled={importing}
+                      className="px-6 py-3.5 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold hover:bg-slate-100 transition-all text-sm disabled:opacity-50"
+                    >
+                      ยกเลิก
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        setIsImportModalOpen(false);
+                        setImportResult(null);
+                        setImportFile(null);
+                        setUploadProgress(0);
+                        setImportStatusText("");
+                      }}
+                      className="flex-1 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2 text-sm"
+                    >
+                      <CheckCircle2 size={18} /> เสร็จสิ้น / ดูรายการโครงงาน
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        setImportResult(null);
+                        setImportFile(null);
+                        setUploadProgress(0);
+                        setImportStatusText("");
+                      }}
+                      className="px-6 py-3.5 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold hover:bg-slate-100 transition-all text-sm"
+                    >
+                      นำเข้าไฟล์อื่นเพิ่มเติม
+                    </button>
+                  </>
+                )}
               </div>
             </motion.div>
           </div>
