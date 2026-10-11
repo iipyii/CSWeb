@@ -3,7 +3,7 @@ import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ClipboardCheck, Calendar, FileText, Link2, Plus,
-  Trash2, Edit3, Save, RefreshCw, AlertCircle, CheckCircle2,
+  Trash2, Edit3, Save, RefreshCw, AlertCircle, CheckCircle, CheckCircle2,
   ExternalLink, Info, Check, X, MoveUp, MoveDown, Award, HelpCircle
 } from 'lucide-react';
 
@@ -547,7 +547,7 @@ export default function ManageInternship() {
                 </div>
               ) : (
                 <div className="flex items-center gap-2 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-2 rounded-xl border border-emerald-200">
-                  <CheckCircle size={15} />
+                  <CheckCircle2 size={15} />
                   <span>คะแนนรวมครบ 100 คะแนน พร้อมบันทึก</span>
                 </div>
               )}
