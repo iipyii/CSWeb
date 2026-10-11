@@ -14,6 +14,8 @@ const defaultContactInfoTh = {
   address_en: "1518 Pracharat 1 Rd., Wongsawang, Bangsue, Bangkok 10800, Thailand",
   phone: "02-555-2000 ต่อ 4601, 4602 (ในเวลาราชการ)",
   phone_en: "02-555-2000 ext. 4601, 4602 (Official Hours)",
+  office_hours: "จันทร์ - ศุกร์ | 08:30 - 16:30 น.",
+  office_hours_en: "Monday - Friday | 08:30 AM - 04:30 PM",
   officeHours: "จันทร์ - ศุกร์ | 08:30 - 16:30 น.",
   officeHours_en: "Monday - Friday | 08:30 AM - 04:30 PM",
   facebook: "CIS KMUTNB",
@@ -39,7 +41,13 @@ export default function Contact() {
       try {
         const res = await axios.get('/api/about/contact');
         if (res.data?.data) {
-          setContactInfo(prev => ({ ...prev, ...res.data.data }));
+          const d = res.data.data;
+          setContactInfo(prev => ({
+            ...prev,
+            ...d,
+            office_hours: d.office_hours || d.officeHours || prev.office_hours,
+            officeHours: d.office_hours || d.officeHours || prev.officeHours
+          }));
         }
       } catch (err) {
         console.error('Failed to load contact data:', err);
@@ -48,11 +56,13 @@ export default function Contact() {
     fetchContact();
   }, []);
 
-  const displayName = lang === 'EN' ? (contactInfo.name_en || defaultContactInfoTh.name_en) : contactInfo.name;
-  const displayFaculty = lang === 'EN' ? (contactInfo.faculty_en || defaultContactInfoTh.faculty_en) : contactInfo.faculty;
-  const displayAddress = lang === 'EN' ? (contactInfo.address_en || defaultContactInfoTh.address_en) : contactInfo.address;
-  const displayPhone = lang === 'EN' ? (contactInfo.phone_en || defaultContactInfoTh.phone_en) : contactInfo.phone;
-  const displayOfficeHours = lang === 'EN' ? (contactInfo.officeHours_en || defaultContactInfoTh.officeHours_en) : (contactInfo.officeHours || "จันทร์ - ศุกร์ | 08:30 - 16:30 น.");
+  const displayName = lang === 'EN' ? (contactInfo.name_en || defaultContactInfoTh.name_en) : (contactInfo.name || defaultContactInfoTh.name);
+  const displayFaculty = lang === 'EN' ? (contactInfo.faculty_en || defaultContactInfoTh.faculty_en) : (contactInfo.faculty || defaultContactInfoTh.faculty);
+  const displayAddress = lang === 'EN' ? (contactInfo.address_en || defaultContactInfoTh.address_en) : (contactInfo.address || defaultContactInfoTh.address);
+  const displayPhone = lang === 'EN' ? (contactInfo.phone_en || defaultContactInfoTh.phone_en) : (contactInfo.phone || defaultContactInfoTh.phone);
+  const displayOfficeHours = lang === 'EN' 
+    ? (contactInfo.office_hours_en || contactInfo.officeHours_en || defaultContactInfoTh.office_hours_en) 
+    : (contactInfo.office_hours || contactInfo.officeHours || defaultContactInfoTh.office_hours);
 
   return (
     <div className="bg-slate-50 min-h-screen text-slate-700">

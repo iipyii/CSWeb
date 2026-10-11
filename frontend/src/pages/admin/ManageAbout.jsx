@@ -66,7 +66,13 @@ export default function ManageAbout() {
 
       if (resOrg.data?.data) setOrgData(resOrg.data.data);
       if (resHist.data?.data) setHistoryData(resHist.data.data);
-      if (resContact.data?.data) setContactData(resContact.data.data);
+      if (resContact.data?.data) {
+        const cData = resContact.data.data;
+        setContactData({
+          ...cData,
+          office_hours: cData.office_hours || cData.officeHours || ''
+        });
+      }
       if (resGreen.data?.data) setGreenOfficeData(resGreen.data.data);
     } catch (err) {
       console.error('Failed to load about data:', err);
@@ -133,7 +139,12 @@ export default function ManageAbout() {
   const handleSaveContact = async () => {
     try {
       setSaving(true);
-      await axios.post('/api/about/contact', { data: contactData });
+      const payload = {
+        ...contactData,
+        office_hours: contactData.office_hours || '',
+        officeHours: contactData.office_hours || ''
+      };
+      await axios.post('/api/about/contact', { data: payload });
       showAlert('success', 'บันทึกข้อมูลการติดต่อเรียบร้อยแล้ว');
     } catch (err) {
       console.error('Save contact failed:', err);

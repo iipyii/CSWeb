@@ -222,6 +222,8 @@ export const getContact = async (req, res) => {
 
     try {
       const parsed = JSON.parse(config.config_value);
+      if (parsed.office_hours && !parsed.officeHours) parsed.officeHours = parsed.office_hours;
+      if (parsed.officeHours && !parsed.office_hours) parsed.office_hours = parsed.officeHours;
       return res.json({ data: parsed });
     } catch (e) {
       return res.json({ data: defaultContact });
@@ -238,6 +240,9 @@ export const updateContact = async (req, res) => {
     if (!data) {
       return res.status(400).json({ error: "ข้อมูลการติดต่อไม่ถูกต้อง" });
     }
+
+    if (data.office_hours && !data.officeHours) data.officeHours = data.office_hours;
+    if (data.officeHours && !data.office_hours) data.office_hours = data.officeHours;
 
     const updated = await prisma.site_config.upsert({
       where: { config_key: "about_contact" },
