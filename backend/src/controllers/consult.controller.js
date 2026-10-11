@@ -281,7 +281,7 @@ export const updateStudentConsultant = async (req, res) => {
         title: newTitle,
         firstname: newFirstname,
         lastname: newLastname,
-        room: room !== undefined ? room : existing.room,
+        room: room !== undefined ? (String(room).trim() || "-") : existing.room,
         year: academicYear
       }
     });

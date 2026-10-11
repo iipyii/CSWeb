@@ -205,7 +205,7 @@ export default function ManageConsultants() {
       id: student.id,
       student_id: student.student_id || "",
       name: student.name || "",
-      room: student.room || "-",
+      room: (student.room && student.room !== "-") ? student.room : "",
       year: cohort !== "-" ? cohort : "69",
       advisor_id: student.advisor_id ? String(student.advisor_id) : ""
     });
@@ -221,7 +221,11 @@ export default function ManageConsultants() {
 
     try {
       setEditSubmitting(true);
-      await axios.put(`/api/consult/students/${editFormData.id}`, editFormData);
+      const payload = {
+        ...editFormData,
+        room: editFormData.room?.trim() || "-"
+      };
+      await axios.put(`/api/consult/students/${editFormData.id}`, payload);
       alert("แก้ไขข้อมูลนักศึกษาสำเร็จ");
       setIsEditModalOpen(false);
       fetchStudents();
@@ -1054,13 +1058,26 @@ export default function ManageConsultants() {
                     <label className="text-xs font-bold text-slate-600 block mb-1">
                       ห้อง / ตอนเรียน
                     </label>
-                    <input 
-                      type="text" 
-                      value={editFormData.room}
-                      onChange={(e) => setEditFormData({ ...editFormData, room: e.target.value })}
-                      placeholder="เช่น RA, RB หรือ -"
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 font-medium"
-                    />
+                    <div className="relative">
+                      <input 
+                        type="text" 
+                        list="room-options-edit"
+                        value={editFormData.room}
+                        onChange={(e) => setEditFormData({ ...editFormData, room: e.target.value })}
+                        placeholder="เช่น RA, RB หรือ -"
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 font-medium"
+                      />
+                      <datalist id="room-options-edit">
+                        <option value="RA" />
+                        <option value="RB" />
+                        <option value="RC" />
+                        <option value="M" />
+                        <option value="D" />
+                        {availableRooms.map(r => (
+                          <option key={r} value={r} />
+                        ))}
+                      </datalist>
+                    </div>
                   </div>
                 </div>
 
