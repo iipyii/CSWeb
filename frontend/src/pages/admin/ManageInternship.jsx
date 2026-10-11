@@ -159,7 +159,14 @@ export default function ManageInternship() {
 
     try {
       setSaving(true);
-      await axios.post('/api/internships/evaluation', config.evaluation, { withCredentials: true });
+      const payload = {
+        ...config.evaluation,
+        items: (config.evaluation.items || []).map(item => ({
+          ...item,
+          score: Number(item.score) || 0
+        }))
+      };
+      await axios.post('/api/internships/evaluation', payload, { withCredentials: true });
       showAlert('success', 'บันทึกเกณฑ์การประเมินคะแนนสำเร็จ');
     } catch (error) {
       console.error('Save evaluation error:', error);
@@ -176,22 +183,45 @@ export default function ManageInternship() {
       ...prev,
       evaluation: {
         ...prev.evaluation,
-        items: [...prev.evaluation.items, { title: 'หัวข้อการประเมินใหม่', score: 20 }]
+        items: [...(prev.evaluation.items || []), { title: 'หัวข้อการประเมินใหม่', score: 20 }]
       }
     }));
   };
 
   const handleUpdateEvalItem = (idx, field, val) => {
-    const updated = [...config.evaluation.items];
-    updated[idx] = { ...updated[idx], [field]: field === 'score' ? Number(val) : val };
+    const updated = [...(config.evaluation.items || [])];
+    if (field === 'score') {
+      let str = String(val).replace(/[^0-9]/g, '');
+      if (str.length > 1) {
+        str = str.replace(/^0+/, '') || '0';
+      }
+      if (str !== '' && parseInt(str, 10) > 100) {
+        str = '100';
+      }
+      updated[idx] = { ...updated[idx], score: str };
+    } else {
+      updated[idx] = { ...updated[idx], [field]: val };
+    }
     setConfig(prev => ({
       ...prev,
       evaluation: { ...prev.evaluation, items: updated }
     }));
   };
 
+  const handleBlurEvalScore = (idx) => {
+    const updated = [...(config.evaluation.items || [])];
+    const cur = updated[idx]?.score;
+    if (cur === '' || cur === undefined || cur === null) {
+      updated[idx] = { ...updated[idx], score: 0 };
+      setConfig(prev => ({
+        ...prev,
+        evaluation: { ...prev.evaluation, items: updated }
+      }));
+    }
+  };
+
   const handleDeleteEvalItem = (idx) => {
-    const updated = config.evaluation.items.filter((_, i) => i !== idx);
+    const updated = (config.evaluation.items || []).filter((_, i) => i !== idx);
     setConfig(prev => ({
       ...prev,
       evaluation: { ...prev.evaluation, items: updated }
@@ -496,18 +526,19 @@ export default function ManageInternship() {
                     className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:border-[#3F51B5]"
                   />
                 </div>
-                <div className="w-full sm:w-36">
+                <div className="w-full sm:w-40">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">คะแนนเต็ม</label>
                   <div className="relative">
                     <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={item.score}
+                      type="text"
+                      inputMode="numeric"
+                      value={item.score ?? ''}
                       onChange={(e) => handleUpdateEvalItem(idx, 'score', e.target.value)}
-                      className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-[#3F51B5] focus:outline-none focus:border-[#3F51B5]"
+                      onBlur={() => handleBlurEvalScore(idx)}
+                      placeholder="0"
+                      className="w-full px-4 pr-16 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-[#3F51B5] focus:outline-none focus:border-[#3F51B5]"
                     />
-                    <span className="absolute right-3 top-2 text-xs text-slate-400">คะแนน</span>
+                    <span className="absolute right-3.5 top-2.5 text-xs font-semibold text-slate-400 select-none pointer-events-none">คะแนน</span>
                   </div>
                 </div>
                 <div className="sm:pt-5">
