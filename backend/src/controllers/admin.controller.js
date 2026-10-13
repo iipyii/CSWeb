@@ -135,8 +135,8 @@ export const getDashboardOverview = async (req, res) => {
 };
 
 /**
- * 📈 Track Website Pageview / Visitor
- * บันทึกการเข้าชมหน้าเว็บของผู้ใช้จริงรายวัน
+ * 📈 Track Website Unique Visitor
+ * บันทึกเฉพาะผู้เข้าชมจริง (Unique Visitor / Session ต่อวัน) ไม่นับทุกคลิกหรือการเปลี่ยนหน้า
  */
 export const trackVisit = async (req, res) => {
   try {
@@ -148,32 +148,54 @@ export const trackVisit = async (req, res) => {
       day: '2-digit' 
     }).format(now);
 
+    // ระบุตัวตนผู้ใช้ (IP หรือ Client Token)
+    const rawIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
+    const visitorToken = req.body?.visitorToken || rawIp;
+
     const config = await prisma.site_config.findUnique({
       where: { config_key: "daily_traffic_analytics" }
     });
 
-    let data = { daily: {}, total: 0 };
+    let data = { daily: {}, visitors: {}, total: 0 };
     if (config?.config_value) {
       try {
         data = JSON.parse(config.config_value);
       } catch (e) {
-        data = { daily: {}, total: 0 };
+        data = { daily: {}, visitors: {}, total: 0 };
       }
     }
 
     if (!data.daily) data.daily = {};
+    if (!data.visitors) data.visitors = {};
     if (typeof data.total !== 'number') data.total = 0;
 
-    data.daily[todayDateKey] = (data.daily[todayDateKey] || 0) + 1;
-    data.total += 1;
+    if (!Array.isArray(data.visitors[todayDateKey])) {
+      data.visitors[todayDateKey] = [];
+    }
+
+    const alreadyCountedToday = data.visitors[todayDateKey].includes(visitorToken);
+
+    // หากยังไม่เคยถูกนับในวันนี้ ให้เพิ่มยอดผู้เข้าชม
+    if (!alreadyCountedToday) {
+      data.daily[todayDateKey] = (data.daily[todayDateKey] || 0) + 1;
+      data.total += 1;
+      data.visitors[todayDateKey].push(visitorToken);
+
+      // จำกัดขนาด array เพื่อประหยัดพื้นที่
+      if (data.visitors[todayDateKey].length > 3000) {
+        data.visitors[todayDateKey].shift();
+      }
+    }
+
     data.last_updated = now.toISOString();
 
-    // ล้างข้อมูลเก่าที่เกิน 60 วันออก เพื่อรักษาขนาดของฐานข้อมูล
+    // ล้างข้อมูลเก่าที่เกิน 60 วันออก
     const keys = Object.keys(data.daily).sort();
     if (keys.length > 60) {
       const oldKeys = keys.slice(0, keys.length - 60);
       for (const k of oldKeys) {
         delete data.daily[k];
+        delete data.visitors[k];
       }
     }
 
@@ -183,11 +205,15 @@ export const trackVisit = async (req, res) => {
       create: {
         config_key: "daily_traffic_analytics",
         config_value: JSON.stringify(data),
-        description: "สถิติการเข้าชมเว็บไซต์รายวัน (Pageviews & Traffic)"
+        description: "สถิติผู้เข้าชมเว็บไซต์รายวัน (Unique Daily Visitors)"
       }
     });
 
-    res.json({ success: true, today: data.daily[todayDateKey] });
+    res.json({ 
+      success: true, 
+      counted: !alreadyCountedToday, 
+      today: data.daily[todayDateKey] 
+    });
   } catch (error) {
     console.error("Track visit error:", error);
     res.status(500).json({ error: "Failed to track visit" });

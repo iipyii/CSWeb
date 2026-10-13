@@ -103,27 +103,27 @@ export default function AdminDashboard() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div>
               <div className="flex items-center gap-2.5">
-                <h2 className="text-xl font-black text-slate-800">สถิติการเข้าชมเว็บไซต์</h2>
+                <h2 className="text-xl font-black text-slate-800">สถิติผู้เข้าชมเว็บไซต์</h2>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> ข้อมูลจริง
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> ข้อมูลจริง (Unique)
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-1">ยอดผู้เข้าชมจริงในรอบ 7 วันย้อนหลัง (ตามวันจริง)</p>
+              <p className="text-xs text-slate-400 mt-1">ยอดผู้เข้าชมจริงในรอบ 7 วันย้อนหลัง (นับคนจริง ไม่นับทุกคลิก)</p>
             </div>
             
             {/* Live Traffic Summary Badges */}
             <div className="flex items-center gap-2 flex-wrap">
               <div className="px-3.5 py-2 bg-slate-50 border border-slate-100 rounded-2xl text-left">
                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">วันนี้</div>
-                <div className="text-sm font-black text-slate-800">{Number(trafficSummary.today || 0).toLocaleString()} <span className="text-[10px] font-normal text-slate-400">ครั้ง</span></div>
+                <div className="text-sm font-black text-slate-800">{Number(trafficSummary.today || 0).toLocaleString()} <span className="text-[10px] font-normal text-slate-400">คน</span></div>
               </div>
               <div className="px-3.5 py-2 bg-indigo-50/70 border border-indigo-100 rounded-2xl text-left">
                 <div className="text-[10px] font-bold text-[#3F51B5] uppercase tracking-wider">7 วันนี้</div>
-                <div className="text-sm font-black text-[#3F51B5]">{Number(trafficSummary.week || 0).toLocaleString()} <span className="text-[10px] font-normal text-indigo-400">ครั้ง</span></div>
+                <div className="text-sm font-black text-[#3F51B5]">{Number(trafficSummary.week || 0).toLocaleString()} <span className="text-[10px] font-normal text-indigo-400">คน</span></div>
               </div>
               <div className="px-3.5 py-2 bg-slate-50 border border-slate-100 rounded-2xl text-left">
                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">สะสมทั้งหมด</div>
-                <div className="text-sm font-black text-slate-700">{Number(trafficSummary.total || 0).toLocaleString()} <span className="text-[10px] font-normal text-slate-400">ครั้ง</span></div>
+                <div className="text-sm font-black text-slate-700">{Number(trafficSummary.total || 0).toLocaleString()} <span className="text-[10px] font-normal text-slate-400">คน</span></div>
               </div>
             </div>
           </div>
@@ -141,7 +141,7 @@ export default function AdminDashboard() {
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12, fontWeight: 'bold'}} />
                 <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11}} />
                 <Tooltip 
-                  formatter={(value) => [`${Number(value).toLocaleString()} ครั้ง`, 'จำนวนเข้าชม']}
+                  formatter={(value) => [`${Number(value).toLocaleString()} คน`, 'ผู้เข้าชม']}
                   labelFormatter={(label, payload) => {
                     const item = payload?.[0]?.payload;
                     return item?.date ? `${label} (${item.date})` : label;

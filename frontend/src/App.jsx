@@ -87,9 +87,38 @@ const MainLayout = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // บันทึกสถิติการเข้าชมหน้าเว็บจริง (ข้ามหน้าแอดมิน)
-    if (!location.pathname.startsWith('/admin')) {
-      axios.post('/api/admin/track-visit', { path: location.pathname }).catch(() => {});
+    // บันทึกเฉพาะผู้เข้าชมจริงต่อวัน/เซสชัน (ไม่นับทุกคลิกหรือทุกหน้าที่เปลี่ยน)
+    if (location.pathname.startsWith('/admin')) return;
+
+    try {
+      const today = new Intl.DateTimeFormat('en-CA', { 
+        timeZone: 'Asia/Bangkok', 
+        year: 'numeric', 
+        month: '2-digit', 
+        day: '2-digit' 
+      }).format(new Date());
+
+      const sessionVisited = sessionStorage.getItem('cis_session_visited');
+      const lastVisitedDate = localStorage.getItem('cis_visitor_date');
+
+      // หากในรอบการใช้งานนี้หรือวันนี้ถูกบันทึกไปแล้ว จะไม่ส่งนับซ้ำ
+      if (sessionVisited === today || lastVisitedDate === today) {
+        return;
+      }
+
+      // Token ประจำเบราว์เซอร์
+      let visitorToken = localStorage.getItem('cis_visitor_id');
+      if (!visitorToken) {
+        visitorToken = 'v_' + Math.random().toString(36).substring(2, 12) + Date.now().toString(36);
+        localStorage.setItem('cis_visitor_id', visitorToken);
+      }
+
+      sessionStorage.setItem('cis_session_visited', today);
+      localStorage.setItem('cis_visitor_date', today);
+
+      axios.post('/api/admin/track-visit', { visitorToken }).catch(() => {});
+    } catch (e) {
+      // ignore storage restrictions
     }
   }, [location.pathname]);
 
