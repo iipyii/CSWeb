@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Routes, Route, Outlet } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Routes, Route, Outlet, useLocation } from 'react-router-dom';
+import axios from 'axios';
 import Navbar from './components/Navbar';
 import ScrollToTop from './components/ScrollToTop';
 import AdminSidebar from './components/admin/AdminSidebar';
@@ -82,16 +83,27 @@ import { LanguageProvider } from './context/LanguageContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AuthCallback from './pages/AuthCallback';
 
-const MainLayout = () => (
-  <div className="min-h-screen flex flex-col overflow-x-hidden">
-    <ScrollToTop />
-    <Navbar />
-    <main className="flex-grow">
-      <Outlet />
-    </main>
-    <AIChatbot />
-  </div>
-);
+const MainLayout = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    // บันทึกสถิติการเข้าชมหน้าเว็บจริง (ข้ามหน้าแอดมิน)
+    if (!location.pathname.startsWith('/admin')) {
+      axios.post('/api/admin/track-visit', { path: location.pathname }).catch(() => {});
+    }
+  }, [location.pathname]);
+
+  return (
+    <div className="min-h-screen flex flex-col overflow-x-hidden">
+      <ScrollToTop />
+      <Navbar />
+      <main className="flex-grow">
+        <Outlet />
+      </main>
+      <AIChatbot />
+    </div>
+  );
+};
 
 // 🔴 Layout สำหรับหน้า Admin (จัดวาง Sidebar และ Navbar)
 // จอเล็กกว่า md (768px, breakpoint เดียวกับ Navbar): sidebar เป็น drawer เปิด/ปิดด้วย hamburger ใน AdminNavbar

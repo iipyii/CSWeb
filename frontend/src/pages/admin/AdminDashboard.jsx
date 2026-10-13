@@ -18,10 +18,12 @@ export default function AdminDashboard() {
     adminCount: 1
   });
   const [activities, setActivities] = useState([]);
-  const [trafficData, setTrafficData] = useState([
-    { name: 'จ.', v: 420 }, { name: 'อ.', v: 380 }, { name: 'พ.', v: 510 },
-    { name: 'พฤ.', v: 320 }, { name: 'ศ.', v: 610 }, { name: 'ส.', v: 290 }, { name: 'อา.', v: 230 }
-  ]);
+  const [trafficData, setTrafficData] = useState([]);
+  const [trafficSummary, setTrafficSummary] = useState({
+    today: 0,
+    week: 0,
+    total: 0
+  });
 
   const fetchDashboardData = async () => {
     try {
@@ -30,6 +32,7 @@ export default function AdminDashboard() {
       if (res.data.stats) setStats(res.data.stats);
       if (res.data.activities) setActivities(res.data.activities);
       if (res.data.traffic) setTrafficData(res.data.traffic);
+      if (res.data.trafficSummary) setTrafficSummary(res.data.trafficSummary);
     } catch (error) {
       console.error("Failed to load dashboard data:", error);
     } finally {
@@ -97,22 +100,61 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* กราฟสถิติ - แสดงเฉพาะ Admin */}
         <div className={`lg:col-span-2 bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm transition-all ${userRole !== 'admin' && 'opacity-50 grayscale pointer-events-none'}`}>
-          <h2 className="text-xl font-black text-slate-800 mb-8">สถิติการเข้าชมเว็บไซต์</h2>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+            <div>
+              <div className="flex items-center gap-2.5">
+                <h2 className="text-xl font-black text-slate-800">สถิติการเข้าชมเว็บไซต์</h2>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> ข้อมูลจริง
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mt-1">ยอดผู้เข้าชมจริงในรอบ 7 วันย้อนหลัง (ตามวันจริง)</p>
+            </div>
+            
+            {/* Live Traffic Summary Badges */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="px-3.5 py-2 bg-slate-50 border border-slate-100 rounded-2xl text-left">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">วันนี้</div>
+                <div className="text-sm font-black text-slate-800">{Number(trafficSummary.today || 0).toLocaleString()} <span className="text-[10px] font-normal text-slate-400">ครั้ง</span></div>
+              </div>
+              <div className="px-3.5 py-2 bg-indigo-50/70 border border-indigo-100 rounded-2xl text-left">
+                <div className="text-[10px] font-bold text-[#3F51B5] uppercase tracking-wider">7 วันนี้</div>
+                <div className="text-sm font-black text-[#3F51B5]">{Number(trafficSummary.week || 0).toLocaleString()} <span className="text-[10px] font-normal text-indigo-400">ครั้ง</span></div>
+              </div>
+              <div className="px-3.5 py-2 bg-slate-50 border border-slate-100 rounded-2xl text-left">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">สะสมทั้งหมด</div>
+                <div className="text-sm font-black text-slate-700">{Number(trafficSummary.total || 0).toLocaleString()} <span className="text-[10px] font-normal text-slate-400">ครั้ง</span></div>
+              </div>
+            </div>
+          </div>
+
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={trafficData}>
                 <defs>
                   <linearGradient id="colorV" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3F51B5" stopOpacity={0.2}/>
+                    <stop offset="5%" stopColor="#3F51B5" stopOpacity={0.25}/>
                     <stop offset="95%" stopColor="#3F51B5" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12, fontWeight: 'bold'}} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11}} />
                 <Tooltip 
-                  contentStyle={{borderRadius: '20px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}} 
+                  formatter={(value) => [`${Number(value).toLocaleString()} ครั้ง`, 'จำนวนเข้าชม']}
+                  labelFormatter={(label, payload) => {
+                    const item = payload?.[0]?.payload;
+                    return item?.date ? `${label} (${item.date})` : label;
+                  }}
+                  contentStyle={{
+                    borderRadius: '16px', 
+                    border: '1px solid #e2e8f0', 
+                    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                    fontWeight: 'bold',
+                    fontSize: '12px'
+                  }} 
                 />
-                <Area type="monotone" dataKey="v" stroke="#3F51B5" strokeWidth={4} fill="url(#colorV)" />
+                <Area type="monotone" dataKey="v" stroke="#3F51B5" strokeWidth={3.5} fill="url(#colorV)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
