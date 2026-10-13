@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { 
@@ -30,8 +31,18 @@ const HANDBOOK_DEFAULT_CATEGORIES = [
   "ระเบียบและข้อบังคับทั่วไป"
 ];
 
-export default function ManageChatbot() {
-  const [activeTab, setActiveTab] = useState("faq"); // 'faq' | 'handbook' | 'settings'
+export default function ManageChatbot({ defaultTab = "faq" }) {
+  const [searchParams] = useSearchParams();
+  const queryTab = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(queryTab || defaultTab); // 'faq' | 'handbook' | 'settings'
+
+  useEffect(() => {
+    if (queryTab && ['faq', 'handbook', 'settings'].includes(queryTab)) {
+      setActiveTab(queryTab);
+    } else if (defaultTab) {
+      setActiveTab(defaultTab);
+    }
+  }, [queryTab, defaultTab]);
   const [loading, setLoading] = useState(true);
 
   // Auth Header helper

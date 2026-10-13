@@ -263,6 +263,11 @@ export default function App() {
                 <ManageChatbot />
               </ProtectedRoute>
             } />
+            <Route path="faq" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <ManageChatbot defaultTab="faq" />
+              </ProtectedRoute>
+            } />
 
             {/* เมนูสำหรับทั้ง Admin และ Lecturer */}
             <Route path="news" element={<ManageNews />} />

@@ -8,7 +8,7 @@ import {
   BookOpenCheck, Bookmark, Link2, ChevronDown, 
   LayoutDashboard, Newspaper, Archive, GraduationCap, 
   Files, Users, BookOpen, FolderGit2, LogOut, UserCircle,
-  MessageSquare, UserCheck, FileText
+  MessageSquare, UserCheck, FileText, HelpCircle
 } from 'lucide-react';
 
 export default function AdminSidebar({ onNavigate }) {
@@ -100,6 +100,7 @@ export default function AdminSidebar({ onNavigate }) {
     { label: 'บทบาทและสิทธิ์', icon: <ShieldCheck size={22} />, path: '/admin/roles', roles: ['admin'] },
     { label: 'ข้อมูลรายวิชา', icon: <BookOpen size={22} />, path: '/admin/subjects', roles: ['admin'] },
     { label: 'ระบบ AI Chatbot', icon: <MessageSquare size={22} />, path: '/admin/chatbot', roles: ['admin'] },
+    { label: 'คำถามที่พบบ่อย (FAQ)', icon: <HelpCircle size={22} />, path: '/admin/faq', roles: ['admin'] },
   ];
 
   const allowedPersonnelSubItems = personnelSubItems.filter(item => item.roles.includes(userRole));

@@ -747,3 +747,214 @@ export const batchImportSubjects = async (req, res) => {
   }
 };
 
+// ==========================================
+// 🎓 CURRICULUM OPTIONS (จัดการปี/หลักสูตร)
+// ==========================================
+
+export const DEFAULT_CURRICULUMS = [
+  { code: 'CS69', label: 'CS69 - วท.บ. วิทยาการคอมพิวเตอร์ (พ.ศ. 2569)', year: 2569, degree: 'bachelor' },
+  { code: 'CS64', label: 'CS64 - วท.บ. วิทยาการคอมพิวเตอร์ (พ.ศ. 2564)', year: 2564, degree: 'bachelor' },
+  { code: 'CS-Inter64', label: 'CS-Inter64 - โครงการพิเศษ สองภาษา (พ.ศ. 2564)', year: 2564, degree: 'bachelor' },
+  { code: 'CS59', label: 'CS59 - วท.บ. วิทยาการคอมพิวเตอร์ (พ.ศ. 2559)', year: 2559, degree: 'bachelor' },
+  { code: 'CS54', label: 'CS54 - วท.บ. วิทยาการคอมพิวเตอร์ (พ.ศ. 2554)', year: 2554, degree: 'bachelor' },
+  { code: 'MS-CS67', label: 'MS-CS67 - วท.ม. วิทยาการคอมพิวเตอร์ (พ.ศ. 2567)', year: 2567, degree: 'master' },
+  { code: 'MS-CS62', label: 'MS-CS62 - วท.ม. วิทยาการคอมพิวเตอร์ (พ.ศ. 2562)', year: 2562, degree: 'master' },
+  { code: 'MS-SE59', label: 'MS-SE59 - วท.ม. วิศวกรรมซอฟต์แวร์ (พ.ศ. 2559)', year: 2559, degree: 'master' },
+  { code: 'PhD-CS64', label: 'PhD-CS64 - ปร.ด. วิทยาการคอมพิวเตอร์ (พ.ศ. 2564)', year: 2564, degree: 'doctorate' }
+];
+
+export const getCurriculums = async (req, res) => {
+  try {
+    const config = await prisma.site_config.findUnique({
+      where: { config_key: "curriculum_options" }
+    });
+
+    let list = [];
+    if (config?.config_value) {
+      try {
+        list = JSON.parse(config.config_value);
+      } catch (e) {
+        list = [...DEFAULT_CURRICULUMS];
+      }
+    } else {
+      list = [...DEFAULT_CURRICULUMS];
+    }
+
+    // Merge any distinct codes present in subjects table so imported items appear
+    try {
+      const dbGroups = await prisma.subjects.groupBy({
+        by: ['curriculum_code', 'curriculum_year', 'degree_level']
+      });
+
+      for (const g of dbGroups) {
+        if (!g.curriculum_code) continue;
+        const exists = list.find(c => c.code?.toLowerCase() === g.curriculum_code.toLowerCase());
+        if (!exists) {
+          list.push({
+            code: g.curriculum_code,
+            label: `${g.curriculum_code} (พ.ศ. ${g.curriculum_year || 'ไม่ระบุ'})`,
+            year: g.curriculum_year || 2564,
+            degree: g.degree_level || 'bachelor'
+          });
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    list.sort((a, b) => (Number(b.year) || 0) - (Number(a.year) || 0));
+    res.json(list);
+  } catch (error) {
+    console.error("Get curriculums error:", error);
+    res.status(500).json({ error: "ไม่สามารถดึงข้อมูลหลักสูตรได้" });
+  }
+};
+
+export const createCurriculum = async (req, res) => {
+  try {
+    const { code, label, year, degree } = req.body;
+    if (!code || !label) {
+      return res.status(400).json({ error: "กรุณาระบุรหัสหลักสูตรและชื่อหลักสูตร" });
+    }
+
+    const trimmedCode = String(code).trim();
+    const config = await prisma.site_config.findUnique({
+      where: { config_key: "curriculum_options" }
+    });
+
+    let list = [];
+    if (config?.config_value) {
+      try { list = JSON.parse(config.config_value); } catch (e) { list = [...DEFAULT_CURRICULUMS]; }
+    } else {
+      list = [...DEFAULT_CURRICULUMS];
+    }
+
+    if (list.some(c => c.code.toLowerCase() === trimmedCode.toLowerCase())) {
+      return res.status(400).json({ error: `รหัสหลักสูตร ${trimmedCode} มีอยู่ในระบบแล้ว` });
+    }
+
+    const newItem = {
+      code: trimmedCode,
+      label: String(label).trim(),
+      year: parseInt(year) || 2569,
+      degree: degree || "bachelor"
+    };
+
+    list.push(newItem);
+    list.sort((a, b) => (Number(b.year) || 0) - (Number(a.year) || 0));
+
+    await prisma.site_config.upsert({
+      where: { config_key: "curriculum_options" },
+      update: { config_value: JSON.stringify(list) },
+      create: {
+        config_key: "curriculum_options",
+        config_value: JSON.stringify(list),
+        description: "รายการตัวเลือกหลักสูตรและปีการศึกษา"
+      }
+    });
+
+    res.json({ message: "เพิ่มตัวเลือกหลักสูตรสำเร็จ", data: list });
+  } catch (error) {
+    console.error("Create curriculum error:", error);
+    res.status(500).json({ error: "เกิดข้อผิดพลาดในการเพิ่มหลักสูตร" });
+  }
+};
+
+export const updateCurriculum = async (req, res) => {
+  try {
+    const { code } = req.params;
+    const { newCode, label, year, degree } = req.body;
+
+    const config = await prisma.site_config.findUnique({
+      where: { config_key: "curriculum_options" }
+    });
+
+    let list = [];
+    if (config?.config_value) {
+      try { list = JSON.parse(config.config_value); } catch (e) { list = [...DEFAULT_CURRICULUMS]; }
+    } else {
+      list = [...DEFAULT_CURRICULUMS];
+    }
+
+    const idx = list.findIndex(c => c.code.toLowerCase() === code.toLowerCase());
+    if (idx === -1) {
+      return res.status(404).json({ error: "ไม่พบหลักสูตรนี้ในระบบ" });
+    }
+
+    const finalCode = (newCode && newCode.trim()) ? newCode.trim() : list[idx].code;
+
+    if (finalCode.toLowerCase() !== code.toLowerCase() && list.some((c, i) => i !== idx && c.code.toLowerCase() === finalCode.toLowerCase())) {
+      return res.status(400).json({ error: `รหัสหลักสูตร ${finalCode} มีอยู่ในระบบแล้ว` });
+    }
+
+    list[idx] = {
+      code: finalCode,
+      label: label ? String(label).trim() : list[idx].label,
+      year: year ? parseInt(year) : list[idx].year,
+      degree: degree || list[idx].degree || "bachelor"
+    };
+
+    list.sort((a, b) => (Number(b.year) || 0) - (Number(a.year) || 0));
+
+    await prisma.site_config.upsert({
+      where: { config_key: "curriculum_options" },
+      update: { config_value: JSON.stringify(list) },
+      create: {
+        config_key: "curriculum_options",
+        config_value: JSON.stringify(list),
+        description: "รายการตัวเลือกหลักสูตรและปีการศึกษา"
+      }
+    });
+
+    if (finalCode !== code) {
+      await prisma.subjects.updateMany({
+        where: { curriculum_code: code },
+        data: {
+          curriculum_code: finalCode,
+          curriculum_year: parseInt(year) || undefined,
+          degree_level: degree || undefined
+        }
+      });
+    }
+
+    res.json({ message: "แก้ไขตัวเลือกหลักสูตรสำเร็จ", data: list });
+  } catch (error) {
+    console.error("Update curriculum error:", error);
+    res.status(500).json({ error: "เกิดข้อผิดพลาดในการแก้ไขหลักสูตร" });
+  }
+};
+
+export const deleteCurriculum = async (req, res) => {
+  try {
+    const { code } = req.params;
+
+    const config = await prisma.site_config.findUnique({
+      where: { config_key: "curriculum_options" }
+    });
+
+    let list = [];
+    if (config?.config_value) {
+      try { list = JSON.parse(config.config_value); } catch (e) { list = [...DEFAULT_CURRICULUMS]; }
+    } else {
+      list = [...DEFAULT_CURRICULUMS];
+    }
+
+    const filtered = list.filter(c => c.code.toLowerCase() !== code.toLowerCase());
+
+    await prisma.site_config.upsert({
+      where: { config_key: "curriculum_options" },
+      update: { config_value: JSON.stringify(filtered) },
+      create: {
+        config_key: "curriculum_options",
+        config_value: JSON.stringify(filtered),
+        description: "รายการตัวเลือกหลักสูตรและปีการศึกษา"
+      }
+    });
+
+    res.json({ message: "ลบตัวเลือกหลักสูตรสำเร็จ", data: filtered });
+  } catch (error) {
+    console.error("Delete curriculum error:", error);
+    res.status(500).json({ error: "เกิดข้อผิดพลาดในการลบหลักสูตร" });
+  }
+};
+

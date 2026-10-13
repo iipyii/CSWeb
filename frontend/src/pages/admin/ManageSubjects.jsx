@@ -5,7 +5,8 @@ import {
   Search, Plus, Edit2, Trash2, BookOpen, 
   Save, X, RefreshCw, UploadCloud, FileSpreadsheet, 
   FileText, Download, CheckCircle2, AlertCircle, 
-  Loader2, Filter, ChevronLeft, ChevronRight, Eye
+  Loader2, Filter, ChevronLeft, ChevronRight, Eye,
+  Layers
 } from 'lucide-react';
 
 const DEGREE_OPTIONS = [
@@ -15,10 +16,10 @@ const DEGREE_OPTIONS = [
   { value: 'doctorate', label: 'ปริญญาเอก (Doctorate)' },
 ];
 
-const CURRICULUM_OPTIONS = [
-  { code: 'all', label: 'ทุกหลักสูตร' },
+const DEFAULT_CURRICULUM_LIST = [
   { code: 'CS69', label: 'CS69 - วท.บ. วิทยาการคอมพิวเตอร์ (พ.ศ. 2569)', year: 2569, degree: 'bachelor' },
   { code: 'CS64', label: 'CS64 - วท.บ. วิทยาการคอมพิวเตอร์ (พ.ศ. 2564)', year: 2564, degree: 'bachelor' },
+  { code: 'CS-Inter64', label: 'CS-Inter64 - โครงการพิเศษ สองภาษา (พ.ศ. 2564)', year: 2564, degree: 'bachelor' },
   { code: 'CS59', label: 'CS59 - วท.บ. วิทยาการคอมพิวเตอร์ (พ.ศ. 2559)', year: 2559, degree: 'bachelor' },
   { code: 'CS54', label: 'CS54 - วท.บ. วิทยาการคอมพิวเตอร์ (พ.ศ. 2554)', year: 2554, degree: 'bachelor' },
   { code: 'MS-CS67', label: 'MS-CS67 - วท.ม. วิทยาการคอมพิวเตอร์ (พ.ศ. 2567)', year: 2567, degree: 'master' },
@@ -52,6 +53,20 @@ export default function ManageSubjects() {
   const [selectedCurriculum, setSelectedCurriculum] = useState('all');
   const [selectedDegree, setSelectedDegree] = useState('all');
   const [selectedTrack, setSelectedTrack] = useState('all');
+
+  // Dynamic Curriculum state
+  const [curriculumList, setCurriculumList] = useState(DEFAULT_CURRICULUM_LIST);
+  const [isCurriculumModalOpen, setIsCurriculumModalOpen] = useState(false);
+  const [curriculumLoading, setCurriculumLoading] = useState(false);
+  const [curriculumActionLoading, setCurriculumActionLoading] = useState(false);
+  const [editingCurriculumCode, setEditingCurriculumCode] = useState(null);
+  const [curriculumForm, setCurriculumForm] = useState({
+    code: '',
+    label: '',
+    year: 2569,
+    degree: 'bachelor'
+  });
+  const [curriculumFeedback, setCurriculumFeedback] = useState(null);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -92,8 +107,90 @@ export default function ManageSubjects() {
   const [importLoading, setImportLoading] = useState(false);
 
   const getAuthHeaders = () => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('csweb_token') || localStorage.getItem('token');
     return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+  };
+
+  const fetchCurriculums = async () => {
+    try {
+      setCurriculumLoading(true);
+      const res = await axios.get('/api/subjects/curriculums');
+      if (Array.isArray(res.data) && res.data.length > 0) {
+        setCurriculumList(res.data);
+      }
+    } catch (err) {
+      console.error("Failed to load curriculums:", err);
+    } finally {
+      setCurriculumLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCurriculums();
+    window.addEventListener('curriculums_updated', fetchCurriculums);
+    return () => window.removeEventListener('curriculums_updated', fetchCurriculums);
+  }, []);
+
+  const handleSaveCurriculum = async (e) => {
+    e?.preventDefault();
+    if (!curriculumForm.code.trim() || !curriculumForm.label.trim()) {
+      setCurriculumFeedback({ type: 'error', message: 'กรุณากรอกรหัสและชื่อหลักสูตรให้ครบถ้วน' });
+      return;
+    }
+    setCurriculumActionLoading(true);
+    setCurriculumFeedback(null);
+    try {
+      if (editingCurriculumCode) {
+        await axios.put(`/api/subjects/curriculums/${editingCurriculumCode}`, {
+          newCode: curriculumForm.code.trim(),
+          label: curriculumForm.label.trim(),
+          year: parseInt(curriculumForm.year) || 2569,
+          degree: curriculumForm.degree
+        }, getAuthHeaders());
+        setCurriculumFeedback({ type: 'success', message: 'แก้ไขข้อมูลหลักสูตรเรียบร้อยแล้ว' });
+      } else {
+        await axios.post('/api/subjects/curriculums', {
+          code: curriculumForm.code.trim(),
+          label: curriculumForm.label.trim(),
+          year: parseInt(curriculumForm.year) || 2569,
+          degree: curriculumForm.degree
+        }, getAuthHeaders());
+        setCurriculumFeedback({ type: 'success', message: 'เพิ่มหลักสูตรใหม่เข้าสู่ระบบเรียบร้อยแล้ว' });
+      }
+      setEditingCurriculumCode(null);
+      setCurriculumForm({ code: '', label: '', year: 2569, degree: 'bachelor' });
+      await fetchCurriculums();
+      window.dispatchEvent(new Event('curriculums_updated'));
+    } catch (err) {
+      setCurriculumFeedback({ 
+        type: 'error', 
+        message: err.response?.data?.error || 'เกิดข้อผิดพลาดในการบันทึกหลักสูตร' 
+      });
+    } finally {
+      setCurriculumActionLoading(false);
+    }
+  };
+
+  const handleDeleteCurriculum = async (code) => {
+    if (!window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบหลักสูตร "${code}" ออกจากตัวเลือก?`)) {
+      return;
+    }
+    setCurriculumActionLoading(true);
+    setCurriculumFeedback(null);
+    try {
+      await axios.delete(`/api/subjects/curriculums/${code}`, getAuthHeaders());
+      setCurriculumFeedback({ type: 'success', message: `ลบหลักสูตร ${code} สำเร็จ` });
+      if (selectedCurriculum === code) setSelectedCurriculum('all');
+      await fetchCurriculums();
+      window.dispatchEvent(new Event('curriculums_updated'));
+    } catch (err) {
+      setCurriculumFeedback({ 
+        type: 'error', 
+        message: err.response?.data?.error || 'เกิดข้อผิดพลาดในการลบหลักสูตร' 
+      });
+    } finally {
+      setCurriculumActionLoading(false);
+    }
   };
 
   const fetchSubjects = async () => {
@@ -316,6 +413,17 @@ export default function ManageSubjects() {
           </button>
           <button 
             onClick={() => {
+              setIsCurriculumModalOpen(true);
+              setCurriculumFeedback(null);
+              setEditingCurriculumCode(null);
+              setCurriculumForm({ code: '', label: '', year: 2569, degree: 'bachelor' });
+            }}
+            className="flex items-center gap-2 bg-slate-800 text-white px-4 py-3 rounded-2xl font-bold text-xs shadow-md hover:bg-slate-900 transition-all active:scale-95"
+          >
+            <Layers size={17} /> จัดการปี/หลักสูตร ({curriculumList.length})
+          </button>
+          <button 
+            onClick={() => {
               setIsImportModalOpen(true);
               setPreviewData(null);
               setImportFile(null);
@@ -356,8 +464,9 @@ export default function ManageSubjects() {
               value={selectedCurriculum}
               onChange={(e) => setSelectedCurriculum(e.target.value)}
             >
-              {CURRICULUM_OPTIONS.map(c => (
-                <option key={c.code} value={c.code}>{c.label}</option>
+              <option value="all">ทุกหลักสูตร</option>
+              {curriculumList.map(c => (
+                <option key={c.code} value={c.code}>{c.label || `${c.code} (พ.ศ. ${c.year})`}</option>
               ))}
             </select>
           </div>
@@ -572,6 +681,32 @@ export default function ManageSubjects() {
               >
                 <FileSpreadsheet size={16} /> นำเข้าจากไฟล์ Excel / CSV
               </button>
+            </div>
+
+            {/* Quick Curriculum Selector */}
+            <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 flex flex-col md:flex-row items-center justify-between gap-3">
+              <div className="text-xs text-indigo-950 font-bold flex items-center gap-2 shrink-0">
+                <Layers size={16} className="text-[#3F51B5]" /> เลือกปี/หลักสูตรที่มีในระบบ:
+              </div>
+              <select
+                onChange={(e) => {
+                  const sel = curriculumList.find(c => c.code === e.target.value);
+                  if (sel) {
+                    setImportConfig(prev => ({
+                      ...prev,
+                      curriculum_code: sel.code,
+                      curriculum_year: String(sel.year),
+                      degree_level: sel.degree
+                    }));
+                  }
+                }}
+                className="w-full md:w-auto flex-1 px-3.5 py-2.5 bg-white border border-indigo-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-[#3F51B5]/20 font-bold text-slate-700 cursor-pointer"
+              >
+                <option value="">-- หรือเลือกหลักสูตรที่บันทึกไว้เพื่อกรอกอัตโนมัติ --</option>
+                {curriculumList.map(c => (
+                  <option key={c.code} value={c.code}>{c.label || `${c.code} (พ.ศ. ${c.year})`}</option>
+                ))}
+              </select>
             </div>
 
             {/* Configuration Form */}
@@ -807,6 +942,32 @@ export default function ManageSubjects() {
                   </div>
                 </div>
 
+                {/* Quick Curriculum Selector */}
+                <div className="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100 flex flex-col md:flex-row items-center justify-between gap-3 text-xs">
+                  <span className="font-bold text-indigo-950 flex items-center gap-1.5 shrink-0">
+                    <Layers size={15} className="text-[#3F51B5]" /> เลือกจากหลักสูตรที่มีในระบบ:
+                  </span>
+                  <select
+                    onChange={(e) => {
+                      const sel = curriculumList.find(c => c.code === e.target.value);
+                      if (sel) {
+                        setFormData(prev => ({
+                          ...prev,
+                          curriculum_code: sel.code,
+                          curriculum_year: sel.year,
+                          degree_level: sel.degree
+                        }));
+                      }
+                    }}
+                    className="w-full md:w-auto flex-1 px-3 py-1.5 bg-white border border-indigo-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-[#3F51B5]/20 font-bold text-slate-700 cursor-pointer"
+                  >
+                    <option value="">-- เลือกหลักสูตรเพื่อกรอกรหัส/ปี/ระดับการศึกษาอัตโนมัติ --</option>
+                    {curriculumList.map(c => (
+                      <option key={c.code} value={c.code}>{c.label || `${c.code} (พ.ศ. ${c.year})`}</option>
+                    ))}
+                  </select>
+                </div>
+
                 {/* Row 2: Curriculum Code, Year, Degree, Track */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="space-y-1">
@@ -943,6 +1104,237 @@ export default function ManageSubjects() {
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* 🎓 Modal: จัดการตัวเลือกปีและหลักสูตร (Curriculums Manager) */}
+      <AnimatePresence>
+        {isCurriculumModalOpen && (
+          <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 15 }} 
+              animate={{ opacity: 1, scale: 1, y: 0 }} 
+              exit={{ opacity: 0, scale: 0.95, y: 15 }} 
+              className="bg-white rounded-[2.5rem] p-6 md:p-8 max-w-4xl w-full shadow-2xl space-y-6 my-8 max-h-[92vh] overflow-y-auto text-left"
+            >
+              <div className="flex items-start justify-between border-b border-slate-100 pb-4">
+                <div>
+                  <h2 className="text-2xl font-black text-slate-800 flex items-center gap-2.5">
+                    <Layers className="text-[#3F51B5]" size={28} /> จัดการตัวเลือกปีและหลักสูตร (Curriculums)
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-1">
+                    เพิ่ม ลบ หรือแก้ไขตัวเลือกหลักสูตรและปีการศึกษา โดยตัวเลือกนี้จะถูกนำไปแสดงในแถบตัวกรองและเมนูเลือกหลักสูตรทั้งหมด
+                  </p>
+                </div>
+                <button 
+                  onClick={() => setIsCurriculumModalOpen(false)} 
+                  className="p-2 hover:bg-slate-100 rounded-2xl text-slate-400 transition-colors"
+                >
+                  <X size={22} />
+                </button>
+              </div>
+
+              {/* Feedback Alert */}
+              {curriculumFeedback && (
+                <div className={`p-4 rounded-2xl flex items-center gap-3 text-xs font-bold ${
+                  curriculumFeedback.type === 'success'
+                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                    : 'bg-rose-50 text-rose-800 border border-rose-200'
+                }`}>
+                  {curriculumFeedback.type === 'success' ? <CheckCircle2 size={18} className="shrink-0 text-emerald-600" /> : <AlertCircle size={18} className="shrink-0 text-rose-600" />}
+                  <span>{curriculumFeedback.message}</span>
+                </div>
+              )}
+
+              {/* Add / Edit Form */}
+              <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-black text-slate-800 flex items-center gap-2">
+                    {editingCurriculumCode ? (
+                      <>
+                        <Edit2 size={16} className="text-[#3F51B5]" /> แก้ไขหลักสูตร: <span className="text-[#3F51B5]">{editingCurriculumCode}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Plus size={16} className="text-emerald-600" /> เพิ่มหลักสูตร / ปีการศึกษาใหม่
+                      </>
+                    )}
+                  </h3>
+                  {editingCurriculumCode && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingCurriculumCode(null);
+                        setCurriculumForm({ code: '', label: '', year: 2569, degree: 'bachelor' });
+                      }}
+                      className="text-xs text-slate-500 hover:text-slate-800 font-bold underline"
+                    >
+                      ยกเลิกโหมดแก้ไข
+                    </button>
+                  )}
+                </div>
+
+                <form onSubmit={handleSaveCurriculum} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+                    <div>
+                      <label className="font-bold text-slate-600 block mb-1">รหัสหลักสูตร *</label>
+                      <input 
+                        type="text" 
+                        placeholder="เช่น CS69, MS-CS67" 
+                        required
+                        className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#3F51B5] font-bold"
+                        value={curriculumForm.code}
+                        onChange={(e) => setCurriculumForm({ ...curriculumForm, code: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-600 block mb-1">ปี พ.ศ. *</label>
+                      <input 
+                        type="number" 
+                        placeholder="2569" 
+                        required
+                        className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#3F51B5] font-bold"
+                        value={curriculumForm.year}
+                        onChange={(e) => setCurriculumForm({ ...curriculumForm, year: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-600 block mb-1">ระดับการศึกษา</label>
+                      <select 
+                        className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#3F51B5] font-bold cursor-pointer"
+                        value={curriculumForm.degree}
+                        onChange={(e) => setCurriculumForm({ ...curriculumForm, degree: e.target.value })}
+                      >
+                        <option value="bachelor">ปริญญาตรี (Bachelor)</option>
+                        <option value="master">ปริญญาโท (Master)</option>
+                        <option value="doctorate">ปริญญาเอก (Doctorate)</option>
+                      </select>
+                    </div>
+                    <div className="flex items-end">
+                      <button 
+                        type="submit"
+                        disabled={curriculumActionLoading}
+                        className="w-full py-2.5 px-4 bg-[#3F51B5] text-white rounded-xl font-bold hover:bg-[#2D3B8E] shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                      >
+                        {curriculumActionLoading ? (
+                          <Loader2 size={16} className="animate-spin" />
+                        ) : editingCurriculumCode ? (
+                          <>
+                            <Save size={16} /> บันทึกการแก้ไข
+                          </>
+                        ) : (
+                          <>
+                            <Plus size={16} /> เพิ่มหลักสูตร
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-slate-600 block mb-1 text-xs">ชื่อเต็ม / คำอธิบายหลักสูตร (Label) *</label>
+                    <input 
+                      type="text" 
+                      placeholder="เช่น CS69 - วท.บ. วิทยาการคอมพิวเตอร์ (พ.ศ. 2569)" 
+                      required
+                      className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs outline-none focus:border-[#3F51B5] font-medium"
+                      value={curriculumForm.label}
+                      onChange={(e) => setCurriculumForm({ ...curriculumForm, label: e.target.value })}
+                    />
+                  </div>
+                </form>
+              </div>
+
+              {/* Existing Curriculums Table */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider">
+                    รายการหลักสูตรในระบบ ({curriculumList.length})
+                  </h3>
+                  <button 
+                    onClick={fetchCurriculums}
+                    disabled={curriculumLoading}
+                    className="text-xs text-[#3F51B5] hover:underline font-bold flex items-center gap-1"
+                  >
+                    <RefreshCw size={12} className={curriculumLoading ? "animate-spin" : ""} /> รีเฟรชรายการ
+                  </button>
+                </div>
+
+                <div className="border border-slate-100 rounded-2xl overflow-hidden bg-white shadow-sm">
+                  <table className="w-full text-xs text-left border-collapse">
+                    <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-100">
+                      <tr>
+                        <th className="p-3.5">รหัส</th>
+                        <th className="p-3.5">ระดับ</th>
+                        <th className="p-3.5">ปี พ.ศ.</th>
+                        <th className="p-3.5">ชื่อหลักสูตร (แสดงผลในเมนู)</th>
+                        <th className="p-3.5 text-right">จัดการ</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {curriculumList.map((c) => (
+                        <tr key={c.code} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="p-3.5 font-black text-slate-800">{c.code}</td>
+                          <td className="p-3.5">
+                            <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold ${
+                              c.degree === 'master' 
+                                ? 'bg-amber-100 text-amber-800' 
+                                : c.degree === 'doctorate' || c.degree === 'doctor'
+                                ? 'bg-purple-100 text-purple-800'
+                                : 'bg-blue-100 text-blue-800'
+                            }`}>
+                              {c.degree === 'master' ? 'ปริญญาโท' : c.degree === 'doctorate' || c.degree === 'doctor' ? 'ปริญญาเอก' : 'ปริญญาตรี'}
+                            </span>
+                          </td>
+                          <td className="p-3.5 font-bold text-slate-600">{c.year}</td>
+                          <td className="p-3.5 text-slate-700 font-medium">{c.label}</td>
+                          <td className="p-3.5 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingCurriculumCode(c.code);
+                                  setCurriculumForm({
+                                    code: c.code,
+                                    label: c.label || '',
+                                    year: c.year || 2569,
+                                    degree: c.degree || 'bachelor'
+                                  });
+                                  setCurriculumFeedback(null);
+                                }}
+                                className="p-1.5 text-slate-400 hover:text-[#3F51B5] hover:bg-indigo-50 rounded-lg transition-colors"
+                                title="แก้ไข"
+                              >
+                                <Edit2 size={15} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteCurriculum(c.code)}
+                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                                title="ลบ"
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setIsCurriculumModalOpen(false)}
+                  className="px-6 py-2.5 bg-slate-100 text-slate-700 font-bold rounded-xl text-xs hover:bg-slate-200 transition-colors"
+                >
+                  ปิดหน้าต่าง
+                </button>
+              </div>
             </motion.div>
           </div>
         )}

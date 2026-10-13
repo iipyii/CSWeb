@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { 
   Search, ChevronDown, BookOpen, Layers, Filter, X, 
@@ -8,6 +8,19 @@ import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import Footer from "../components/Footer";
 import { cleanThaiDisplay } from "../utils/thaiText";
+
+// รายการหลักสูตรตั้งต้น (Fallback หากยังโหลด API ไม่เสร็จ)
+const DEFAULT_RAW_CURRICULUMS = [
+  { code: 'CS69', label: 'CS69 - วท.บ. วิทยาการคอมพิวเตอร์ (พ.ศ. 2569)', year: 2569, degree: 'bachelor' },
+  { code: 'CS64', label: 'CS64 - วท.บ. วิทยาการคอมพิวเตอร์ (พ.ศ. 2564)', year: 2564, degree: 'bachelor' },
+  { code: 'CS-Inter64', label: 'CS-Inter64 - โครงการพิเศษ สองภาษา (พ.ศ. 2564)', year: 2564, degree: 'bachelor' },
+  { code: 'CS59', label: 'CS59 - วท.บ. วิทยาการคอมพิวเตอร์ (พ.ศ. 2559)', year: 2559, degree: 'bachelor' },
+  { code: 'CS54', label: 'CS54 - วท.บ. วิทยาการคอมพิวเตอร์ (พ.ศ. 2554)', year: 2554, degree: 'bachelor' },
+  { code: 'MS-CS67', label: 'MS-CS67 - วท.ม. วิทยาการคอมพิวเตอร์ (พ.ศ. 2567)', year: 2567, degree: 'master' },
+  { code: 'MS-CS62', label: 'MS-CS62 - วท.ม. วิทยาการคอมพิวเตอร์ (พ.ศ. 2562)', year: 2562, degree: 'master' },
+  { code: 'MS-SE59', label: 'MS-SE59 - วท.ม. วิศวกรรมซอฟต์แวร์ (พ.ศ. 2559)', year: 2559, degree: 'master' },
+  { code: 'PhD-CS64', label: 'PhD-CS64 - ปร.ด. วิทยาการคอมพิวเตอร์ (พ.ศ. 2564)', year: 2564, degree: 'doctorate' }
+];
 
 export default function CourseDescription() {
   const location = useLocation();
@@ -23,111 +36,107 @@ export default function CourseDescription() {
   const [activeModalSubject, setActiveModalSubject] = useState(null);
   const [copiedCode, setCopiedCode] = useState(null);
 
-  // ข้อมูลหลักสูตรครบถ้วนทั้งใหม่และเก่า ตามโครงสร้างภาควิชาฯ
-  const curriculumOptions = [
-    {
-      id: "all",
-      label: "ทุกระดับการศึกษา (ปริญญาตรี / โท / เอก ทั้งหมด)",
-      degree_level: "all",
-      years: [
-        { year: "all", code: "all", name: "ทุกปีหลักสูตร (ทั้งหมด)" },
-        { year: "2569", code: "CS69", name: "พ.ศ. 2569 (วท.บ. CS69)" },
-        { year: "2567", code: "MS-CS67", name: "พ.ศ. 2567 (วท.ม. MS-CS67)" },
-        { year: "2564", code: "CS64", name: "พ.ศ. 2564 (วท.บ. CS64 / ปร.ด. PhD-CS64)" },
-        { year: "2562", code: "MS-CS62", name: "พ.ศ. 2562 (วท.ม. MS-CS62)" },
-        { year: "2559", code: "CS59", name: "พ.ศ. 2559 (วท.บ. CS59 / วท.ม. MS-SE59)" },
-        { year: "2554", code: "CS54", name: "พ.ศ. 2554 (วท.บ. CS54)" }
-      ]
-    },
-    {
-      id: "bachelor-all",
-      label: "ปริญญาตรี ทั้งหมด (วท.บ.)",
-      degree_level: "bachelor",
-      years: [
-        { year: "all", code: "all", name: "ทุกปีหลักสูตรปริญญาตรี" },
-        { year: "2569", code: "CS69", name: "หลักสูตรปรับปรุง พ.ศ. 2569 (ใหม่ล่าสุด)" },
-        { year: "2564", code: "CS64", name: "หลักสูตรปรับปรุง พ.ศ. 2564" },
-        { year: "2559", code: "CS59", name: "หลักสูตรปรับปรุง พ.ศ. 2559" },
-        { year: "2554", code: "CS54", name: "หลักสูตร พ.ศ. 2554" }
-      ]
-    },
-    {
-      id: "bachelor-normal",
-      label: "ปริญญาตรี ภาคปกติ (วท.บ.)",
-      degree_level: "bachelor",
-      curriculum_code: "CS",
-      years: [
-        { year: "all", code: "all", name: "ทุกปีหลักสูตรภาคปกติ" },
-        { year: "2569", code: "CS69", name: "หลักสูตรปรับปรุง พ.ศ. 2569 (ใหม่ล่าสุด)" },
-        { year: "2564", code: "CS64", name: "หลักสูตรปรับปรุง พ.ศ. 2564" },
-        { year: "2559", code: "CS59", name: "หลักสูตรปรับปรุง พ.ศ. 2559" },
-        { year: "2554", code: "CS54", name: "หลักสูตร พ.ศ. 2554" }
-      ]
-    },
-    {
-      id: "bachelor-inter",
-      label: "ปริญญาตรี โครงการพิเศษ สองภาษา (วท.บ.)",
-      degree_level: "bachelor",
-      curriculum_code: "CS-Inter",
-      years: [
-        { year: "all", code: "all", name: "ทุกปีหลักสูตรโครงการพิเศษ" },
-        { year: "2564", code: "CS-Inter64", name: "โครงการพิเศษ สองภาษา พ.ศ. 2564" }
-      ]
-    },
-    {
-      id: "master-all",
-      label: "ปริญญาโท ทั้งหมด (วท.ม.)",
-      degree_level: "master",
-      years: [
-        { year: "all", code: "all", name: "ทุกปีหลักสูตรปริญญาโท" },
-        { year: "2567", code: "MS-CS67", name: "วท.ม. วิทยาการคอมพิวเตอร์ พ.ศ. 2567" },
-        { year: "2562", code: "MS-CS62", name: "วท.ม. วิทยาการคอมพิวเตอร์ พ.ศ. 2562" },
-        { year: "2559", code: "MS-SE59", name: "วท.ม. วิศวกรรมซอฟต์แวร์ พ.ศ. 2559" }
-      ]
-    },
-    {
-      id: "master-cs",
-      label: "ปริญญาโท สาขาวิชาวิทยาการคอมพิวเตอร์ (วท.ม.)",
-      degree_level: "master",
-      curriculum_code: "MS-CS",
-      years: [
-        { year: "all", code: "all", name: "ทุกปีหลักสูตร CS ปริญญาโท" },
-        { year: "2567", code: "MS-CS67", name: "หลักสูตรปรับปรุง พ.ศ. 2567" },
-        { year: "2562", code: "MS-CS62", name: "หลักสูตรปรับปรุง พ.ศ. 2562" }
-      ]
-    },
-    {
-      id: "master-se",
-      label: "ปริญญาโท สาขาวิชาวิศวกรรมซอฟต์แวร์ (วท.ม.)",
-      degree_level: "master",
-      curriculum_code: "MS-SE",
-      years: [
-        { year: "all", code: "all", name: "ทุกปีหลักสูตร SE ปริญญาโท" },
-        { year: "2559", code: "MS-SE59", name: "หลักสูตรปรับปรุง พ.ศ. 2559" }
-      ]
-    },
-    {
-      id: "doctor-all",
-      label: "ปริญญาเอก ทั้งหมด (ปร.ด.)",
-      degree_level: "doctor",
-      years: [
-        { year: "all", code: "all", name: "ทุกปีหลักสูตรปริญญาเอก" },
-        { year: "2564", code: "PhD-CS64", name: "ปร.ด. วิทยาการคอมพิวเตอร์ พ.ศ. 2564" },
-        { year: "2559", code: "PhD-CS59", name: "ปร.ด. วิทยาการคอมพิวเตอร์ พ.ศ. 2559" }
-      ]
-    },
-    {
-      id: "doctor-cs",
-      label: "ปริญญาเอก สาขาวิชาวิทยาการคอมพิวเตอร์ (ปร.ด.)",
-      degree_level: "doctor",
-      curriculum_code: "PhD-CS",
-      years: [
-        { year: "all", code: "all", name: "ทุกปีหลักสูตร CS ปริญญาเอก" },
-        { year: "2564", code: "PhD-CS64", name: "หลักสูตรปรับปรุง พ.ศ. 2564" },
-        { year: "2559", code: "PhD-CS59", name: "หลักสูตรปรับปรุง พ.ศ. 2559" }
-      ]
-    }
-  ];
+  // ดึงรายการหลักสูตรและปีแบบไดนามิกจากฐานข้อมูล
+  const [rawCurriculums, setRawCurriculums] = useState(DEFAULT_RAW_CURRICULUMS);
+
+  useEffect(() => {
+    const fetchCurriculums = async () => {
+      try {
+        const res = await axios.get("/api/subjects/curriculums");
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          setRawCurriculums(res.data);
+        }
+      } catch (err) {
+        console.warn("Failed to load curriculums, using defaults:", err);
+      }
+    };
+    fetchCurriculums();
+  }, []);
+
+  // สร้างตัวเลือกหลักสูตรและปีแบบไดนามิกตามกลุ่มระดับการศึกษา
+  const curriculumOptions = useMemo(() => {
+    const bachelorItems = rawCurriculums.filter(c => c.degree === 'bachelor');
+    const masterItems = rawCurriculums.filter(c => c.degree === 'master');
+    const doctorItems = rawCurriculums.filter(c => c.degree === 'doctor' || c.degree === 'doctorate');
+
+    const mapToYears = (items, allLabel) => [
+      { year: "all", code: "all", name: allLabel },
+      ...items.map(item => ({
+        year: String(item.year),
+        code: item.code,
+        name: item.label ? item.label : `พ.ศ. ${item.year} (${item.code})`
+      }))
+    ];
+
+    return [
+      {
+        id: "all",
+        label: "ทุกระดับการศึกษา (ปริญญาตรี / โท / เอก ทั้งหมด)",
+        degree_level: "all",
+        years: [
+          { year: "all", code: "all", name: "ทุกปีหลักสูตร (ทั้งหมด)" },
+          ...rawCurriculums.map(item => ({
+            year: String(item.year),
+            code: item.code,
+            name: item.label ? item.label : `พ.ศ. ${item.year} (${item.code})`
+          }))
+        ]
+      },
+      {
+        id: "bachelor-all",
+        label: "ปริญญาตรี ทั้งหมด (วท.บ.)",
+        degree_level: "bachelor",
+        years: mapToYears(bachelorItems, "ทุกปีหลักสูตรปริญญาตรี")
+      },
+      {
+        id: "bachelor-normal",
+        label: "ปริญญาตรี ภาคปกติ (วท.บ.)",
+        degree_level: "bachelor",
+        curriculum_code: "CS",
+        years: mapToYears(bachelorItems.filter(c => !c.code?.toLowerCase().includes('inter')), "ทุกปีหลักสูตรภาคปกติ")
+      },
+      {
+        id: "bachelor-inter",
+        label: "ปริญญาตรี โครงการพิเศษ สองภาษา (วท.บ.)",
+        degree_level: "bachelor",
+        curriculum_code: "CS-Inter",
+        years: mapToYears(bachelorItems.filter(c => c.code?.toLowerCase().includes('inter')), "ทุกปีหลักสูตรโครงการพิเศษ")
+      },
+      {
+        id: "master-all",
+        label: "ปริญญาโท ทั้งหมด (วท.ม.)",
+        degree_level: "master",
+        years: mapToYears(masterItems, "ทุกปีหลักสูตรปริญญาโท")
+      },
+      {
+        id: "master-cs",
+        label: "ปริญญาโท สาขาวิชาวิทยาการคอมพิวเตอร์ (วท.ม.)",
+        degree_level: "master",
+        curriculum_code: "MS-CS",
+        years: mapToYears(masterItems.filter(c => !c.code?.toLowerCase().includes('se')), "ทุกปีหลักสูตร CS ปริญญาโท")
+      },
+      {
+        id: "master-se",
+        label: "ปริญญาโท สาขาวิชาวิศวกรรมซอฟต์แวร์ (วท.ม.)",
+        degree_level: "master",
+        curriculum_code: "MS-SE",
+        years: mapToYears(masterItems.filter(c => c.code?.toLowerCase().includes('se')), "ทุกปีหลักสูตร SE ปริญญาโท")
+      },
+      {
+        id: "doctor-all",
+        label: "ปริญญาเอก ทั้งหมด (ปร.ด.)",
+        degree_level: "doctor",
+        years: mapToYears(doctorItems, "ทุกปีหลักสูตรปริญญาเอก")
+      },
+      {
+        id: "doctor-cs",
+        label: "ปริญญาเอก สาขาวิชาวิทยาการคอมพิวเตอร์ (ปร.ด.)",
+        degree_level: "doctor",
+        curriculum_code: "PhD-CS",
+        years: mapToYears(doctorItems, "ทุกปีหลักสูตร CS ปริญญาเอก")
+      }
+    ];
+  }, [rawCurriculums]);
 
   // รายการกลุ่มวิชาชีพ (Track)
   const trackOptions = [
