@@ -13,7 +13,7 @@ import { cleanThaiDisplay } from "../utils/thaiText";
 const DEFAULT_RAW_CURRICULUMS = [
   { code: 'CS69', label: 'CS69 - วท.บ. วิทยาการคอมพิวเตอร์ (พ.ศ. 2569)', year: 2569, degree: 'bachelor' },
   { code: 'CS64', label: 'CS64 - วท.บ. วิทยาการคอมพิวเตอร์ (พ.ศ. 2564)', year: 2564, degree: 'bachelor' },
-  { code: 'CS-Inter64', label: 'CS-Inter64 - โครงการพิเศษ สองภาษา (พ.ศ. 2564)', year: 2564, degree: 'bachelor' },
+  { code: 'CSB64', label: 'CSB64 - โครงการพิเศษ สองภาษา (พ.ศ. 2564)', year: 2564, degree: 'bachelor' },
   { code: 'CS59', label: 'CS59 - วท.บ. วิทยาการคอมพิวเตอร์ (พ.ศ. 2559)', year: 2559, degree: 'bachelor' },
   { code: 'CS54', label: 'CS54 - วท.บ. วิทยาการคอมพิวเตอร์ (พ.ศ. 2554)', year: 2554, degree: 'bachelor' },
   { code: 'MS-CS67', label: 'MS-CS67 - วท.ม. วิทยาการคอมพิวเตอร์ (พ.ศ. 2567)', year: 2567, degree: 'master' },
@@ -26,7 +26,7 @@ export default function CourseDescription() {
   const location = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDegree, setSelectedDegree] = useState("all");
-  const [selectedYear, setSelectedYear] = useState("all");
+  const [selectedCurriculumCode, setSelectedCurriculumCode] = useState("all");
   const [selectedTrack, setSelectedTrack] = useState("all");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [activeDegreeTab, setActiveDegreeTab] = useState("all");
@@ -56,29 +56,24 @@ export default function CourseDescription() {
   // สร้างตัวเลือกหลักสูตรและปีแบบไดนามิกตามกลุ่มระดับการศึกษา
   const curriculumOptions = useMemo(() => {
     const bachelorItems = rawCurriculums.filter(c => c.degree === 'bachelor');
+    const bachelorNormal = bachelorItems.filter(c => !c.code?.toLowerCase().includes('csb'));
+    const bachelorCsb = bachelorItems.filter(c => c.code?.toLowerCase().includes('csb'));
     const masterItems = rawCurriculums.filter(c => c.degree === 'master');
+    const masterCs = masterItems.filter(c => !c.code?.toLowerCase().includes('se'));
+    const masterSe = masterItems.filter(c => c.code?.toLowerCase().includes('se'));
     const doctorItems = rawCurriculums.filter(c => c.degree === 'doctor' || c.degree === 'doctorate');
-
-    const mapToYears = (items, allLabel) => [
-      { year: "all", code: "all", name: allLabel },
-      ...items.map(item => ({
-        year: String(item.year),
-        code: item.code,
-        name: item.label ? item.label : `พ.ศ. ${item.year} (${item.code})`
-      }))
-    ];
 
     return [
       {
         id: "all",
         label: "ทุกระดับการศึกษา (ปริญญาตรี / โท / เอก ทั้งหมด)",
         degree_level: "all",
-        years: [
-          { year: "all", code: "all", name: "ทุกปีหลักสูตร (ทั้งหมด)" },
+        curriculums: [
+          { code: "all", name: "ทุกปีหลักสูตร (ทั้งหมด)" },
           ...rawCurriculums.map(item => ({
-            year: String(item.year),
             code: item.code,
-            name: item.label ? item.label : `พ.ศ. ${item.year} (${item.code})`
+            year: item.year,
+            name: item.label ? item.label : `${item.code} (พ.ศ. ${item.year})`
           }))
         ]
       },
@@ -86,54 +81,110 @@ export default function CourseDescription() {
         id: "bachelor-all",
         label: "ปริญญาตรี ทั้งหมด (วท.บ.)",
         degree_level: "bachelor",
-        years: mapToYears(bachelorItems, "ทุกปีหลักสูตรปริญญาตรี")
+        curriculums: [
+          { code: "all", name: "ทุกปีหลักสูตรปริญญาตรี" },
+          ...bachelorItems.map(item => ({
+            code: item.code,
+            year: item.year,
+            name: item.label ? item.label : `${item.code} (พ.ศ. ${item.year})`
+          }))
+        ]
       },
       {
         id: "bachelor-normal",
         label: "ปริญญาตรี ภาคปกติ (วท.บ.)",
         degree_level: "bachelor",
-        curriculum_code: "CS",
-        years: mapToYears(bachelorItems.filter(c => !c.code?.toLowerCase().includes('inter')), "ทุกปีหลักสูตรภาคปกติ")
+        curriculum_code_filter: bachelorNormal.map(c => c.code).join(','),
+        curriculums: [
+          { code: "all", name: "ทุกปีหลักสูตรภาคปกติ" },
+          ...bachelorNormal.map(item => ({
+            code: item.code,
+            year: item.year,
+            name: item.label ? item.label : `${item.code} (พ.ศ. ${item.year})`
+          }))
+        ]
       },
       {
-        id: "bachelor-inter",
-        label: "ปริญญาตรี โครงการพิเศษ สองภาษา (วท.บ.)",
+        id: "bachelor-csb",
+        label: "ปริญญาตรี โครงการพิเศษ สองภาษา (CSB)",
         degree_level: "bachelor",
-        curriculum_code: "CS-Inter",
-        years: mapToYears(bachelorItems.filter(c => c.code?.toLowerCase().includes('inter')), "ทุกปีหลักสูตรโครงการพิเศษ")
+        curriculum_code_filter: bachelorCsb.map(c => c.code).join(','),
+        curriculums: [
+          { code: "all", name: "ทุกปีหลักสูตรโครงการพิเศษ (CSB)" },
+          ...bachelorCsb.map(item => ({
+            code: item.code,
+            year: item.year,
+            name: item.label ? item.label : `${item.code} (พ.ศ. ${item.year})`
+          }))
+        ]
       },
       {
         id: "master-all",
         label: "ปริญญาโท ทั้งหมด (วท.ม.)",
         degree_level: "master",
-        years: mapToYears(masterItems, "ทุกปีหลักสูตรปริญญาโท")
+        curriculums: [
+          { code: "all", name: "ทุกปีหลักสูตรปริญญาโท" },
+          ...masterItems.map(item => ({
+            code: item.code,
+            year: item.year,
+            name: item.label ? item.label : `${item.code} (พ.ศ. ${item.year})`
+          }))
+        ]
       },
       {
         id: "master-cs",
         label: "ปริญญาโท สาขาวิชาวิทยาการคอมพิวเตอร์ (วท.ม.)",
         degree_level: "master",
-        curriculum_code: "MS-CS",
-        years: mapToYears(masterItems.filter(c => !c.code?.toLowerCase().includes('se')), "ทุกปีหลักสูตร CS ปริญญาโท")
+        curriculum_code_filter: masterCs.map(c => c.code).join(','),
+        curriculums: [
+          { code: "all", name: "ทุกปีหลักสูตร CS ปริญญาโท" },
+          ...masterCs.map(item => ({
+            code: item.code,
+            year: item.year,
+            name: item.label ? item.label : `${item.code} (พ.ศ. ${item.year})`
+          }))
+        ]
       },
       {
         id: "master-se",
         label: "ปริญญาโท สาขาวิชาวิศวกรรมซอฟต์แวร์ (วท.ม.)",
         degree_level: "master",
-        curriculum_code: "MS-SE",
-        years: mapToYears(masterItems.filter(c => c.code?.toLowerCase().includes('se')), "ทุกปีหลักสูตร SE ปริญญาโท")
+        curriculum_code_filter: masterSe.map(c => c.code).join(','),
+        curriculums: [
+          { code: "all", name: "ทุกปีหลักสูตร SE ปริญญาโท" },
+          ...masterSe.map(item => ({
+            code: item.code,
+            year: item.year,
+            name: item.label ? item.label : `${item.code} (พ.ศ. ${item.year})`
+          }))
+        ]
       },
       {
         id: "doctor-all",
         label: "ปริญญาเอก ทั้งหมด (ปร.ด.)",
         degree_level: "doctor",
-        years: mapToYears(doctorItems, "ทุกปีหลักสูตรปริญญาเอก")
+        curriculums: [
+          { code: "all", name: "ทุกปีหลักสูตรปริญญาเอก" },
+          ...doctorItems.map(item => ({
+            code: item.code,
+            year: item.year,
+            name: item.label ? item.label : `${item.code} (พ.ศ. ${item.year})`
+          }))
+        ]
       },
       {
         id: "doctor-cs",
         label: "ปริญญาเอก สาขาวิชาวิทยาการคอมพิวเตอร์ (ปร.ด.)",
         degree_level: "doctor",
-        curriculum_code: "PhD-CS",
-        years: mapToYears(doctorItems, "ทุกปีหลักสูตร CS ปริญญาเอก")
+        curriculum_code_filter: doctorItems.map(c => c.code).join(','),
+        curriculums: [
+          { code: "all", name: "ทุกปีหลักสูตร CS ปริญญาเอก" },
+          ...doctorItems.map(item => ({
+            code: item.code,
+            year: item.year,
+            name: item.label ? item.label : `${item.code} (พ.ศ. ${item.year})`
+          }))
+        ]
       }
     ];
   }, [rawCurriculums]);
@@ -160,7 +211,7 @@ export default function CourseDescription() {
     { id: "หมวดวิชาศึกษาทั่วไป", label: "หมวดวิชาศึกษาทั่วไป" }
   ];
 
-  // เมื่อเปลี่ยนระดับหลักสูตร ให้เลือกปีแรกอัตโนมัติ (เฉพาะเมื่อปีที่เลือกไม่อยู่ใน degree ใหม่)
+  // เมื่อเปลี่ยนระดับหลักสูตร
   const currentDegreeConfig = curriculumOptions.find(c => c.id === selectedDegree) || curriculumOptions[0];
 
   useEffect(() => {
@@ -176,10 +227,10 @@ export default function CourseDescription() {
 
     if (code) {
       for (const deg of curriculumOptions) {
-        const foundYear = deg.years.find(y => y.code.toLowerCase() === code.toLowerCase());
-        if (foundYear) {
+        const foundCurriculum = deg.curriculums.find(y => y.code.toLowerCase() === code.toLowerCase());
+        if (foundCurriculum) {
           setSelectedDegree(deg.id);
-          setSelectedYear(foundYear.year);
+          setSelectedCurriculumCode(foundCurriculum.code);
           return;
         }
       }
@@ -193,24 +244,21 @@ export default function CourseDescription() {
       } else if (degree === 'bachelor') {
         setSelectedDegree('bachelor-normal');
       }
-      if (year) {
-        setSelectedYear(String(year));
-      }
     }
-  }, [location.search]);
+  }, [location.search, curriculumOptions]);
 
   useEffect(() => {
-    if (currentDegreeConfig && currentDegreeConfig.years.length > 0) {
-      const hasCurrentYear = currentDegreeConfig.years.some(y => y.year === selectedYear);
-      if (!hasCurrentYear) {
-        setSelectedYear(currentDegreeConfig.years[0].year);
+    if (currentDegreeConfig && currentDegreeConfig.curriculums.length > 0) {
+      const hasCurrentCode = currentDegreeConfig.curriculums.some(c => c.code === selectedCurriculumCode);
+      if (!hasCurrentCode) {
+        setSelectedCurriculumCode("all");
       }
     }
   }, [selectedDegree]);
 
   useEffect(() => {
     setActiveDegreeTab("all");
-  }, [selectedDegree, selectedYear]);
+  }, [selectedDegree, selectedCurriculumCode]);
 
   // ดึงข้อมูลรายวิชาตามตัวกรองที่เลือกอย่างเคร่งครัด
   const fetchSubjects = async () => {
@@ -223,19 +271,19 @@ export default function CourseDescription() {
         params.keyword = q;
       }
 
-      // กรองตามระดับการศึกษา (ถ้าไม่ได้เลือก 'all')
-      if (currentDegreeConfig && currentDegreeConfig.degree_level !== "all") {
-        params.degree_level = currentDegreeConfig.degree_level;
-      }
+      // กรองตามรหัสหลักสูตรที่เลือก
+      if (selectedCurriculumCode && selectedCurriculumCode !== "all") {
+        params.curriculum_code = selectedCurriculumCode;
+      } else {
+        // กรองตามระดับการศึกษา (ถ้าไม่ได้เลือก 'all')
+        if (currentDegreeConfig && currentDegreeConfig.degree_level !== "all") {
+          params.degree_level = currentDegreeConfig.degree_level;
+        }
 
-      // กรองตามรหัสหลักสูตรเฉพาะทาง (เช่น CS-Inter, MS-CS, MS-SE)
-      if (currentDegreeConfig?.curriculum_code) {
-        params.curriculum_code = currentDegreeConfig.curriculum_code;
-      }
-
-      // กรองตามปีหลักสูตรอย่างเคร่งครัดตามที่ผู้ใช้เลือก (รวมทั้ง 2569)
-      if (selectedYear && selectedYear !== "all") {
-        params.curriculum_year = selectedYear;
+        // กรองตามกลุ่มรหัสหลักสูตรเฉพาะทาง (เช่น ภาคปกติ CS69,CS64 หรือ สองภาษา CSB64)
+        if (currentDegreeConfig?.curriculum_code_filter) {
+          params.curriculum_code = currentDegreeConfig.curriculum_code_filter;
+        }
       }
 
       if (selectedTrack !== "all") {
@@ -266,7 +314,7 @@ export default function CourseDescription() {
       fetchSubjects();
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchTerm, selectedDegree, selectedYear, selectedTrack, selectedCategory]);
+  }, [searchTerm, selectedDegree, selectedCurriculumCode, selectedTrack, selectedCategory]);
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
@@ -354,12 +402,12 @@ export default function CourseDescription() {
               </label>
               <div className="relative">
                 <select
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(e.target.value)}
+                  value={selectedCurriculumCode}
+                  onChange={(e) => setSelectedCurriculumCode(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-sm font-bold text-slate-800 outline-none focus:ring-2 focus:ring-[#3F51B5]/20 focus:border-[#3F51B5] transition-all cursor-pointer"
                 >
-                  {currentDegreeConfig.years.map((y) => (
-                    <option key={y.year} value={y.year}>{y.name}</option>
+                  {currentDegreeConfig.curriculums.map((c) => (
+                    <option key={c.code} value={c.code}>{c.name}</option>
                   ))}
                 </select>
               </div>

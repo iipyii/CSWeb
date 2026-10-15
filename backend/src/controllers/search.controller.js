@@ -13,7 +13,7 @@ const SITE_MENUS = [
   { title: "ลิงก์สำหรับบุคลากร", title_en: "Personnel Links", url: "/personnel-links", category: "บุคลากร", keywords: "ลิงก์ link ระบบสารสนเทศ บุคลากร intranet azure office365" },
   
   { title: "หลักสูตรระดับปริญญาตรี (ภาคปกติ)", title_en: "Bachelor Degree (Regular)", url: "/course-sections/bachelor", category: "หลักสูตร", keywords: "หลักสูตร ปริญญาตรี ป.ตรี bachelor curriculum cs64 cs69 cs59 วิทยาการคอมพิวเตอร์" },
-  { title: "หลักสูตรระดับปริญญาตรี (โครงการพิเศษ/สองภาษา)", title_en: "Bachelor Degree (English Program)", url: "/course-sections/cs-english", category: "หลักสูตร", keywords: "สองภาษา english inter พิเศษ cs-inter ปริญญาตรี english program" },
+  { title: "หลักสูตรระดับปริญญาตรี (โครงการพิเศษ/สองภาษา)", title_en: "Bachelor Degree (English Program)", url: "/course-sections/cs-english", category: "หลักสูตร", keywords: "สองภาษา english csb พิเศษ ปริญญาตรี english program csb64" },
   { title: "หลักสูตรระดับปริญญาโท (วิทยาการคอมพิวเตอร์)", title_en: "Master Degree (Computer Science)", url: "/course-sections/cs-master", category: "หลักสูตร", keywords: "ปริญญาโท ป.โท master cs ms-cs วิทยาการคอมพิวเตอร์" },
   { title: "หลักสูตรระดับปริญญาโท (วิศวกรรมซอฟต์แวร์)", title_en: "Master Degree (Software Engineering)", url: "/course-sections/se-master", category: "หลักสูตร", keywords: "วิศวกรรมซอฟต์แวร์ software engineering ปริญญาโท se ms-se" },
   { title: "หลักสูตรระดับปริญญาเอก", title_en: "Doctoral Degree (Ph.D.)", url: "/course-sections/doctor", category: "หลักสูตร", keywords: "ปริญญาเอก ป.เอก phd doctor ดุษฎีบัณฑิต" },
