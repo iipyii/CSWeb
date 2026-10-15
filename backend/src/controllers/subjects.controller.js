@@ -531,38 +531,48 @@ export const importSubjectsFromPdf = async (req, res) => {
 // GET /api/subjects/template (Admin only)
 export const downloadSubjectsTemplate = async (req, res) => {
   try {
-    const sampleData = [
-      {
-        "รหัสวิชา (subject_code)": "040613001",
-        "ชื่อวิชาภาษาไทย (title_th)": "การเขียนโปรแกรมคอมพิวเตอร์ 1",
-        "ชื่อวิชาภาษาอังกฤษ (title_en)": "Computer Programming I",
-        "หน่วยกิต (credit)": "3(2-2-5)",
-        "วิชาบังคับก่อน 1 (prereq1)": "ไม่มี",
-        "วิชาบังคับก่อน 2 (prereq2)": "",
-        "คำอธิบายรายวิชาภาษาไทย (description_th)": "แนวคิดพื้นฐานเกี่ยวกับการเขียนโปรแกรม โครงสร้างข้อมูลเบื้องต้น การควบคุมการทำงาน ฟังก์ชัน และการแก้ปัญหาด้วยโปรแกรมคอมพิวเตอร์",
-        "คำอธิบายรายวิชาภาษาอังกฤษ (description_en)": "Fundamental concepts of computer programming, basic data structures, control structures, functions, and problem solving using computer programs.",
-        "หมวดหมู่วิชา (category)": "หมวดวิชาเฉพาะด้าน",
-        "รหัสหลักสูตร (curriculum_code)": "CS69",
-        "ปีหลักสูตร (curriculum_year)": 2569,
-        "ระดับการศึกษา (degree_level)": "bachelor",
-        "กลุ่ม/แขนงวิชา (track)": "Software Engineering & Cloud"
-      },
-      {
-        "รหัสวิชา (subject_code)": "040613101",
-        "ชื่อวิชาภาษาไทย (title_th)": "โครงสร้างข้อมูลและขั้นตอนวิธี",
-        "ชื่อวิชาภาษาอังกฤษ (title_en)": "Data Structures and Algorithms",
-        "หน่วยกิต (credit)": "3(3-0-6)",
-        "วิชาบังคับก่อน 1 (prereq1)": "040613001",
-        "วิชาบังคับก่อน 2 (prereq2)": "",
-        "คำอธิบายรายวิชาภาษาไทย (description_th)": "การวิเคราะห์ขั้นตอนวิธี โครงสร้างข้อมูลแบบเชิงเส้นและไม่เชิงเส้น การค้นหา การเรียงลำดับ",
-        "คำอธิบายรายวิชาภาษาอังกฤษ (description_en)": "Algorithm analysis, linear and non-linear data structures, searching, sorting algorithms.",
-        "หมวดหมู่วิชา (category)": "หมวดวิชาเฉพาะด้าน",
-        "รหัสหลักสูตร (curriculum_code)": "CS69",
-        "ปีหลักสูตร (curriculum_year)": 2569,
-        "ระดับการศึกษา (degree_level)": "bachelor",
-        "กลุ่ม/แขนงวิชา (track)": "Software Engineering & Cloud"
-      }
-    ];
+    // ดึงตัวอย่างรายวิชาจริงจากฐานข้อมูลแบบ Dynamic เพื่อสร้างไฟล์ Template
+    const existing = await prisma.subjects.findMany({
+      take: 2,
+      orderBy: { created_at: "desc" }
+    });
+
+    let sampleData = [];
+    if (existing.length > 0) {
+      sampleData = existing.map(s => ({
+        "รหัสวิชา (subject_code)": s.subject_code,
+        "ชื่อวิชาภาษาไทย (title_th)": s.title_th,
+        "ชื่อวิชาภาษาอังกฤษ (title_en)": s.title_en || "",
+        "หน่วยกิต (credit)": s.credit || "3(3-0-6)",
+        "วิชาบังคับก่อน 1 (prereq1)": s.prereq1 || "ไม่มี",
+        "วิชาบังคับก่อน 2 (prereq2)": s.prereq2 || "",
+        "คำอธิบายรายวิชาภาษาไทย (description_th)": s.description_th || "",
+        "คำอธิบายรายวิชาภาษาอังกฤษ (description_en)": s.description_en || "",
+        "หมวดหมู่วิชา (category)": s.category || "หมวดวิชาเฉพาะด้าน",
+        "รหัสหลักสูตร (curriculum_code)": s.curriculum_code,
+        "ปีหลักสูตร (curriculum_year)": s.curriculum_year,
+        "ระดับการศึกษา (degree_level)": s.degree_level,
+        "กลุ่ม/แขนงวิชา (track)": s.track || "ทั่วไป"
+      }));
+    } else {
+      sampleData = [
+        {
+          "รหัสวิชา (subject_code)": "040600001",
+          "ชื่อวิชาภาษาไทย (title_th)": "ตัวอย่างวิชาภาษาไทย",
+          "ชื่อวิชาภาษาอังกฤษ (title_en)": "Sample Subject English",
+          "หน่วยกิต (credit)": "3(3-0-6)",
+          "วิชาบังคับก่อน 1 (prereq1)": "ไม่มี",
+          "วิชาบังคับก่อน 2 (prereq2)": "",
+          "คำอธิบายรายวิชาภาษาไทย (description_th)": "คำอธิบายรายวิชาตัวอย่าง...",
+          "คำอธิบายรายวิชาภาษาอังกฤษ (description_en)": "Sample course description...",
+          "หมวดหมู่วิชา (category)": "หมวดวิชาเฉพาะด้าน",
+          "รหัสหลักสูตร (curriculum_code)": "CS69",
+          "ปีหลักสูตร (curriculum_year)": 2569,
+          "ระดับการศึกษา (degree_level)": "bachelor",
+          "กลุ่ม/แขนงวิชา (track)": "ทั่วไป"
+        }
+      ];
+    }
 
     const ws = XLSX.utils.json_to_sheet(sampleData);
     const wb = XLSX.utils.book_new();
