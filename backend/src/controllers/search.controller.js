@@ -131,42 +131,50 @@ export const globalSearch = async (req, res) => {
                 return [];
             }),
 
-            // 2.4 คำอธิบายรายวิชา (subjects / program_sections)
-            prisma.subjects.findMany({
-                where: {
-                    OR: [
-                        { subject_code: { contains: keyword, mode: "insensitive" } },
-                        { title_th: { contains: keyword, mode: "insensitive" } },
-                        { title_en: { contains: keyword, mode: "insensitive" } },
-                        { description_th: { contains: keyword, mode: "insensitive" } },
-                        { description_en: { contains: keyword, mode: "insensitive" } }
-                    ]
-                },
-                select: { 
-                    id: true, 
-                    subject_code: true, 
-                    title_th: true, 
-                    title_en: true, 
-                    category: true,
-                    credit: true,
-                    curriculum_code: true,
-                    curriculum_year: true,
-                    degree_level: true
-                },
-                take: 12
-            }).then(subs => {
-                return subs.map(s => ({
-                    id: s.id,
-                    subject_code: s.subject_code,
-                    title_th: s.title_th,
-                    title_en: s.title_en,
-                    title: s.subject_code ? `${s.subject_code} ${s.title_th || s.title_en || ''}`.trim() : (s.title_th || s.title_en),
-                    category: s.category,
-                    credit: s.credit,
-                    curriculum_code: s.curriculum_code,
-                    curriculum_year: s.curriculum_year,
-                    degree_level: s.degree_level
-                }));
+            // 2.4 คำอธิบายรายวิชา (subjects)
+            (() => {
+                const cleanCode = keyword.replace(/[^0-9a-zA-Z]/g, "");
+                const isDigits = /^\d{3,9}$/.test(cleanCode);
+
+                const where = isDigits
+                    ? { subject_code: { contains: cleanCode, mode: "insensitive" } }
+                    : {
+                        OR: [
+                            { subject_code: { contains: cleanCode || keyword, mode: "insensitive" } },
+                            { title_th: { contains: keyword, mode: "insensitive" } },
+                            { title_en: { contains: keyword, mode: "insensitive" } }
+                        ]
+                    };
+
+                return prisma.subjects.findMany({
+                    where,
+                    select: { 
+                        id: true, 
+                        subject_code: true, 
+                        title_th: true, 
+                        title_en: true, 
+                        category: true, 
+                        credit: true, 
+                        curriculum_code: true, 
+                        curriculum_year: true, 
+                        degree_level: true 
+                    },
+                    take: 12
+                }).then(subs => {
+                    return subs.map(s => ({
+                        id: s.id,
+                        subject_code: s.subject_code,
+                        title_th: s.title_th,
+                        title_en: s.title_en,
+                        title: s.subject_code ? `${s.subject_code} ${s.title_th || s.title_en || ''}`.trim() : (s.title_th || s.title_en),
+                        category: s.category,
+                        credit: s.credit,
+                        curriculum_code: s.curriculum_code,
+                        curriculum_year: s.curriculum_year,
+                        degree_level: s.degree_level
+                    }));
+                });
+            })()
             }).catch(async (err) => {
                 // Fallback to program_sections if subjects table query encounters issue
                 return prisma.program_sections.findMany({

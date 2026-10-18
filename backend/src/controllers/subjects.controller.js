@@ -50,8 +50,62 @@ export function fixThaiSpacing(str) {
   s = s.replace(/([ก-ฮ])\s+([่้๊๋์ิีึืุูั็])/g, "$1$2");
   s = s.replace(/([่้๊๋์ิีึืุูั็])\s+([ก-ฮะ-ูเ-ไ])/g, "$1$2");
   s = s.replace(/([่้๊๋์ิีึืุูั็])\s+([ก-ฮะ-ูเ-ไ])/g, "$1$2");
+  // Decomposed SARA AM: Consonant + space + า -> Consonant + ำ
   s = s.replace(/([ก-ฮ])\s+า(?![a-zA-Z0-9])/g, "$1ำ");
   s = s.replace(/([ก-ฮ])([่้๊๋])\s+า(?![a-zA-Z0-9])/g, "$1$2ำ");
+
+  // Fix Latin 'O' or '0' used as thanthakhat / garan
+  s = s.replace(/ซอฟต[O0]แวร[O0]?/g, "ซอฟต์แวร์");
+  s = s.replace(/([ก-ฮ])([O0])(?=[ก-ฮ\s]|$)/g, "$1์");
+
+  // Missing SARA AM words (where า was stored without ํ)
+  s = s
+    .replace(/(?<![ก-ฮ])สาหรับ(?![ก-ฮ])/g, "สำหรับ")
+    .replace(/(?<![ก-ฮ])จานวน(?![ก-ฮ])/g, "จำนวน")
+    .replace(/(?<![ก-ฮ])กาหนด(?![ก-ฮ])/g, "กำหนด")
+    .replace(/(?<![ก-ฮ])กาเนิด(?![ก-ฮ])/g, "กำเนิด")
+    .replace(/(?<![ก-ฮ])กาจัด(?![ก-ฮ])/g, "กำจัด")
+    .replace(/(?<![ก-ฮ])ทาวิจัย(?![ก-ฮ])/g, "ทำวิจัย")
+    .replace(/(?<![ก-ฮ])ทาวิทยานิพนธ์(?![ก-ฮ])/g, "ทำวิทยานิพนธ์")
+    .replace(/(?<![ก-ฮ])การทางาน(?![ก-ฮ])/g, "การทำงาน")
+    .replace(/(?<![ก-ฮ])ทาการ(?![ก-ฮ])/g, "ทำการ")
+    .replace(/(?<![ก-ฮ])ทาหน้าที่(?![ก-ฮ])/g, "ทำหน้าที่")
+    .replace(/(?<![ก-ฮ])ทาความ(?![ก-ฮ])/g, "ทำความ")
+    .replace(/(?<![ก-ฮ])จัดทา(?![ก-ฮ])/g, "จัดทำ")
+    .replace(/(?<![ก-ฮ])ทานาย(?![ก-ฮ])/g, "ทำนาย")
+    .replace(/(?<![ก-ฮ])คาแนะนา(?![ก-ฮ])/g, "คำแนะนำ")
+    .replace(/(?<![ก-ฮ])คาตอบ(?![ก-ฮ])/g, "คำตอบ")
+    .replace(/(?<![ก-ฮ])คาถาม(?![ก-ฮ])/g, "คำถาม")
+    .replace(/(?<![ก-ฮ])คานวณ(?![ก-ฮ])/g, "คำนวณ")
+    .replace(/(?<![ก-ฮ])คาศัพท์(?![ก-ฮ])/g, "คำศัพท์")
+    .replace(/(?<![ก-ฮ])นาเสนอ(?![ก-ฮ])/g, "นำเสนอ")
+    .replace(/(?<![ก-ฮ])นาทาง(?![ก-ฮ])/g, "นำทาง")
+    .replace(/(?<![ก-ฮ])นาเข้า(?![ก-ฮ])/g, "นำเข้า")
+    .replace(/(?<![ก-ฮ])นาออก(?![ก-ฮ])/g, "นำออก")
+    .replace(/(?<![ก-ฮ])นาไปใช้(?![ก-ฮ])/g, "นำไปใช้")
+    .replace(/(?<![ก-ฮ])นามาใช้(?![ก-ฮ])/g, "นำมาใช้")
+    .replace(/(?<![ก-ฮ])การนา(?![ก-ฮ])/g, "การนำ")
+    .replace(/(?<![ก-ฮ])ดาเนิน(?![ก-ฮ])/g, "ดำเนิน")
+    .replace(/(?<![ก-ฮ])สารวจ(?![ก-ฮ])/g, "สำรวจ")
+    .replace(/(?<![ก-ฮ])สาเร็จ(?![ก-ฮ])/g, "สำเร็จ")
+    .replace(/(?<![ก-ฮ])สาคัญ(?![ก-ฮ])/g, "สำคัญ")
+    .replace(/(?<![ก-ฮ])จาลอง(?![ก-ฮ])/g, "จำลอง")
+    .replace(/(?<![ก-ฮ])จาแนก(?![ก-ฮ])/g, "จำแนก")
+    .replace(/(?<![ก-ฮ])จากัด(?![ก-ฮ])/g, "จำกัด")
+    .replace(/(?<![ก-ฮ])จาเป็น(?![ก-ฮ])/g, "จำเป็น")
+    .replace(/(?<![ก-ฮ])จดจา(?![ก-ฮ])/g, "จดจำ")
+    .replace(/(?<![ก-ฮ])ประจาวัน(?![ก-ฮ])/g, "ประจำวัน");
+
+  // Specific common misspellings from OCR / PDF
+  s = s
+    .replace(/ฝกประสบการณ[ ]*วิชาชีพ/g, "ฝึกประสบการณ์วิชาชีพ")
+    .replace(/ฝกประสบการณ/g, "ฝึกประสบการณ์")
+    .replace(/ประสบการณ(?!์)/g, "ประสบการณ์")
+    .replace(/ฝกงาน/g, "ฝึกงาน")
+    .replace(/สมบูรณ(?!์)/g, "สมบูรณ์")
+    .replace(/ประยุกต(?!์)/g, "ประยุกต์")
+    .replace(/ประสิทธภาพ/g, "ประสิทธิภาพ");
+
   s = s
     .replace(/ซอฟต[ ]*แวร[ ]*/g, "ซอฟต์แวร์")
     .replace(/คอมพิวเตอร[ ]*/g, "คอมพิวเตอร์")
@@ -59,9 +113,8 @@ export function fixThaiSpacing(str) {
     .replace(/ปัญญาประดิษฐ[ ]*/g, "ปัญญาประดิษฐ์")
     .replace(/คณิตศาสตร[ ]*/g, "คณิตศาสตร์")
     .replace(/วิทยาศาสตร[ ]*/g, "วิทยาศาสตร์")
-    .replace(/ศาสตร[ ]*/g, "ศาสตร์")
-    .replace(/ประยุกต[ ]*/g, "ประยุกต์")
-    .replace(/วิเคราะห[ ]*/g, "วิเคราะห์")
+    .replace(/ศาสตร[ ]*(?=[ก-ฮ\s]|$)/g, "ศาสตร์")
+    .replace(/วิเคราะห[ ]*(?=[ก-ฮ\s]|$)/g, "วิเคราะห์")
     .replace(/โครงงานพิกษ/g, "โครงงานพิเศษ")
     .replace(/กราฟ[ •\x95]*กส[ ]*/g, "กราฟิกส์")
     .replace(/ฟ[ •\x95]*สิกส[ ]*/g, "ฟิสิกส์")
@@ -269,9 +322,10 @@ export const getSubjects = async (req, res) => {
     if (curriculum_code && curriculum_code !== "all" && curriculum_code.trim() !== "") {
       const codeTrim = curriculum_code.trim();
       if (codeTrim.includes(",")) {
-        where.curriculum_code = { in: codeTrim.split(",").map(c => c.trim()) };
+        const codeList = codeTrim.split(",").map(c => c.trim()).filter(Boolean);
+        where.curriculum_code = { in: codeList };
       } else {
-        where.curriculum_code = { contains: codeTrim, mode: "insensitive" };
+        where.curriculum_code = { equals: codeTrim, mode: "insensitive" };
       }
     }
 
@@ -291,39 +345,136 @@ export const getSubjects = async (req, res) => {
       where.category = category;
     }
 
+    let isSearchByKeyword = false;
+    let rawKeyword = "";
     if (keyword && keyword.trim() !== "") {
-      const q = keyword.trim();
-      const cleanCode = q.replace(/[^0-9a-zA-Z]/g, "");
-      const orConditions = [
-        { subject_code: { contains: q, mode: "insensitive" } },
-        { title_th: { contains: q, mode: "insensitive" } },
-        { title_en: { contains: q, mode: "insensitive" } },
-        { description_th: { contains: q, mode: "insensitive" } },
-        { description_en: { contains: q, mode: "insensitive" } }
-      ];
+      isSearchByKeyword = true;
+      rawKeyword = keyword.trim();
+      const hasThai = /[\u0E00-\u0E7F]/.test(rawKeyword);
+      const cleanCode = rawKeyword.replace(/[^0-9a-zA-Z]/g, "");
+      const isDigitsOnly = /^\d+$/.test(cleanCode) && cleanCode.length >= 3 && !hasThai;
+      const isSpecificCode = cleanCode.length >= 8 && /^\d+$/.test(cleanCode) && !hasThai;
 
-      if (cleanCode && cleanCode !== q && cleanCode.length >= 3) {
-        orConditions.push({ subject_code: { contains: cleanCode, mode: "insensitive" } });
+      if (isSpecificCode) {
+        // Exact subject code search (8-9 digits) -> match subject_code only!
+        where.subject_code = { equals: cleanCode };
+      } else if (isDigitsOnly) {
+        // Partial subject code digits -> match subject_code only!
+        where.subject_code = { contains: cleanCode, mode: "insensitive" };
+      } else {
+        // Search by subject name / title
+        const normQ = cleanThaiEncoding(rawKeyword);
+        const words = normQ.split(/\s+/).filter(w => w.length >= 1);
+        const orConditions = [];
+
+        if (words.length > 1) {
+          // Require all words to be in title (AND logic across words)
+          orConditions.push({
+            AND: words.map(w => ({
+              title_th: { contains: w, mode: "insensitive" }
+            }))
+          });
+          orConditions.push({
+            AND: words.map(w => ({
+              title_en: { contains: w, mode: "insensitive" }
+            }))
+          });
+          orConditions.push({
+            title_th: { contains: normQ, mode: "insensitive" }
+          });
+          orConditions.push({
+            title_en: { contains: rawKeyword, mode: "insensitive" }
+          });
+        } else {
+          orConditions.push({ title_th: { contains: normQ, mode: "insensitive" } });
+          orConditions.push({ title_en: { contains: rawKeyword, mode: "insensitive" } });
+        }
+
+        // Only search subject_code if query is not Thai and has at least 3 chars, or code has at least 6 digits
+        if ((!hasThai && cleanCode.length >= 3) || cleanCode.length >= 6) {
+          orConditions.push({ subject_code: { contains: cleanCode, mode: "insensitive" } });
+        }
+
+        where.OR = orConditions;
       }
-
-      const words = q.split(/\s+/).filter(w => w.length >= 2);
-      if (words.length > 1) {
-        words.forEach(w => {
-          orConditions.push({ title_th: { contains: w, mode: "insensitive" } });
-          orConditions.push({ title_en: { contains: w, mode: "insensitive" } });
-        });
-      }
-
-      where.OR = orConditions;
     }
 
-    const subjects = await prisma.subjects.findMany({
+    let subjects = await prisma.subjects.findMany({
       where,
       orderBy: [
         { curriculum_year: "desc" },
         { subject_code: "asc" }
       ]
     });
+
+    // Fallback: If 0 results matched title/code, and user typed text (not digits),
+    // search inside description_th and description_en
+    if (subjects.length === 0 && isSearchByKeyword) {
+      const cleanCode = rawKeyword.replace(/[^0-9a-zA-Z]/g, "");
+      const isDigitsOnly = /^\d+$/.test(cleanCode);
+      if (!isDigitsOnly && rawKeyword.length >= 2) {
+        const normQ = cleanThaiEncoding(rawKeyword);
+        const fallbackWhere = { ...where };
+        delete fallbackWhere.OR;
+        fallbackWhere.OR = [
+          { description_th: { contains: normQ, mode: "insensitive" } },
+          { description_en: { contains: rawKeyword, mode: "insensitive" } }
+        ];
+        subjects = await prisma.subjects.findMany({
+          where: fallbackWhere,
+          orderBy: [
+            { curriculum_year: "desc" },
+            { subject_code: "asc" }
+          ]
+        });
+      }
+    }
+
+    // Smart Ranking:
+    // Exact subject_code match first, exact title match second, startsWith third
+    if (isSearchByKeyword && subjects.length > 1) {
+      const qLower = rawKeyword.toLowerCase();
+      const cleanCode = rawKeyword.replace(/[^0-9a-zA-Z]/g, "").toLowerCase();
+
+      subjects.sort((a, b) => {
+        const aCode = (a.subject_code || "").toLowerCase();
+        const bCode = (b.subject_code || "").toLowerCase();
+        const aTitleTh = (a.title_th || "").toLowerCase();
+        const bTitleTh = (b.title_th || "").toLowerCase();
+        const aTitleEn = (a.title_en || "").toLowerCase();
+        const bTitleEn = (b.title_en || "").toLowerCase();
+
+        // 1. Exact subject code match
+        const aExactCode = cleanCode && aCode === cleanCode;
+        const bExactCode = cleanCode && bCode === cleanCode;
+        if (aExactCode && !bExactCode) return -1;
+        if (!aExactCode && bExactCode) return 1;
+
+        // 2. Exact title match
+        const aExactTitle = aTitleTh === qLower || aTitleEn === qLower;
+        const bExactTitle = bTitleTh === qLower || bTitleEn === qLower;
+        if (aExactTitle && !bExactTitle) return -1;
+        if (!aExactTitle && bExactTitle) return 1;
+
+        // 3. Subject code starts with cleanCode
+        const aCodeStart = cleanCode && aCode.startsWith(cleanCode);
+        const bCodeStart = cleanCode && bCode.startsWith(cleanCode);
+        if (aCodeStart && !bCodeStart) return -1;
+        if (!aCodeStart && bCodeStart) return 1;
+
+        // 4. Title starts with search term
+        const aTitleStart = aTitleTh.startsWith(qLower) || aTitleEn.startsWith(qLower);
+        const bTitleStart = bTitleTh.startsWith(qLower) || bTitleEn.startsWith(qLower);
+        if (aTitleStart && !bTitleStart) return -1;
+        if (!aTitleStart && bTitleStart) return 1;
+
+        // Default: curriculum_year desc, then subject_code asc
+        if (b.curriculum_year !== a.curriculum_year) {
+          return b.curriculum_year - a.curriculum_year;
+        }
+        return aCode.localeCompare(bCode);
+      });
+    }
 
     res.json(subjects);
   } catch (error) {

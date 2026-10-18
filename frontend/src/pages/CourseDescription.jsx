@@ -681,26 +681,26 @@ export default function CourseDescription() {
                               คำค้นหา <strong className="text-slate-800 font-mono">"{searchTerm}"</strong>{" "}
                             </>
                           )}
-                          {selectedYear !== 'all' ? (
-                            <>ไม่มีอยู่ในหลักสูตรปี <strong className="text-slate-800 font-semibold">{selectedYear}</strong></>
+                          {selectedCurriculumCode !== 'all' ? (
+                            <>ไม่มีอยู่ในหลักสูตร <strong className="text-slate-800 font-semibold">{selectedCurriculumCode}</strong></>
                           ) : (
                             <>ไม่พบในตัวกรองหลักสูตรที่เลือก</>
                           )}
                         </p>
-                        {(selectedYear !== 'all' || selectedDegree !== 'all' || selectedTrack !== 'all' || selectedCategory !== 'all' || searchTerm) && (
+                        {(selectedCurriculumCode !== 'all' || selectedDegree !== 'all' || selectedTrack !== 'all' || selectedCategory !== 'all' || searchTerm) && (
                           <div className="pt-2 flex flex-wrap justify-center gap-2">
-                            {selectedYear !== 'all' && (
+                            {selectedCurriculumCode !== 'all' && (
                               <button
-                                onClick={() => setSelectedYear("all")}
+                                onClick={() => setSelectedCurriculumCode("all")}
                                 className="px-3.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-[#3F51B5] text-xs font-bold rounded-xl transition-all shadow-sm"
                               >
-                                ลองค้นหาในทุกปีหลักสูตร
+                                ค้นหาในทุกหลักสูตร
                               </button>
                             )}
                             <button
                               onClick={() => {
                                 setSelectedDegree("all");
-                                setSelectedYear("all");
+                                setSelectedCurriculumCode("all");
                                 setSelectedTrack("all");
                                 setSelectedCategory("all");
                                 setSearchTerm("");
