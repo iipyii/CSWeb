@@ -174,8 +174,7 @@ export const globalSearch = async (req, res) => {
                         degree_level: s.degree_level
                     }));
                 });
-            })()
-            }).catch(async (err) => {
+            })().catch(async (err) => {
                 // Fallback to program_sections if subjects table query encounters issue
                 return prisma.program_sections.findMany({
                     where: { content: { contains: keyword, mode: "insensitive" } },
