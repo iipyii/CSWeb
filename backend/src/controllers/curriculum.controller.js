@@ -17,7 +17,10 @@ export const getAllPrograms = async (req, res) => {
           orderBy: { year: "desc" }
         }
       },
-      orderBy: { id: "asc" }
+      orderBy: [
+        { order_no: "asc" },
+        { id: "asc" }
+      ]
     });
     res.json(programs);
   } catch (error) {
@@ -72,33 +75,56 @@ export const getDegrees = async (req, res) => {
 // เพิ่มหลักสูตรใหม่
 export const createProgram = async (req, res) => {
   try {
-    const { name_th, slug, degreeId, year } = req.body;
+    const { name_th, name_en, slug, degreeId, year, curriculum_code, image_path, is_featured, date_tag, order_no } = req.body;
     if (!name_th || !degreeId) {
-      return res.status(400).json({ error: "Name and Degree are required" });
+      return res.status(400).json({ error: "กรุณาระบุชื่อหลักสูตรและระดับการศึกษา" });
     }
+
+    const generatedSlug = slug && slug.trim() 
+      ? slug.trim() 
+      : `prog-${Date.now()}`;
 
     const program = await prisma.programs.create({
       data: {
-        name_th,
-        slug: slug || `prog-${Date.now()}`,
-        degreeId: parseInt(degreeId)
+        name_th: name_th.trim(),
+        name_en: name_en ? name_en.trim() : null,
+        slug: generatedSlug,
+        degreeId: parseInt(degreeId),
+        image_path: image_path || null,
+        is_featured: is_featured !== undefined ? Boolean(is_featured) : true,
+        date_tag: date_tag ? date_tag.trim() : (year ? `พ.ศ. ${year}` : null),
+        order_no: order_no !== undefined ? parseInt(order_no) : 0
       },
       include: { degree: true, versions: true }
     });
 
     if (year && !isNaN(parseInt(year))) {
-      await prisma.program_versions.create({
+      const yr = parseInt(year);
+      const code = curriculum_code && curriculum_code.trim() 
+        ? curriculum_code.trim() 
+        : `${generatedSlug.toUpperCase()}${String(yr).slice(-2)}`;
+
+      const version = await prisma.program_versions.create({
         data: {
           programId: program.id,
-          year: parseInt(year)
+          year: yr,
+          curriculum_code: code
         }
       });
+
+      // Auto link any subjects that match this curriculum_code
+      try {
+        await prisma.subjects.updateMany({
+          where: { curriculum_code: code },
+          data: { program_version_id: version.id }
+        });
+      } catch (e) {}
     }
 
     res.status(201).json(program);
   } catch (error) {
     console.error("Create program error:", error);
-    res.status(500).json({ error: "Failed to create program" });
+    res.status(500).json({ error: "Failed to create program: " + error.message });
   }
 };
 
@@ -106,14 +132,19 @@ export const createProgram = async (req, res) => {
 export const updateProgram = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name_th, slug, degreeId } = req.body;
+    const { name_th, name_en, slug, degreeId, image_path, is_featured, date_tag, order_no } = req.body;
 
     const updated = await prisma.programs.update({
       where: { id: parseInt(id) },
       data: {
-        name_th,
-        slug: slug || undefined,
-        degreeId: degreeId ? parseInt(degreeId) : undefined
+        name_th: name_th ? name_th.trim() : undefined,
+        name_en: name_en !== undefined ? (name_en ? name_en.trim() : null) : undefined,
+        slug: slug ? slug.trim() : undefined,
+        degreeId: degreeId ? parseInt(degreeId) : undefined,
+        image_path: image_path !== undefined ? image_path : undefined,
+        is_featured: is_featured !== undefined ? Boolean(is_featured) : undefined,
+        date_tag: date_tag !== undefined ? (date_tag ? date_tag.trim() : null) : undefined,
+        order_no: order_no !== undefined ? parseInt(order_no) : undefined
       },
       include: { 
         degree: true, 
@@ -164,7 +195,7 @@ export const deleteProgram = async (req, res) => {
 // เพิ่มเวอร์ชันปีใหม่ให้หลักสูตร
 export const addProgramVersion = async (req, res) => {
   try {
-    const { programId, year } = req.body;
+    const { programId, year, curriculum_code } = req.body;
     if (!programId || !year) {
       return res.status(400).json({ error: "Program ID and Year are required" });
     }
@@ -180,13 +211,27 @@ export const addProgramVersion = async (req, res) => {
       return res.status(400).json({ error: `หลักสูตรนี้มีเวอร์ชันปี ${yr} อยู่แล้ว` });
     }
 
+    const prog = await prisma.programs.findUnique({ where: { id: progId } });
+    const code = curriculum_code && curriculum_code.trim()
+      ? curriculum_code.trim()
+      : `${(prog?.slug || 'CS').toUpperCase()}${String(yr).slice(-2)}`;
+
     const version = await prisma.program_versions.create({
       data: {
         programId: progId,
-        year: yr
+        year: yr,
+        curriculum_code: code
       },
       include: { sections: true }
     });
+
+    // Auto link subjects with matching curriculum_code
+    try {
+      await prisma.subjects.updateMany({
+        where: { curriculum_code: code },
+        data: { program_version_id: version.id }
+      });
+    } catch (e) {}
 
     res.status(201).json(version);
   } catch (error) {

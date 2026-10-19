@@ -7,6 +7,7 @@ import {
   FileSpreadsheet, Download, UploadCloud, CheckCircle2, AlertCircle,
   FileText
 } from 'lucide-react';
+import DeleteConfirmModal from '../../components/admin/DeleteConfirmModal';
 
 export default function ManageProjects() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -17,6 +18,21 @@ export default function ManageProjects() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [modalError, setModalError] = useState("");
+
+  // Universal Delete Confirm Modal State
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    title: 'ยืนยันการลบข้อมูล',
+    itemName: '',
+    description: 'การดำเนินการนี้ไม่สามารถย้อนกลับได้ ข้อมูลจะถูกลบออกจากระบบอย่างถาวร',
+    confirmWord: 'delete',
+    onConfirm: null,
+    isLoading: false
+  });
+
+  const closeDeleteModal = () => {
+    setDeleteModal(prev => ({ ...prev, isOpen: false, isLoading: false }));
+  };
 
   // State for Excel Import Modal
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -194,17 +210,28 @@ export default function ManageProjects() {
     setFormData({ ...formData, studentsList: updated });
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("คุณต้องการลบโครงงานนี้ใช่หรือไม่?")) {
-      try {
-        await axios.delete(`/api/projects/${id}`);
-        alert("ลบโครงงานสำเร็จ");
-        fetchProjects();
-      } catch (error) {
-        console.error("Delete error:", error);
-        alert("เกิดข้อผิดพลาดในการลบโครงงาน");
+  const handleDelete = (project) => {
+    setDeleteModal({
+      isOpen: true,
+      title: "ยืนยันการลบโครงงาน",
+      itemName: project.titleTh || project.titleEn || `โครงงาน ID ${project.id}`,
+      description: "ข้อมูลโครงงานนี้จะถูกลบออกจากระบบอย่างถาวร ไม่สามารถกู้คืนได้",
+      confirmWord: "delete",
+      isLoading: false,
+      onConfirm: async () => {
+        try {
+          setDeleteModal(prev => ({ ...prev, isLoading: true }));
+          await axios.delete(`/api/projects/${project.id}`);
+          alert("ลบโครงงานสำเร็จ");
+          closeDeleteModal();
+          fetchProjects();
+        } catch (error) {
+          console.error("Delete error:", error);
+          alert("เกิดข้อผิดพลาดในการลบโครงงาน");
+          setDeleteModal(prev => ({ ...prev, isLoading: false }));
+        }
       }
-    }
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -675,7 +702,7 @@ export default function ManageProjects() {
                           <Edit2 size={16} />
                         </button>
                         <button 
-                          onClick={() => handleDelete(project.id)} 
+                          onClick={() => handleDelete(project)} 
                           className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all" 
                           title="ลบ"
                         >
@@ -1215,6 +1242,18 @@ export default function ManageProjects() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Universal Delete Confirm Modal */}
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        title={deleteModal.title}
+        itemName={deleteModal.itemName}
+        description={deleteModal.description}
+        confirmWord={deleteModal.confirmWord}
+        isLoading={deleteModal.isLoading}
+        onConfirm={deleteModal.onConfirm}
+        onClose={closeDeleteModal}
+      />
     </div>
   );
 }

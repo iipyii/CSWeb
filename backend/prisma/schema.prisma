@@ -148,23 +148,30 @@ model degrees {
 }
 
 model programs {
-  id       Int    @id @default(autoincrement())
-  degreeId Int
-  name_th  String
-  slug     String
+  id          Int                @id @default(autoincrement())
+  degreeId    Int
+  name_th     String
+  name_en     String?            @db.VarChar(255)
+  slug        String
+  image_path  String?            @db.Text
+  is_featured Boolean            @default(true)
+  date_tag    String?            @db.VarChar(100)
+  order_no    Int                @default(0)
 
-  degree   degrees            @relation(fields: [degreeId], references: [id])
-  versions program_versions[]
+  degree      degrees            @relation(fields: [degreeId], references: [id])
+  versions    program_versions[]
 }
 
 model program_versions {
-  id        Int     @id @default(autoincrement())
-  programId Int
-  year      Int
-  pdf_url   String?
+  id              Int                @id @default(autoincrement())
+  programId       Int
+  year            Int
+  curriculum_code String?            @db.VarChar(50)
+  pdf_url         String?
 
-  program  programs           @relation(fields: [programId], references: [id])
-  sections program_sections[]
+  program         programs           @relation(fields: [programId], references: [id])
+  sections        program_sections[]
+  subjects        subjects[]
 
   @@unique([programId, year])
 }
@@ -319,26 +326,30 @@ model projects {
 }
 
 model subjects {
-  id              Int       @id @default(autoincrement())
-  subject_code    String    @db.VarChar(20)
-  title_th        String    @db.VarChar(255)
-  title_en        String    @db.VarChar(255)
-  prereq1         String?   @db.VarChar(50)
-  prereq2         String?   @db.VarChar(50)
-  credit          String    @db.VarChar(30)
-  description_th  String    @db.Text
-  description_en  String?   @db.Text
-  category        String?   @db.VarChar(100) // เช่น "หมวดวิชาเฉพาะด้านบังคับ", "หมวดวิชาเลือก", "หมวดวิชาศึกษาทั่วไป"
-  curriculum_code String    @db.VarChar(50)  // เช่น "CS69", "CS64", "CS59", "CS-Inter64", "MS-CS67", "MS-CS62", "MS-SE59", "PhD-CS64", "PhD-CS59"
-  curriculum_year Int       @default(2564)   // 2569, 2564, 2559, etc.
-  degree_level    String    @default("bachelor") @db.VarChar(30) // bachelor, master, doctor
-  track           String?   @db.VarChar(100) // เช่น "Software Engineering & Cloud", "Data Science & Artificial Intelligence", "Network & Cybersecurity", "IoT & Intelligent Systems", "ทั่วไป"
-  created_at      DateTime  @default(now()) @db.Timestamp(6)
-  updated_at      DateTime? @updatedAt
+  id                 Int               @id @default(autoincrement())
+  subject_code       String            @db.VarChar(20)
+  title_th           String            @db.VarChar(255)
+  title_en           String            @db.VarChar(255)
+  prereq1            String?           @db.VarChar(50)
+  prereq2            String?           @db.VarChar(50)
+  credit             String            @db.VarChar(30)
+  description_th     String            @db.Text
+  description_en     String?           @db.Text
+  category           String?           @db.VarChar(100) // เช่น "หมวดวิชาเฉพาะด้านบังคับ", "หมวดวิชาเลือก", "หมวดวิชาศึกษาทั่วไป"
+  curriculum_code    String            @db.VarChar(50)  // เช่น "CS69", "CS64", "CS59", "CSB64", "MS-CS67", "MS-CS62", "MS-SE59", "PhD-CS64", "PhD-CS59"
+  curriculum_year    Int               @default(2564)   // 2569, 2564, 2559, etc.
+  degree_level       String            @default("bachelor") @db.VarChar(30) // bachelor, master, doctor
+  track              String?           @db.VarChar(100) // เช่น "Software Engineering & Cloud", "Data Science & Artificial Intelligence", "Network & Cybersecurity", "IoT & Intelligent Systems", "ทั่วไป"
+  program_version_id Int?
+  created_at         DateTime          @default(now()) @db.Timestamp(6)
+  updated_at         DateTime?         @updatedAt
+
+  program_version    program_versions? @relation(fields: [program_version_id], references: [id], onDelete: SetNull)
 
   @@index([subject_code])
   @@index([curriculum_code])
   @@index([track])
+  @@index([program_version_id])
 }
 
 model student_handbooks {

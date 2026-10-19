@@ -578,6 +578,15 @@ export const createSubject = async (req, res) => {
       return res.status(400).json({ error: "กรุณาระบุรหัสวิชาและชื่อวิชาภาษาไทย" });
     }
 
+    const targetCurriculumCode = (curriculum_code || "CS69").trim();
+    let pvId = req.body.program_version_id ? parseInt(req.body.program_version_id) : null;
+    if (!pvId) {
+      const pv = await prisma.program_versions.findFirst({
+        where: { curriculum_code: targetCurriculumCode }
+      });
+      if (pv) pvId = pv.id;
+    }
+
     const newSubject = await prisma.subjects.create({
       data: {
         subject_code: subject_code.trim(),
@@ -589,10 +598,11 @@ export const createSubject = async (req, res) => {
         description_th: description_th ? description_th.trim() : "",
         description_en: description_en ? description_en.trim() : "",
         category: category || "หมวดวิชาเฉพาะด้านบังคับ",
-        curriculum_code: curriculum_code || "CS69",
+        curriculum_code: targetCurriculumCode,
         curriculum_year: curriculum_year ? parseInt(curriculum_year) : 2569,
         degree_level: degree_level || "bachelor",
-        track: track || "ทั่วไป"
+        track: track || "ทั่วไป",
+        program_version_id: pvId
       }
     });
 
@@ -623,6 +633,14 @@ export const updateSubject = async (req, res) => {
       track
     } = req.body;
 
+    let pvId = req.body.program_version_id ? parseInt(req.body.program_version_id) : undefined;
+    if (pvId === undefined && curriculum_code) {
+      const pv = await prisma.program_versions.findFirst({
+        where: { curriculum_code: curriculum_code.trim() }
+      });
+      if (pv) pvId = pv.id;
+    }
+
     const updated = await prisma.subjects.update({
       where: { id },
       data: {
@@ -635,10 +653,11 @@ export const updateSubject = async (req, res) => {
         description_th: description_th !== undefined ? description_th.trim() : undefined,
         description_en: description_en !== undefined ? description_en.trim() : undefined,
         category: category !== undefined ? category : undefined,
-        curriculum_code: curriculum_code !== undefined ? curriculum_code : undefined,
+        curriculum_code: curriculum_code !== undefined ? curriculum_code.trim() : undefined,
         curriculum_year: curriculum_year ? parseInt(curriculum_year) : undefined,
         degree_level: degree_level !== undefined ? degree_level : undefined,
-        track: track !== undefined ? track : undefined
+        track: track !== undefined ? track : undefined,
+        program_version_id: pvId
       }
     });
 
@@ -979,58 +998,17 @@ export const DEFAULT_CURRICULUMS = [
 
 export const getCurriculums = async (req, res) => {
   try {
-    const config = await prisma.site_config.findUnique({
-      where: { config_key: "curriculum_options" }
-    });
-
-    let list = [];
-    if (config?.config_value) {
-      try {
-        list = JSON.parse(config.config_value);
-      } catch (e) {
-        list = [...DEFAULT_CURRICULUMS];
-      }
-    } else {
-      list = [...DEFAULT_CURRICULUMS];
-    }
-
-    // Sanitize any remaining CS-Inter references to CSB64
-    list = list.map(item => {
-      if (item.code && item.code.toLowerCase().includes('inter')) {
-        return {
-          code: 'CSB64',
-          label: item.label ? item.label.replace(/CS-Inter64|CS-Inter/gi, 'CSB64') : 'CSB64 - โครงการพิเศษ สองภาษา (พ.ศ. 2564)',
-          year: item.year || 2564,
-          degree: item.degree || 'bachelor'
-        };
-      }
-      return item;
-    });
-
-    // Merge any distinct codes present in subjects table so imported items appear
-    try {
-      const dbGroups = await prisma.subjects.groupBy({
-        by: ['curriculum_code', 'curriculum_year', 'degree_level']
-      });
-
-      for (const g of dbGroups) {
-        if (!g.curriculum_code) continue;
-        const normalizedCode = g.curriculum_code.toLowerCase().includes('inter') ? 'CSB64' : g.curriculum_code;
-        const exists = list.find(c => c.code?.toLowerCase() === normalizedCode.toLowerCase());
-        if (!exists) {
-          list.push({
-            code: normalizedCode,
-            label: `${normalizedCode} (พ.ศ. ${g.curriculum_year || 'ไม่ระบุ'})`,
-            year: g.curriculum_year || 2564,
-            degree: g.degree_level || 'bachelor'
-          });
+    // 1. ดึงข้อมูลจาก program_versions และ programs ในฐานข้อมูลโดยตรง (Single Source of Truth)
+    const versions = await prisma.program_versions.findMany({
+      include: {
+        program: {
+          include: { degree: true }
         }
-      }
-    } catch (e) {
-      // ignore
-    }
+      },
+      orderBy: { year: "desc" }
+    });
 
-    // Count subjects per curriculum
+    // 2. นับจำนวนรายวิชาของแต่ละหลักสูตร
     const countMap = new Map();
     try {
       const counts = await prisma.subjects.groupBy({
@@ -1042,26 +1020,67 @@ export const getCurriculums = async (req, res) => {
           countMap.set(item.curriculum_code.toLowerCase().trim(), item._count.id);
         }
       }
-    } catch (e) {
-      // ignore
+    } catch (e) {}
+
+    const list = [];
+    const seenCodes = new Set();
+
+    // Map ข้อมูลจาก programs และ program_versions เป็นหลัก
+    for (const v of versions) {
+      const code = v.curriculum_code || `${(v.program?.slug || 'CS').toUpperCase()}${String(v.year).slice(-2)}`;
+      const normalizedCode = code.toLowerCase().includes('inter') ? 'CSB64' : code;
+      const key = normalizedCode.toLowerCase().trim();
+      if (!seenCodes.has(key)) {
+        seenCodes.add(key);
+        list.push({
+          code: normalizedCode,
+          label: `${normalizedCode} - ${v.program?.name_th || 'หลักสูตร'} (พ.ศ. ${v.year})`,
+          year: v.year,
+          degree: v.program?.degree?.slug || 'bachelor',
+          programId: v.programId,
+          versionId: v.id,
+          subjectCount: countMap.get(key) || 0
+        });
+      }
     }
 
-    // Deduplicate strictly by code and attach subjectCount
-    const uniqueMap = new Map();
-    for (const item of list) {
-      const key = (item.code || '').toLowerCase().trim();
-      if (!key) continue;
-      if (!uniqueMap.has(key)) {
-        uniqueMap.set(key, {
+    // 3. Fallback: รวมตัวเลือกเดิมเพื่อความต่อเนื่อง
+    for (const item of DEFAULT_CURRICULUMS) {
+      const key = item.code.toLowerCase().trim();
+      if (!seenCodes.has(key)) {
+        seenCodes.add(key);
+        list.push({
           ...item,
           subjectCount: countMap.get(key) || 0
         });
       }
     }
-    const finalList = Array.from(uniqueMap.values());
 
-    finalList.sort((a, b) => (Number(b.year) || 0) - (Number(a.year) || 0));
-    res.json(finalList);
+    // 4. ผสานรหัสหลักสูตรที่มีอยู่ในตาราง subjects
+    try {
+      const dbGroups = await prisma.subjects.groupBy({
+        by: ['curriculum_code', 'curriculum_year', 'degree_level']
+      });
+
+      for (const g of dbGroups) {
+        if (!g.curriculum_code) continue;
+        const normalizedCode = g.curriculum_code.toLowerCase().includes('inter') ? 'CSB64' : g.curriculum_code;
+        const key = normalizedCode.toLowerCase().trim();
+        if (!seenCodes.has(key)) {
+          seenCodes.add(key);
+          list.push({
+            code: normalizedCode,
+            label: `${normalizedCode} (พ.ศ. ${g.curriculum_year || 'ไม่ระบุ'})`,
+            year: g.curriculum_year || 2564,
+            degree: g.degree_level || 'bachelor',
+            subjectCount: countMap.get(key) || 0
+          });
+        }
+      }
+    } catch (e) {}
+
+    list.sort((a, b) => (Number(b.year) || 0) - (Number(a.year) || 0));
+    res.json(list);
   } catch (error) {
     console.error("Get curriculums error:", error);
     res.status(500).json({ error: "ไม่สามารถดึงข้อมูลหลักสูตรได้" });

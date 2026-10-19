@@ -10,6 +10,7 @@ import {
   Landmark, HeartPulse, UserCog, CalendarDays, FileEdit, FileSpreadsheet, 
   ClipboardCheck, Globe, UserCheck
 } from 'lucide-react';
+import DeleteConfirmModal from '../../components/admin/DeleteConfirmModal';
 
 const ICON_MAP = {
   Users: Users,
@@ -1343,46 +1344,20 @@ export default function ManagePersonnel() {
       {/* ========================================================================= */}
       {/* ⚠️ DELETE CONFIRMATION MODAL */}
       {/* ========================================================================= */}
-      {deleteConfirm.open && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 text-center space-y-4"
-          >
-            <div className="w-14 h-14 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
-              <Trash2 size={26} />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-slate-800">ยืนยันการลบข้อมูล</h3>
-              <p className="text-xs text-slate-500 mt-1">
-                คุณต้องการลบข้อมูล <strong className="text-slate-700">"{deleteConfirm.name}"</strong> ใช่หรือไม่?
-              </p>
-            </div>
-            <div className="flex gap-2 justify-center pt-2">
-              <button
-                type="button"
-                onClick={() => setDeleteConfirm({ open: false, type: '', id: null, name: '' })}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl"
-              >
-                ยกเลิก
-              </button>
-              <button
-                type="button"
-                disabled={saving}
-                onClick={() => {
-                  if (deleteConfirm.type === 'lecturer') handleDeleteLecturer(deleteConfirm.id);
-                  if (deleteConfirm.type === 'staff') handleDeleteStaff(deleteConfirm.id);
-                  if (deleteConfirm.type === 'link') handleDeleteLink(deleteConfirm.id);
-                }}
-                className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-md shadow-rose-200 disabled:opacity-50"
-              >
-                {saving ? 'กำลังลบ...' : 'ลบข้อมูล'}
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
+      <DeleteConfirmModal
+        isOpen={deleteConfirm.open}
+        title="ยืนยันการลบข้อมูลบุคลากร"
+        itemName={deleteConfirm.name}
+        description="การดำเนินการนี้ไม่สามารถย้อนกลับได้ ข้อมูลบุคลากรหรือลิงก์จะถูกลบออกจากระบบอย่างถาวร"
+        confirmWord="delete"
+        isLoading={saving}
+        onConfirm={() => {
+          if (deleteConfirm.type === 'lecturer') handleDeleteLecturer(deleteConfirm.id);
+          if (deleteConfirm.type === 'staff') handleDeleteStaff(deleteConfirm.id);
+          if (deleteConfirm.type === 'link') handleDeleteLink(deleteConfirm.id);
+        }}
+        onClose={() => setDeleteConfirm({ open: false, type: '', id: null, name: '' })}
+      />
 
     </div>
   );

@@ -8,6 +8,7 @@ import {
   BookOpen, Filter, FileText, GraduationCap, CheckCircle2,
   ExternalLink, Layers, ChevronRight
 } from 'lucide-react';
+import DeleteConfirmModal from '../../components/admin/DeleteConfirmModal';
 
 const API_BASE = "/api";
 
@@ -35,6 +36,16 @@ export default function ManageChatbot({ defaultTab = "faq" }) {
   const [searchParams] = useSearchParams();
   const queryTab = searchParams.get('tab');
   const [activeTab, setActiveTab] = useState(queryTab || defaultTab); // 'faq' | 'handbook' | 'settings'
+
+  // Delete Confirm Modal
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    title: '',
+    itemName: '',
+    description: '',
+    onConfirm: null,
+    loading: false
+  });
 
   useEffect(() => {
     if (queryTab && ['faq', 'handbook', 'settings'].includes(queryTab)) {
@@ -189,17 +200,28 @@ export default function ManageChatbot({ defaultTab = "faq" }) {
     setIsFaqModalOpen(true);
   };
 
-  const handleDeleteFaq = async (id) => {
-    if (window.confirm("คุณต้องการลบชุดข้อมูลคำถามนี้ใช่หรือไม่?")) {
-      try {
-        await axios.delete(`${API_BASE}/faq/${id}`, getAuthHeader());
-        alert("ลบข้อมูลสำเร็จ");
-        fetchData();
-      } catch (error) {
-        console.error("Delete FAQ error:", error);
-        alert("เกิดข้อผิดพลาดในการลบข้อมูล");
+  const handleDeleteFaq = (faq) => {
+    const faqId = typeof faq === 'object' ? faq.id : faq;
+    const faqLabel = typeof faq === 'object' ? (faq.keywords || faq.answer?.substring(0, 30) || 'ชุดคำถามนี้') : 'ชุดคำถามนี้';
+
+    setDeleteModal({
+      isOpen: true,
+      title: 'ยืนยันการลบชุดข้อมูลคำถาม (FAQ)',
+      itemName: faqLabel,
+      description: 'ข้อมูลคำถามและคำตอบของบอทนี้จะถูกลบออกจากระบบอย่างถาวร',
+      onConfirm: async () => {
+        try {
+          setDeleteModal(prev => ({ ...prev, loading: true }));
+          await axios.delete(`${API_BASE}/faq/${faqId}`, getAuthHeader());
+          fetchData();
+          setDeleteModal(prev => ({ ...prev, isOpen: false, loading: false }));
+        } catch (error) {
+          console.error("Delete FAQ error:", error);
+          alert("เกิดข้อผิดพลาดในการลบข้อมูล");
+          setDeleteModal(prev => ({ ...prev, loading: false }));
+        }
       }
-    }
+    });
   };
 
   const handleSubmitFaq = async (e) => {
@@ -275,17 +297,28 @@ export default function ManageChatbot({ defaultTab = "faq" }) {
     setIsHandbookModalOpen(true);
   };
 
-  const handleDeleteHandbook = async (id) => {
-    if (window.confirm("คุณต้องการลบระเบียบ/ข้อบังคับคู่มือนักศึกษานี้ใช่หรือไม่?")) {
-      try {
-        await axios.delete(`${API_BASE}/handbooks/${id}`, getAuthHeader());
-        alert("ลบข้อมูลคู่มือนักศึกษาสำเร็จ");
-        fetchData();
-      } catch (error) {
-        console.error("Delete handbook error:", error);
-        alert("เกิดข้อผิดพลาดในการลบข้อมูลคู่มือนักศึกษา");
+  const handleDeleteHandbook = (item) => {
+    const handbookId = typeof item === 'object' ? item.id : item;
+    const handbookTopic = typeof item === 'object' ? (item.topic || 'ระเบียบข้อบังคับนี้') : 'ระเบียบข้อบังคับนี้';
+
+    setDeleteModal({
+      isOpen: true,
+      title: 'ยืนยันการลบระเบียบ/ข้อบังคับคู่มือนักศึกษา',
+      itemName: handbookTopic,
+      description: 'ข้อมูลระเบียบและเนื้อหานี้จะถูกลบออกจากฐานข้อมูลบอทอย่างถาวร',
+      onConfirm: async () => {
+        try {
+          setDeleteModal(prev => ({ ...prev, loading: true }));
+          await axios.delete(`${API_BASE}/handbooks/${handbookId}`, getAuthHeader());
+          fetchData();
+          setDeleteModal(prev => ({ ...prev, isOpen: false, loading: false }));
+        } catch (error) {
+          console.error("Delete handbook error:", error);
+          alert("เกิดข้อผิดพลาดในการลบข้อมูลคู่มือนักศึกษา");
+          setDeleteModal(prev => ({ ...prev, loading: false }));
+        }
       }
-    }
+    });
   };
 
   const handleSubmitHandbook = async (e) => {
@@ -523,7 +556,7 @@ export default function ManageChatbot({ defaultTab = "faq" }) {
                               <Edit2 size={16} />
                             </button>
                             <button 
-                              onClick={() => handleDeleteFaq(item.id)} 
+                              onClick={() => handleDeleteFaq(item)} 
                               className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all" 
                               title="ลบ"
                             >
@@ -671,7 +704,7 @@ export default function ManageChatbot({ defaultTab = "faq" }) {
                               <Edit2 size={16} />
                             </button>
                             <button 
-                              onClick={() => handleDeleteHandbook(item.id)} 
+                              onClick={() => handleDeleteHandbook(item)} 
                               className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all" 
                               title="ลบ"
                             >
@@ -1041,6 +1074,15 @@ export default function ManageChatbot({ defaultTab = "faq" }) {
         )}
       </AnimatePresence>
 
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={deleteModal.onConfirm}
+        title={deleteModal.title}
+        itemName={deleteModal.itemName}
+        description={deleteModal.description}
+        loading={deleteModal.loading}
+      />
     </div>
   );
 }

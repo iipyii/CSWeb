@@ -7,6 +7,7 @@ import {
   FileText, UploadCloud, GraduationCap, Users, BookOpenCheck,
   X, Layers, FolderPlus, ArrowUpRight
 } from 'lucide-react';
+import DeleteConfirmModal from '../../components/admin/DeleteConfirmModal';
 
 const CATEGORIES = [
   { id: 'วิทยาการคอมพิวเตอร์ (CS)', label: 'วิทยาการคอมพิวเตอร์ (CS)', icon: <GraduationCap size={18} /> },
@@ -24,6 +25,16 @@ export default function ManageSubjectCourses() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [alertInfo, setAlertInfo] = useState({ show: false, type: '', message: '' });
+
+  // Delete Confirm Modal
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    title: '',
+    itemName: '',
+    description: '',
+    onConfirm: null,
+    loading: false
+  });
 
   // Modals
   const [yearModalOpen, setYearModalOpen] = useState(false);
@@ -109,17 +120,27 @@ export default function ManageSubjectCourses() {
   };
 
   // Delete Academic Year
-  const handleDeleteYear = async (yearObj) => {
-    if (!window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบปีการศึกษา ${yearObj.year}? เอกสารทั้งหมดในปีนี้จะถูกลบไปด้วย`)) return;
-    try {
-      await axios.delete(`/api/courses/years/${yearObj.id}`, { withCredentials: true });
-      showAlert('success', `ลบปีการศึกษา ${yearObj.year} สำเร็จ`);
-      setSelectedYear(null);
-      await fetchYears();
-    } catch (error) {
-      console.error('Delete year error:', error);
-      showAlert('error', 'เกิดข้อผิดพลาดในการลบปีการศึกษา');
-    }
+  const handleDeleteYear = (yearObj) => {
+    setDeleteModal({
+      isOpen: true,
+      title: 'ยืนยันการลบปีการศึกษา',
+      itemName: `ปีการศึกษา ${yearObj.year}`,
+      description: 'เอกสารและรายวิชาทั้งหมดที่อยู่ภายใต้ปีการศึกษานี้จะถูกลบไปด้วยอย่างถาวร',
+      onConfirm: async () => {
+        try {
+          setDeleteModal(prev => ({ ...prev, loading: true }));
+          await axios.delete(`/api/courses/years/${yearObj.id}`, { withCredentials: true });
+          showAlert('success', `ลบปีการศึกษา ${yearObj.year} สำเร็จ`);
+          setSelectedYear(null);
+          await fetchYears();
+          setDeleteModal(prev => ({ ...prev, isOpen: false, loading: false }));
+        } catch (error) {
+          console.error('Delete year error:', error);
+          showAlert('error', 'เกิดข้อผิดพลาดในการลบปีการศึกษา');
+          setDeleteModal(prev => ({ ...prev, loading: false }));
+        }
+      }
+    });
   };
 
   // Open Document Modal for Create
@@ -211,16 +232,29 @@ export default function ManageSubjectCourses() {
   };
 
   // Delete Document
-  const handleDeleteDoc = async (id) => {
-    if (!window.confirm('คุณแน่ใจหรือไม่ว่าต้องการลบเอกสารนี้?')) return;
-    try {
-      await axios.delete(`/api/courses/${id}`, { withCredentials: true });
-      showAlert('success', 'ลบเอกสารสำเร็จ');
-      setCourses(prev => prev.filter(d => d.id !== id));
-    } catch (error) {
-      console.error('Delete doc error:', error);
-      showAlert('error', 'เกิดข้อผิดพลาดในการลบเอกสาร');
-    }
+  const handleDeleteDoc = (doc) => {
+    const docId = typeof doc === 'object' ? doc.id : doc;
+    const docTitle = typeof doc === 'object' ? doc.title : 'เอกสาร';
+
+    setDeleteModal({
+      isOpen: true,
+      title: 'ยืนยันการลบเอกสาร',
+      itemName: docTitle,
+      description: 'เอกสารและไฟล์แนบนี้จะถูกลบออกจากระบบอย่างถาวร',
+      onConfirm: async () => {
+        try {
+          setDeleteModal(prev => ({ ...prev, loading: true }));
+          await axios.delete(`/api/courses/${docId}`, { withCredentials: true });
+          showAlert('success', 'ลบเอกสารสำเร็จ');
+          setCourses(prev => prev.filter(d => d.id !== docId));
+          setDeleteModal(prev => ({ ...prev, isOpen: false, loading: false }));
+        } catch (error) {
+          console.error('Delete doc error:', error);
+          showAlert('error', 'เกิดข้อผิดพลาดในการลบเอกสาร');
+          setDeleteModal(prev => ({ ...prev, loading: false }));
+        }
+      }
+    });
   };
 
   // Group current courses by category
@@ -444,7 +478,7 @@ export default function ManageSubjectCourses() {
                           <Edit3 size={15} />
                         </button>
                         <button
-                          onClick={() => handleDeleteDoc(doc.id)}
+                          onClick={() => handleDeleteDoc(doc)}
                           className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-white rounded-lg transition-all"
                           title="ลบ"
                         >
@@ -640,6 +674,16 @@ export default function ManageSubjectCourses() {
           </div>
         )}
       </AnimatePresence>
+
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={deleteModal.onConfirm}
+        title={deleteModal.title}
+        itemName={deleteModal.itemName}
+        description={deleteModal.description}
+        loading={deleteModal.loading}
+      />
     </div>
   );
 }

@@ -10,6 +10,7 @@ import {
   Landmark, ShieldCheck, GraduationCap, Globe,
   BookOpen, Monitor, Award, Sparkles, Heart, Bell
 } from 'lucide-react';
+import DeleteConfirmModal from '../../components/admin/DeleteConfirmModal';
 
 // Icon Map for dynamic icon rendering
 const ICON_MAP = {
@@ -53,6 +54,16 @@ export default function ManageStudentLinks() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [alertInfo, setAlertInfo] = useState({ show: false, type: '', message: '' });
+
+  // Delete Confirm Modal
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    title: '',
+    itemName: '',
+    description: '',
+    onConfirm: null,
+    loading: false
+  });
 
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
@@ -153,17 +164,27 @@ export default function ManageStudentLinks() {
   };
 
   // Delete Link
-  const handleDeleteLink = async (id, title) => {
-    if (!window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบลิงก์ "${title}"?`)) return;
-    try {
-      const updatedList = links.filter(l => l.id !== id);
-      await axios.post('/api/student-links', { data: updatedList }, { withCredentials: true });
-      setLinks(updatedList);
-      showAlert('success', 'ลบลิงก์สำเร็จ');
-    } catch (error) {
-      console.error('Delete link error:', error);
-      showAlert('error', 'เกิดข้อผิดพลาดในการลบลิงก์');
-    }
+  const handleDeleteLink = (id, title) => {
+    setDeleteModal({
+      isOpen: true,
+      title: 'ยืนยันการลบลิงก์',
+      itemName: title || 'ลิงก์นี้',
+      description: 'ลิงก์นี้จะถูกลบออกจากหน้ารวมลิงก์สำหรับนักศึกษาอย่างถาวร',
+      onConfirm: async () => {
+        try {
+          setDeleteModal(prev => ({ ...prev, loading: true }));
+          const updatedList = links.filter(l => l.id !== id);
+          await axios.post('/api/student-links', { data: updatedList }, { withCredentials: true });
+          setLinks(updatedList);
+          showAlert('success', 'ลบลิงก์สำเร็จ');
+          setDeleteModal(prev => ({ ...prev, isOpen: false, loading: false }));
+        } catch (error) {
+          console.error('Delete link error:', error);
+          showAlert('error', 'เกิดข้อผิดพลาดในการลบลิงก์');
+          setDeleteModal(prev => ({ ...prev, loading: false }));
+        }
+      }
+    });
   };
 
   // Move Order
@@ -464,6 +485,16 @@ export default function ManageStudentLinks() {
           </div>
         )}
       </AnimatePresence>
+
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={deleteModal.onConfirm}
+        title={deleteModal.title}
+        itemName={deleteModal.itemName}
+        description={deleteModal.description}
+        loading={deleteModal.loading}
+      />
     </div>
   );
 }

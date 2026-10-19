@@ -282,30 +282,21 @@ export default function Home() {
                 {lang === 'EN' ? 'Recommended Programs' : 'หลักสูตรแนะนำของเรา'}
               </h2>
             </motion.div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-              {courses.slice(0, 4).map((course, index) => (
-                <CourseCard
-                  key={course.id}
-                  course={course}
-                  index={index}
-                  lang={lang}
-                  onViewDetail={() => navigate(`/course-sections/${course.level}`)}
-                />
-              ))}
-            </div>
-            {/* ปริญญาเอก หรือหลักสูตรลำดับที่ 5 (จัดกึ่งกลาง) */}
-            {courses[4] && (
-              <div className="flex justify-center mt-12">
-                <div className="w-full md:w-1/2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+              {courses.map((course, index) => (
+                <div 
+                  key={course.id || index}
+                  className={courses.length % 2 !== 0 && index === courses.length - 1 ? "md:col-span-2 md:max-w-2xl md:mx-auto w-full" : "w-full"}
+                >
                   <CourseCard
-                    course={courses[4]}
-                    index={4}
+                    course={course}
+                    index={index}
                     lang={lang}
-                    onViewDetail={() => navigate(`/course-sections/${courses[4].level}`)}
+                    onViewDetail={() => navigate(`/course-sections/${course.level || course.id}`)}
                   />
                 </div>
-              </div>
-            )}
+              ))}
+            </div>
           </section>
         </div>
       </div>

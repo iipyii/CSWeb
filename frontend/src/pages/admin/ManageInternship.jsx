@@ -6,12 +6,23 @@ import {
   Trash2, Edit3, Save, RefreshCw, AlertCircle, CheckCircle, CheckCircle2,
   ExternalLink, Info, Check, X, MoveUp, MoveDown, Award, HelpCircle
 } from 'lucide-react';
+import DeleteConfirmModal from '../../components/admin/DeleteConfirmModal';
 
 export default function ManageInternship() {
   const [activeTab, setActiveTab] = useState('qualification'); // 'qualification' | 'evaluation' | 'schedule' | 'process' | 'links'
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [alertInfo, setAlertInfo] = useState({ show: false, type: '', message: '' });
+
+  // Delete Confirm Modal
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    title: '',
+    itemName: '',
+    description: '',
+    onConfirm: null,
+    loading: false
+  });
 
   // Data States
   const [items, setItems] = useState([]);
@@ -124,16 +135,29 @@ export default function ManageInternship() {
   };
 
   // Delete Item
-  const handleDeleteItem = async (id) => {
-    if (!window.confirm('คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?')) return;
-    try {
-      await axios.delete(`/api/internships/item/${id}`, { withCredentials: true });
-      setItems(prev => prev.filter(item => item.id !== id));
-      showAlert('success', 'ลบข้อมูลสำเร็จ');
-    } catch (error) {
-      console.error('Delete item error:', error);
-      showAlert('error', 'เกิดข้อผิดพลาดในการลบข้อมูล');
-    }
+  const handleDeleteItem = (target) => {
+    const targetId = typeof target === 'object' ? target.id : target;
+    const targetTitle = typeof target === 'object' ? (target.title || target.name || 'รายการนี้') : 'รายการนี้';
+
+    setDeleteModal({
+      isOpen: true,
+      title: 'ยืนยันการลบรายการ',
+      itemName: targetTitle,
+      description: 'รายการนี้จะถูกลบออกจากระบบอย่างถาวร',
+      onConfirm: async () => {
+        try {
+          setDeleteModal(prev => ({ ...prev, loading: true }));
+          await axios.delete(`/api/internships/item/${targetId}`, { withCredentials: true });
+          setItems(prev => prev.filter(item => item.id !== targetId));
+          showAlert('success', 'ลบข้อมูลสำเร็จ');
+          setDeleteModal(prev => ({ ...prev, isOpen: false, loading: false }));
+        } catch (error) {
+          console.error('Delete item error:', error);
+          showAlert('error', 'เกิดข้อผิดพลาดในการลบข้อมูล');
+          setDeleteModal(prev => ({ ...prev, loading: false }));
+        }
+      }
+    });
   };
 
   // Save Links Config
@@ -866,6 +890,16 @@ export default function ManageInternship() {
           </div>
         )}
       </AnimatePresence>
+
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={deleteModal.onConfirm}
+        title={deleteModal.title}
+        itemName={deleteModal.itemName}
+        description={deleteModal.description}
+        loading={deleteModal.loading}
+      />
     </div>
   );
 }

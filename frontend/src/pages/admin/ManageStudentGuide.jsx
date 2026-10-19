@@ -6,12 +6,23 @@ import {
   AlertCircle, CheckCircle2, ExternalLink, FileText,
   UploadCloud, MoveUp, MoveDown, Eye, X, Link as LinkIcon
 } from 'lucide-react';
+import DeleteConfirmModal from '../../components/admin/DeleteConfirmModal';
 
 export default function ManageStudentGuide() {
   const [guides, setGuides] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [alertInfo, setAlertInfo] = useState({ show: false, type: '', message: '' });
+
+  // Delete Confirm Modal
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    title: '',
+    itemName: '',
+    description: '',
+    onConfirm: null,
+    loading: false
+  });
 
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
@@ -147,18 +158,31 @@ export default function ManageStudentGuide() {
   };
 
   // Delete Guide
-  const handleDeleteGuide = async (id) => {
-    if (!window.confirm('คุณแน่ใจหรือไม่ว่าต้องการลบคู่มือนี้?')) return;
-    try {
-      const updatedList = guides.filter(g => g.id !== id);
-      updatedList.forEach((g, idx) => { g.order = idx + 1; });
-      await axios.post('/api/student-guides', { data: updatedList }, { withCredentials: true });
-      setGuides(updatedList);
-      showAlert('success', 'ลบคู่มือสำเร็จ');
-    } catch (error) {
-      console.error('Delete guide error:', error);
-      showAlert('error', 'เกิดข้อผิดพลาดในการลบคู่มือ');
-    }
+  const handleDeleteGuide = (guide) => {
+    const guideId = typeof guide === 'object' ? guide.id : guide;
+    const guideTitle = typeof guide === 'object' ? guide.title : 'คู่มือนักศึกษานี้';
+
+    setDeleteModal({
+      isOpen: true,
+      title: 'ยืนยันการลบคู่มือนักศึกษา',
+      itemName: guideTitle,
+      description: 'ข้อมูลคู่มือและลิงก์/ไฟล์จะถูกลบออกจากระบบอย่างถาวร',
+      onConfirm: async () => {
+        try {
+          setDeleteModal(prev => ({ ...prev, loading: true }));
+          const updatedList = guides.filter(g => g.id !== guideId);
+          updatedList.forEach((g, idx) => { g.order = idx + 1; });
+          await axios.post('/api/student-guides', { data: updatedList }, { withCredentials: true });
+          setGuides(updatedList);
+          showAlert('success', 'ลบคู่มือสำเร็จ');
+          setDeleteModal(prev => ({ ...prev, isOpen: false, loading: false }));
+        } catch (error) {
+          console.error('Delete guide error:', error);
+          showAlert('error', 'เกิดข้อผิดพลาดในการลบคู่มือ');
+          setDeleteModal(prev => ({ ...prev, loading: false }));
+        }
+      }
+    });
   };
 
   // Move Order
@@ -342,7 +366,7 @@ export default function ManageStudentGuide() {
                           <Edit3 size={16} />
                         </button>
                         <button
-                          onClick={() => handleDeleteGuide(item.id)}
+                          onClick={() => handleDeleteGuide(item)}
                           className="p-2 text-slate-400 hover:text-rose-500 hover:bg-slate-100 rounded-lg transition-all"
                           title="ลบ"
                         >
@@ -494,6 +518,16 @@ export default function ManageStudentGuide() {
           </div>
         )}
       </AnimatePresence>
+
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={deleteModal.onConfirm}
+        title={deleteModal.title}
+        itemName={deleteModal.itemName}
+        description={deleteModal.description}
+        loading={deleteModal.loading}
+      />
     </div>
   );
 }

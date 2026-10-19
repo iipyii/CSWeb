@@ -8,6 +8,7 @@ import {
   Loader2, Filter, ChevronLeft, ChevronRight, Eye,
   Layers
 } from 'lucide-react';
+import DeleteConfirmModal from '../../components/admin/DeleteConfirmModal';
 
 const DEGREE_OPTIONS = [
   { value: 'all', label: 'ทุกระดับการศึกษา' },
@@ -53,6 +54,21 @@ export default function ManageSubjects() {
   const [selectedCurriculum, setSelectedCurriculum] = useState('all');
   const [selectedDegree, setSelectedDegree] = useState('all');
   const [selectedTrack, setSelectedTrack] = useState('all');
+
+  // Universal Delete Confirm Modal State
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    title: 'ยืนยันการลบข้อมูล',
+    itemName: '',
+    description: 'การดำเนินการนี้ไม่สามารถย้อนกลับได้ ข้อมูลจะถูกลบออกจากระบบอย่างถาวร',
+    confirmWord: 'delete',
+    onConfirm: null,
+    isLoading: false
+  });
+
+  const closeDeleteModal = () => {
+    setDeleteModal(prev => ({ ...prev, isOpen: false, isLoading: false }));
+  };
 
   // Dynamic Curriculum state
   const [curriculumList, setCurriculumList] = useState(DEFAULT_CURRICULUM_LIST);
@@ -178,26 +194,36 @@ export default function ManageSubjects() {
     }
   };
 
-  const handleDeleteCurriculum = async (code) => {
-    if (!window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบหลักสูตร "${code}" ออกจากตัวเลือก?`)) {
-      return;
-    }
-    setCurriculumActionLoading(true);
-    setCurriculumFeedback(null);
-    try {
-      await axios.delete(`/api/subjects/curriculums/${code}`, getAuthHeaders());
-      setCurriculumFeedback({ type: 'success', message: `ลบหลักสูตร ${code} สำเร็จ` });
-      if (selectedCurriculum === code) setSelectedCurriculum('all');
-      await fetchCurriculums();
-      window.dispatchEvent(new Event('curriculums_updated'));
-    } catch (err) {
-      setCurriculumFeedback({ 
-        type: 'error', 
-        message: err.response?.data?.error || 'เกิดข้อผิดพลาดในการลบหลักสูตร' 
-      });
-    } finally {
-      setCurriculumActionLoading(false);
-    }
+  const handleDeleteCurriculum = (code) => {
+    setDeleteModal({
+      isOpen: true,
+      title: "ยืนยันการลบหลักสูตร",
+      itemName: code,
+      description: `คุณแน่ใจหรือไม่ว่าต้องการลบหลักสูตร "${code}" ออกจากตัวเลือกของระบบ?`,
+      confirmWord: "delete",
+      isLoading: false,
+      onConfirm: async () => {
+        setCurriculumActionLoading(true);
+        setCurriculumFeedback(null);
+        try {
+          setDeleteModal(prev => ({ ...prev, isLoading: true }));
+          await axios.delete(`/api/subjects/curriculums/${code}`, getAuthHeaders());
+          setCurriculumFeedback({ type: 'success', message: `ลบหลักสูตร ${code} สำเร็จ` });
+          if (selectedCurriculum === code) setSelectedCurriculum('all');
+          closeDeleteModal();
+          await fetchCurriculums();
+          window.dispatchEvent(new Event('curriculums_updated'));
+        } catch (err) {
+          setCurriculumFeedback({ 
+            type: 'error', 
+            message: err.response?.data?.error || 'เกิดข้อผิดพลาดในการลบหลักสูตร' 
+          });
+          setDeleteModal(prev => ({ ...prev, isLoading: false }));
+        } finally {
+          setCurriculumActionLoading(false);
+        }
+      }
+    });
   };  const handleOpenEditCurriculumModal = (c) => {
     setEditingCurriculumModalItem(c);
     setEditCurriculumForm({
@@ -333,17 +359,28 @@ export default function ManageSubjects() {
     }
   };
 
-  const handleDeleteSubject = async (id, code, title) => {
-    if (window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบรายวิชา "${code} ${title}"?`)) {
-      try {
-        await axios.delete(`/api/subjects/${id}`, getAuthHeaders());
-        alert("ลบรายวิชาสำเร็จ");
-        fetchSubjects();
-      } catch (error) {
-        console.error("Delete subject error:", error);
-        alert("เกิดข้อผิดพลาดในการลบรายวิชา");
+  const handleDeleteSubject = (id, code, title) => {
+    setDeleteModal({
+      isOpen: true,
+      title: "ยืนยันการลบรายวิชา",
+      itemName: `${code} ${title}`,
+      description: "ข้อมูลรายวิชานี้และข้อมูลที่เกี่ยวข้องจะถูกลบออกจากฐานข้อมูลอย่างถาวร",
+      confirmWord: "delete",
+      isLoading: false,
+      onConfirm: async () => {
+        try {
+          setDeleteModal(prev => ({ ...prev, isLoading: true }));
+          await axios.delete(`/api/subjects/${id}`, getAuthHeaders());
+          alert("ลบรายวิชาสำเร็จ");
+          closeDeleteModal();
+          fetchSubjects();
+        } catch (error) {
+          console.error("Delete subject error:", error);
+          alert(error.response?.data?.error || "เกิดข้อผิดพลาดในการลบรายวิชา");
+          setDeleteModal(prev => ({ ...prev, isLoading: false }));
+        }
       }
-    }
+    });
   };
 
   // Import Actions
@@ -1497,6 +1534,17 @@ export default function ManageSubjects() {
         )}
       </AnimatePresence>
 
+      {/* Universal Delete Confirm Modal */}
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        title={deleteModal.title}
+        itemName={deleteModal.itemName}
+        description={deleteModal.description}
+        confirmWord={deleteModal.confirmWord}
+        isLoading={deleteModal.isLoading}
+        onConfirm={deleteModal.onConfirm}
+        onClose={closeDeleteModal}
+      />
     </div>
   );
 }

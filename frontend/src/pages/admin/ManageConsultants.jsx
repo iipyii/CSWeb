@@ -21,6 +21,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import DeleteConfirmModal from '../../components/admin/DeleteConfirmModal';
 
 export default function ManageConsultants() {
   const { isAdmin, user } = useAuth();
@@ -28,6 +29,16 @@ export default function ManageConsultants() {
   const myLecturerCode = user?.lecturer_code || user?.lecturer?.lecturer_code;
   const myLecturerId = user?.lecturer_id || user?.lecturer?.id;
   const myLecturerName = user?.lecturer?.fullname_th || user?.full_name;
+
+  // Delete Confirm Modal
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    title: '',
+    itemName: '',
+    description: '',
+    onConfirm: null,
+    loading: false
+  });
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -142,17 +153,28 @@ export default function ManageConsultants() {
     fetchLecturers();
   }, []);
 
-  const handleDelete = async (id) => {
-    if (window.confirm("คุณต้องการลบข้อมูลนักศึกษารายนี้ใช่หรือไม่?")) {
-      try {
-        await axios.delete(`/api/consult/students/${id}`);
-        alert("ลบข้อมูลนักศึกษาสำเร็จ");
-        fetchStudents();
-      } catch (error) {
-        console.error("Delete error:", error);
-        alert("เกิดข้อผิดพลาดในการลบข้อมูล");
+  const handleDelete = (student) => {
+    const studentId = typeof student === 'object' ? student.id : student;
+    const studentLabel = typeof student === 'object' ? `${student.student_id ? student.student_id + ' - ' : ''}${student.name || 'นักศึกษารายนี้'}` : 'นักศึกษารายนี้';
+
+    setDeleteModal({
+      isOpen: true,
+      title: 'ยืนยันการลบข้อมูลนักศึกษา',
+      itemName: studentLabel,
+      description: 'ข้อมูลนักศึกษาและบันทึกการปรึกษาของนักศึกษารายนี้จะถูกลบออกจากระบบอย่างถาวร',
+      onConfirm: async () => {
+        try {
+          setDeleteModal(prev => ({ ...prev, loading: true }));
+          await axios.delete(`/api/consult/students/${studentId}`);
+          fetchStudents();
+          setDeleteModal(prev => ({ ...prev, isOpen: false, loading: false }));
+        } catch (error) {
+          console.error("Delete error:", error);
+          alert("เกิดข้อผิดพลาดในการลบข้อมูล");
+          setDeleteModal(prev => ({ ...prev, loading: false }));
+        }
       }
-    }
+    });
   };
 
   const handleOpenAddModal = () => {
@@ -561,7 +583,7 @@ export default function ManageConsultants() {
                             <Pencil size={18}/>
                           </button>
                           <button 
-                            onClick={() => handleDelete(student.id)}
+                            onClick={() => handleDelete(student)}
                             className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer" 
                             title="ลบ"
                           >
@@ -1137,6 +1159,16 @@ export default function ManageConsultants() {
           </div>
         )}
       </AnimatePresence>
+
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={deleteModal.onConfirm}
+        title={deleteModal.title}
+        itemName={deleteModal.itemName}
+        description={deleteModal.description}
+        loading={deleteModal.loading}
+      />
     </div>
   );
 }

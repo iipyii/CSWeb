@@ -117,7 +117,20 @@ export default function CourseSections() {
             icon = <History size={32} />;
             borderColor = "border-purple-600";
           } else {
-            targetProg = allPrograms.find(p => p.slug === level || p.degree?.slug === level);
+            targetProg = allPrograms.find(p => p.slug === level || String(p.id) === level || p.degree?.slug === level);
+            if (targetProg) {
+              degreeLabel = targetProg.degree?.name_th || "หลักสูตร";
+              if (targetProg.degree?.slug === "bachelor") {
+                icon = <GraduationCap size={32} />;
+                borderColor = "border-[#3F51B5]";
+              } else if (targetProg.degree?.slug === "master") {
+                icon = <BookOpen size={32} />;
+                borderColor = "border-green-600";
+              } else if (targetProg.degree?.slug === "doctor") {
+                icon = <History size={32} />;
+                borderColor = "border-purple-600";
+              }
+            }
           }
 
           if (targetProg && targetProg.versions) {

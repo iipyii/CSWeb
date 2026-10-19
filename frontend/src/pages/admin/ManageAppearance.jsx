@@ -5,6 +5,7 @@ import {
   ExternalLink, Monitor, Calendar, Download, ClipboardCheck, BookOpen, 
   GraduationCap, FileText, Users, Laptop, CheckCircle2, AlertCircle, ArrowUp, ArrowDown
 } from 'lucide-react';
+import DeleteConfirmModal from '../../components/admin/DeleteConfirmModal';
 
 const ICON_OPTIONS = [
   { value: 'Monitor', label: 'Monitor (คอมพิวเตอร์/ระบบ)', icon: Monitor },
@@ -19,11 +20,11 @@ const ICON_OPTIONS = [
 ];
 
 const LEVEL_OPTIONS = [
-  { value: 'bachelor', label: 'ปริญญาตรี (ภาคปกติ)' },
-  { value: 'cs-english', label: 'ปริญญาตรี (โครงการพิเศษ สองภาษา CSB)' },
-  { value: 'cs-master', label: 'ปริญญาโท (Computer Science)' },
-  { value: 'se-master', label: 'ปริญญาโท (Software Engineering)' },
-  { value: 'doctor', label: 'ปริญญาเอก (Computer Science)' },
+  { value: 'regular', label: 'ปริญญาตรี (ภาคปกติ)' },
+  { value: 'csb', label: 'ปริญญาตรี (โครงการพิเศษ สองภาษา CSB)' },
+  { value: 'ComputerScience', label: 'ปริญญาโท (Computer Science)' },
+  { value: 'SoftwareEngineering', label: 'ปริญญาโท (Software Engineering)' },
+  { value: 'computersci', label: 'ปริญญาเอก (Computer Science)' },
 ];
 
 export default function ManageAppearance() {
@@ -33,6 +34,24 @@ export default function ManageAppearance() {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
   const [alertInfo, setAlertInfo] = useState({ show: false, type: '', message: '' });
+
+  // Dynamic Programs for linking
+  const [availablePrograms, setAvailablePrograms] = useState([]);
+
+  // Universal Delete Confirm Modal State
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    title: 'ยืนยันการลบข้อมูล',
+    itemName: '',
+    description: 'การดำเนินการนี้ไม่สามารถย้อนกลับได้ ข้อมูลจะถูกลบออกจากระบบอย่างถาวร',
+    confirmWord: 'delete',
+    onConfirm: null,
+    isLoading: false
+  });
+
+  const closeDeleteModal = () => {
+    setDeleteModal(prev => ({ ...prev, isOpen: false, isLoading: false }));
+  };
 
   // 1. Logo & Banners
   const [logoPreview, setLogoPreview] = useState(null);
@@ -54,14 +73,16 @@ export default function ManageAppearance() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [bannersRes, settingsRes, qaRes, fcRes] = await Promise.all([
+      const [bannersRes, settingsRes, qaRes, fcRes, progRes] = await Promise.all([
         axios.get("/api/appearance/banners"),
         axios.get("/api/appearance/settings"),
         axios.get("/api/appearance/quick-actions"),
-        axios.get("/api/appearance/featured-courses")
+        axios.get("/api/appearance/featured-courses"),
+        axios.get("/api/curriculum/programs")
       ]);
 
       setBanners(bannersRes.data || []);
+      setAvailablePrograms(progRes.data || []);
       const logoUrl = settingsRes.data?.configMap?.site_logo;
       if (logoUrl) {
         setLogoPreview(logoUrl.startsWith('http') ? logoUrl : `${logoUrl}`);
@@ -178,18 +199,29 @@ export default function ManageAppearance() {
     }
   };
 
-  const handleDeleteBanner = async (id) => {
-    if (window.confirm("ต้องการลบแบนเนอร์นี้ใช่หรือไม่?")) {
-      try {
-        await axios.delete(`/api/appearance/banners/${id}`);
-        showAlert('success', "ลบแบนเนอร์เรียบร้อย");
-        fetchData();
-        window.dispatchEvent(new CustomEvent('site_config_updated', { detail: { banners: true } }));
-      } catch (error) {
-        console.error("Delete banner error:", error);
-        showAlert('error', error.response?.data?.error || "เกิดข้อผิดพลาดในการลบ");
+  const handleDeleteBanner = (banner) => {
+    setDeleteModal({
+      isOpen: true,
+      title: "ยืนยันการลบแบนเนอร์",
+      itemName: banner.title || `แบนเนอร์ลำดับที่ ${banner.id}`,
+      description: "รูปภาพแบนเนอร์นี้จะถูกลบออกจากสไลด์หน้าแรกของเว็บไซต์อย่างถาวร",
+      confirmWord: "delete",
+      isLoading: false,
+      onConfirm: async () => {
+        try {
+          setDeleteModal(prev => ({ ...prev, isLoading: true }));
+          await axios.delete(`/api/appearance/banners/${banner.id}`);
+          showAlert('success', "ลบแบนเนอร์เรียบร้อย");
+          closeDeleteModal();
+          fetchData();
+          window.dispatchEvent(new CustomEvent('site_config_updated', { detail: { banners: true } }));
+        } catch (error) {
+          console.error("Delete banner error:", error);
+          showAlert('error', error.response?.data?.error || "เกิดข้อผิดพลาดในการลบ");
+          setDeleteModal(prev => ({ ...prev, isLoading: false }));
+        }
       }
-    }
+    });
   };
 
   // === Quick Actions Handlers ===
@@ -207,7 +239,19 @@ export default function ManageAppearance() {
   };
 
   const handleRemoveQuickAction = (index) => {
-    setQuickActions(prev => prev.filter((_, i) => i !== index));
+    const item = quickActions[index];
+    setDeleteModal({
+      isOpen: true,
+      title: "ยืนยันการลบปุ่มทางลัด",
+      itemName: item?.label || `ปุ่มลำดับที่ ${index + 1}`,
+      description: "ปุ่มทางลัดนี้จะถูกนำออกจากรายการหน้าแรก",
+      confirmWord: "delete",
+      isLoading: false,
+      onConfirm: () => {
+        setQuickActions(prev => prev.filter((_, i) => i !== index));
+        closeDeleteModal();
+      }
+    });
   };
 
   const handleQuickActionChange = (index, field, value) => {
@@ -245,11 +289,12 @@ export default function ManageAppearance() {
 
   // === Featured Courses Handlers ===
   const handleAddCourse = () => {
+    const defaultLevel = availablePrograms[0]?.slug || 'regular';
     setFeaturedCourses(prev => [
       ...prev,
       {
         id: `course-${Date.now()}`,
-        level: 'bachelor',
+        level: defaultLevel,
         title: 'ชื่อหลักสูตรภาษาไทย',
         enTitle: 'COURSE TITLE IN ENGLISH',
         date: 'มีนาคม 2567',
@@ -259,7 +304,19 @@ export default function ManageAppearance() {
   };
 
   const handleRemoveCourse = (index) => {
-    setFeaturedCourses(prev => prev.filter((_, i) => i !== index));
+    const course = featuredCourses[index];
+    setDeleteModal({
+      isOpen: true,
+      title: "ยืนยันการลบการ์ดหลักสูตรแนะนำ",
+      itemName: course?.title || `การ์ดลำดับที่ ${index + 1}`,
+      description: "การ์ดหลักสูตรแนะนำนี้จะถูกนำออกจากรายการหน้าแรก",
+      confirmWord: "delete",
+      isLoading: false,
+      onConfirm: () => {
+        setFeaturedCourses(prev => prev.filter((_, i) => i !== index));
+        closeDeleteModal();
+      }
+    });
   };
 
   const handleCourseChange = (index, field, value) => {
@@ -488,7 +545,7 @@ export default function ManageAppearance() {
                           </div>
                           <div className="flex gap-2">
                             <button 
-                              onClick={() => handleDeleteBanner(item.id)}
+                              onClick={() => handleDeleteBanner(item)}
                               className="p-2.5 bg-white text-slate-400 rounded-xl border border-slate-200 hover:text-rose-500 transition-colors shadow-sm"
                               title="ลบแบนเนอร์"
                             >
@@ -754,15 +811,23 @@ export default function ManageAppearance() {
                               ระดับการศึกษา (ลิงก์ไปยังหมวดหลักสูตร)
                             </label>
                             <select
-                              value={course.level || 'bachelor'}
+                              value={course.level || (availablePrograms[0]?.slug || 'regular')}
                               onChange={(e) => handleCourseChange(idx, 'level', e.target.value)}
-                              className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 outline-none"
+                              className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 outline-none cursor-pointer"
                             >
-                              {LEVEL_OPTIONS.map((lvl) => (
-                                <option key={lvl.value} value={lvl.value}>
-                                  {lvl.label}
-                                </option>
-                              ))}
+                              {availablePrograms.length > 0 ? (
+                                availablePrograms.map((p) => (
+                                  <option key={p.id} value={p.slug || String(p.id)}>
+                                    {p.name_th} ({p.degree?.name_th || 'หลักสูตร'} - {p.slug})
+                                  </option>
+                                ))
+                              ) : (
+                                LEVEL_OPTIONS.map((lvl) => (
+                                  <option key={lvl.value} value={lvl.value}>
+                                    {lvl.label}
+                                  </option>
+                                ))
+                              )}
                             </select>
                           </div>
 
@@ -794,6 +859,18 @@ export default function ManageAppearance() {
           )}
         </div>
       )}
+
+      {/* Universal Delete Confirm Modal */}
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        title={deleteModal.title}
+        itemName={deleteModal.itemName}
+        description={deleteModal.description}
+        confirmWord={deleteModal.confirmWord}
+        isLoading={deleteModal.isLoading}
+        onConfirm={deleteModal.onConfirm}
+        onClose={closeDeleteModal}
+      />
     </div>
   );
 }

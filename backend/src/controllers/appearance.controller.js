@@ -231,22 +231,54 @@ export const updateQuickActions = async (req, res) => {
 };
 
 // === Featured Courses ===
+// === Featured Courses ===
 export const getFeaturedCourses = async (req, res) => {
   try {
+    // 1. ดึงหลักสูตรจากฐานข้อมูล programs โดยตรงเป็น Single Source of Truth
+    const programs = await prisma.programs.findMany({
+      where: { is_featured: true },
+      include: {
+        degree: true,
+        versions: {
+          orderBy: { year: "desc" },
+          take: 1
+        }
+      },
+      orderBy: [
+        { order_no: "asc" },
+        { id: "asc" }
+      ]
+    });
+
+    if (programs.length > 0) {
+      const formatted = programs.map((p, idx) => ({
+        id: p.slug || `prog-${p.id}`,
+        programId: p.id,
+        level: p.slug || (p.degree?.slug === "bachelor" ? "bachelor" : p.slug),
+        title: p.name_th,
+        enTitle: p.name_en || p.name_th,
+        date: p.date_tag || (p.versions?.[0] ? `มีนาคม ${p.versions[0].year}` : 'มีนาคม 2564'),
+        image: p.image_path || "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80",
+        order: p.order_no || (idx + 1),
+        is_featured: p.is_featured,
+        degree_name: p.degree?.name_th || 'ปริญญาตรี'
+      }));
+      return res.json({ data: formatted });
+    }
+
+    // Fallback: Check site_config
     const config = await prisma.site_config.findUnique({
       where: { config_key: "homepage_featured_courses" }
     });
 
-    if (!config || !config.config_value) {
-      return res.json({ data: defaultFeaturedCourses });
+    if (config?.config_value) {
+      try {
+        const parsed = JSON.parse(config.config_value);
+        return res.json({ data: parsed });
+      } catch (e) {}
     }
 
-    try {
-      const parsed = JSON.parse(config.config_value);
-      return res.json({ data: parsed });
-    } catch (e) {
-      return res.json({ data: defaultFeaturedCourses });
-    }
+    return res.json({ data: defaultFeaturedCourses });
   } catch (error) {
     console.error("Fetch featured courses error:", error);
     res.status(500).json({ error: "Failed to fetch featured courses" });
@@ -260,6 +292,48 @@ export const updateFeaturedCourses = async (req, res) => {
       return res.status(400).json({ error: "ข้อมูลหลักสูตรแนะนำไม่ถูกต้อง" });
     }
 
+    // ซิงค์ข้อมูลลงตาราง programs โดยตรงเพื่อไม่ให้ทำงานซ้ำซ้อน
+    for (let i = 0; i < data.length; i++) {
+      const item = data[i];
+      if (item.programId) {
+        await prisma.programs.update({
+          where: { id: parseInt(item.programId) },
+          data: {
+            name_th: item.title ? item.title.trim() : undefined,
+            name_en: item.enTitle ? item.enTitle.trim() : undefined,
+            image_path: item.image || undefined,
+            date_tag: item.date ? item.date.trim() : undefined,
+            order_no: i + 1,
+            is_featured: item.is_featured !== undefined ? Boolean(item.is_featured) : true
+          }
+        }).catch(() => null);
+      } else if (item.level || item.id) {
+        const targetSlug = item.level || item.id;
+        const prog = await prisma.programs.findFirst({
+          where: {
+            OR: [
+              { slug: targetSlug },
+              { slug: targetSlug === 'bachelor' ? 'regular' : targetSlug }
+            ]
+          }
+        });
+        if (prog) {
+          await prisma.programs.update({
+            where: { id: prog.id },
+            data: {
+              name_th: item.title ? item.title.trim() : undefined,
+              name_en: item.enTitle ? item.enTitle.trim() : undefined,
+              image_path: item.image || undefined,
+              date_tag: item.date ? item.date.trim() : undefined,
+              order_no: i + 1,
+              is_featured: item.is_featured !== undefined ? Boolean(item.is_featured) : true
+            }
+          }).catch(() => null);
+        }
+      }
+    }
+
+    // บันทึก site_config สำหรับสำรองข้อมูล
     await prisma.site_config.upsert({
       where: { config_key: "homepage_featured_courses" },
       update: {

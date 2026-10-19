@@ -6,6 +6,7 @@ import {
   Clock, FileText, LayoutGrid
 } from 'lucide-react';
 import { formatThaiDate } from '../../utils/thaiText';
+import DeleteConfirmModal from '../../components/admin/DeleteConfirmModal';
 
 const categories = [
   { id: 'all', label: 'ทั้งหมด', icon: <LayoutGrid size={16} /> },
@@ -19,6 +20,21 @@ export default function ManageNews() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('all');
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Universal Delete Confirm Modal State
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    title: 'ยืนยันการลบข้อมูล',
+    itemName: '',
+    description: 'การดำเนินการนี้ไม่สามารถย้อนกลับได้ ข้อมูลจะถูกลบออกจากระบบอย่างถาวร',
+    confirmWord: 'delete',
+    onConfirm: null,
+    isLoading: false
+  });
+
+  const closeDeleteModal = () => {
+    setDeleteModal(prev => ({ ...prev, isOpen: false, isLoading: false }));
+  };
 
   // ✅ ใช้ useState เพื่อจัดการรายการข่าวให้หายไปเมื่อกดจัดเก็บ
   const [newsList, setNewsList] = useState([]);
@@ -88,15 +104,26 @@ export default function ManageNews() {
   };
 
   // 🟢 4. อัปเดตฟังก์ชันลบข่าวถาวร
-  const handleDelete = async (id) => {
-    if (window.confirm("คุณต้องการลบข่าวนี้ทิ้งถาวรใช่หรือไม่? (ไม่สามารถกู้คืนได้)")) {
-      try {
-        await axios.delete(`/api/news/${id}`);
-        fetchNews(); // โหลดข้อมูลใหม่
-      } catch (error) {
-        alert("เกิดข้อผิดพลาดในการลบ");
+  const handleDelete = (item) => {
+    setDeleteModal({
+      isOpen: true,
+      title: "ยืนยันการลบข่าวสาร",
+      itemName: item.title,
+      description: "คุณต้องการลบข่าวนี้ทิ้งถาวรใช่หรือไม่? ข้อมูลจะไม่สามารถกู้คืนได้",
+      confirmWord: "delete",
+      isLoading: false,
+      onConfirm: async () => {
+        try {
+          setDeleteModal(prev => ({ ...prev, isLoading: true }));
+          await axios.delete(`/api/news/${item.id}`);
+          closeDeleteModal();
+          fetchNews();
+        } catch (error) {
+          alert("เกิดข้อผิดพลาดในการลบ");
+          setDeleteModal(prev => ({ ...prev, isLoading: false }));
+        }
       }
-    }
+    });
   };
 
   const filteredNews = newsList.filter(item => {
@@ -191,7 +218,7 @@ export default function ManageNews() {
                 </button>
                 <div className="flex gap-3">
                   <button
-                    onClick={() => handleDelete(item.id)}
+                    onClick={() => handleDelete(item)}
                     className="flex-1 flex items-center justify-center gap-2 py-3 bg-rose-50 text-rose-500 rounded-2xl text-[10px] font-black hover:bg-rose-500 hover:text-white transition-all">
                     <Trash2 size={14} /> ลบ
                   </button>
@@ -219,6 +246,18 @@ export default function ManageNews() {
           <p className="text-slate-400 text-sm mt-1 font-medium">รายการข่าวอาจถูกจัดเก็บหรือยังไม่มีข้อมูลในหมวดหมู่นี้</p>
         </div>
       )}
+
+      {/* Universal Delete Confirm Modal */}
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        title={deleteModal.title}
+        itemName={deleteModal.itemName}
+        description={deleteModal.description}
+        confirmWord={deleteModal.confirmWord}
+        isLoading={deleteModal.isLoading}
+        onConfirm={deleteModal.onConfirm}
+        onClose={closeDeleteModal}
+      />
     </div>
   );
 }

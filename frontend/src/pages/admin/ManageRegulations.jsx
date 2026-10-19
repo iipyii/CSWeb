@@ -5,6 +5,7 @@ import {
   RefreshCw, Loader2, Upload, X, Save, Eye, CheckCircle2,
   BookOpen, DollarSign, Users, GraduationCap, Award, Briefcase, Landmark
 } from 'lucide-react';
+import DeleteConfirmModal from '../../components/admin/DeleteConfirmModal';
 
 const CATEGORIES = [
   { key: 'finance', label: 'งานการเงิน', icon: DollarSign, publicPath: '/finance-regulations' },
@@ -43,6 +44,16 @@ export default function ManageRegulations() {
   const [selectedSubcategory, setSelectedSubcategory] = useState('all');
   const [loading, setLoading] = useState(true);
   const [docs, setDocs] = useState([]);
+
+  // Delete Confirm Modal
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    title: '',
+    itemName: '',
+    description: '',
+    onConfirm: null,
+    loading: false
+  });
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -116,16 +127,28 @@ export default function ManageRegulations() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('คุณแน่ใจหรือไม่ว่าต้องการลบเอกสารระเบียบนี้?')) return;
-    try {
-      await axios.delete(`/api/downloads/${id}`);
-      alert('ลบเอกสารสำเร็จ');
-      fetchDocs();
-    } catch (err) {
-      console.error('Delete failed:', err);
-      alert('เกิดข้อผิดพลาดในการลบเอกสาร');
-    }
+  const handleDelete = (doc) => {
+    const docId = typeof doc === 'object' ? doc.id : doc;
+    const docTitle = typeof doc === 'object' ? doc.title : 'เอกสารระเบียบนี้';
+
+    setDeleteModal({
+      isOpen: true,
+      title: 'ยืนยันการลบระเบียบ/ข้อบังคับ',
+      itemName: docTitle,
+      description: 'เอกสารและไฟล์แนบนี้จะถูกลบออกจากระบบอย่างถาวร',
+      onConfirm: async () => {
+        try {
+          setDeleteModal(prev => ({ ...prev, loading: true }));
+          await axios.delete(`/api/downloads/${docId}`);
+          fetchDocs();
+          setDeleteModal(prev => ({ ...prev, isOpen: false, loading: false }));
+        } catch (err) {
+          console.error('Delete failed:', err);
+          alert('เกิดข้อผิดพลาดในการลบเอกสาร');
+          setDeleteModal(prev => ({ ...prev, loading: false }));
+        }
+      }
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -388,7 +411,7 @@ export default function ManageRegulations() {
                           <Edit3 size={18} />
                         </button>
                         <button
-                          onClick={() => handleDelete(doc.id)}
+                          onClick={() => handleDelete(doc)}
                           title="ลบเอกสาร"
                           className="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                         >
@@ -512,6 +535,16 @@ export default function ManageRegulations() {
           </div>
         </div>
       )}
+
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={deleteModal.onConfirm}
+        title={deleteModal.title}
+        itemName={deleteModal.itemName}
+        description={deleteModal.description}
+        loading={deleteModal.loading}
+      />
     </div>
   );
 }

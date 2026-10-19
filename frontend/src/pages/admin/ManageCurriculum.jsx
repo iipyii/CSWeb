@@ -3,8 +3,9 @@ import axios from 'axios';
 import { 
   Plus, Search, Edit3, Trash2, GraduationCap, 
   BookOpen, ExternalLink, X, Save, RefreshCw, Loader2,
-  FileText, Upload, CheckCircle2, AlertCircle, Eye, Calendar, Layers, Sparkles
+  FileText, Upload, CheckCircle2, AlertCircle, Eye, Calendar, Layers, Sparkles, Star, Image as ImageIcon
 } from 'lucide-react';
+import DeleteConfirmModal from '../../components/admin/DeleteConfirmModal';
 
 const levelTabs = [
   { id: 'all', label: 'ทั้งหมด' },
@@ -42,14 +43,36 @@ export default function ManageCurriculum() {
   const [programs, setPrograms] = useState([]);
   const [degrees, setDegrees] = useState([]);
 
+  // Universal Delete Confirm Modal State
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    title: 'ยืนยันการลบข้อมูล',
+    itemName: '',
+    description: 'การดำเนินการนี้ไม่สามารถย้อนกลับได้ ข้อมูลจะถูกลบออกจากระบบอย่างถาวร',
+    confirmWord: 'delete',
+    onConfirm: null,
+    isLoading: false
+  });
+
+  const closeDeleteModal = () => {
+    setDeleteModal(prev => ({ ...prev, isOpen: false, isLoading: false }));
+  };
+
   // Program Modal State
   const [isProgramModalOpen, setIsProgramModalOpen] = useState(false);
   const [editingProgram, setEditingProgram] = useState(null);
+  const [uploadingProgramImage, setUploadingProgramImage] = useState(false);
   const [programForm, setProgramForm] = useState({
     name_th: '',
+    name_en: '',
     slug: '',
     degreeId: 1,
-    year: '2569'
+    year: '2569',
+    curriculum_code: '',
+    image_path: '',
+    is_featured: true,
+    date_tag: '',
+    order_no: 0
   });
   const [submittingProgram, setSubmittingProgram] = useState(false);
 
@@ -57,6 +80,7 @@ export default function ManageCurriculum() {
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [activeVersionYear, setActiveVersionYear] = useState(null);
   const [newVersionYear, setNewVersionYear] = useState('');
+  const [newVersionCode, setNewVersionCode] = useState('');
   const [isAddingVersion, setIsAddingVersion] = useState(false);
   const [uploadingSection, setUploadingSection] = useState(null);
 
@@ -75,7 +99,7 @@ export default function ManageCurriculum() {
   const [seedingSections, setSeedingSections] = useState(false);
 
   const getAuthHeaders = () => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('csweb_token') || localStorage.getItem('token');
     return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
   };
 
@@ -115,20 +139,57 @@ export default function ManageCurriculum() {
       setEditingProgram(program);
       setProgramForm({
         name_th: program.name_th || '',
+        name_en: program.name_en || '',
         slug: program.slug || '',
         degreeId: program.degreeId || (degrees[0]?.id || 1),
-        year: program.versions?.[0]?.year?.toString() || '2569'
+        year: program.versions?.[0]?.year?.toString() || '2569',
+        curriculum_code: program.versions?.[0]?.curriculum_code || '',
+        image_path: program.image_path || '',
+        is_featured: program.is_featured ?? true,
+        date_tag: program.date_tag || '',
+        order_no: program.order_no ?? 0
       });
     } else {
       setEditingProgram(null);
       setProgramForm({
         name_th: '',
+        name_en: '',
         slug: '',
         degreeId: degrees[0]?.id || 1,
-        year: '2569'
+        year: '2569',
+        curriculum_code: '',
+        image_path: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80',
+        is_featured: true,
+        date_tag: `มีนาคม ${new Date().getFullYear() + 543}`,
+        order_no: programs.length
       });
     }
     setIsProgramModalOpen(true);
+  };
+
+  const handleProgramImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setUploadingProgramImage(true);
+      const formData = new FormData();
+      formData.append("image", file);
+      const res = await axios.post("/api/appearance/upload-image", formData, {
+        ...getAuthHeaders(),
+        headers: {
+          ...getAuthHeaders().headers,
+          "Content-Type": "multipart/form-data"
+        }
+      });
+      if (res.data?.imagePath) {
+        setProgramForm(prev => ({ ...prev, image_path: res.data.imagePath }));
+      }
+    } catch (err) {
+      console.error("Upload program image error:", err);
+      alert("อัปโหลดรูปภาพไม่สำเร็จ");
+    } finally {
+      setUploadingProgramImage(false);
+    }
   };
 
   const openSectionManager = (program) => {
@@ -151,14 +212,30 @@ export default function ManageCurriculum() {
       setSubmittingProgram(true);
       if (editingProgram) {
         await axios.put(`/api/curriculum/programs/${editingProgram.id}`, {
-          name_th: programForm.name_th,
-          slug: programForm.slug,
-          degreeId: programForm.degreeId
+          name_th: programForm.name_th.trim(),
+          name_en: programForm.name_en.trim(),
+          slug: programForm.slug.trim(),
+          degreeId: programForm.degreeId,
+          image_path: programForm.image_path.trim() || null,
+          is_featured: programForm.is_featured,
+          date_tag: programForm.date_tag.trim() || null,
+          order_no: parseInt(programForm.order_no) || 0
         }, getAuthHeaders());
         alert("แก้ไขข้อมูลหลักสูตรสำเร็จ");
       } else {
-        await axios.post("/api/curriculum/programs", programForm, getAuthHeaders());
-        alert("เพิ่มหลักสูตรสำเร็จ");
+        await axios.post("/api/curriculum/programs", {
+          name_th: programForm.name_th.trim(),
+          name_en: programForm.name_en.trim(),
+          slug: programForm.slug.trim(),
+          degreeId: programForm.degreeId,
+          year: programForm.year,
+          curriculum_code: programForm.curriculum_code.trim(),
+          image_path: programForm.image_path.trim() || null,
+          is_featured: programForm.is_featured,
+          date_tag: programForm.date_tag.trim() || null,
+          order_no: parseInt(programForm.order_no) || 0
+        }, getAuthHeaders());
+        alert("เพิ่มหลักสูตรใหม่สำเร็จและเชื่อมโยงกับหน้าแรกอัตโนมัติแล้ว");
       }
       setIsProgramModalOpen(false);
       fetchCurriculum();
@@ -170,20 +247,31 @@ export default function ManageCurriculum() {
     }
   };
 
-  const handleDeleteProgram = async (id) => {
-    if (window.confirm("คุณต้องการลบหลักสูตรนี้และเวอร์ชันรวมถึงไฟล์ PDF ที่เกี่ยวข้องใช่หรือไม่?")) {
-      try {
-        await axios.delete(`/api/curriculum/programs/${id}`, getAuthHeaders());
-        alert("ลบหลักสูตรสำเร็จ");
-        if (selectedProgram?.id === id) {
-          setSelectedProgram(null);
+  const handleDeleteProgram = (program) => {
+    setDeleteModal({
+      isOpen: true,
+      title: "ยืนยันการลบหลักสูตร",
+      itemName: program.name_th,
+      description: "การลบหลักสูตรนี้จะลบทุกเวอร์ชันปีและไฟล์เอกสาร มคอ.2 ทั้งหมดที่เกี่ยวข้องออกจากระบบอย่างถาวร",
+      confirmWord: "delete",
+      isLoading: false,
+      onConfirm: async () => {
+        try {
+          setDeleteModal(prev => ({ ...prev, isLoading: true }));
+          await axios.delete(`/api/curriculum/programs/${program.id}`, getAuthHeaders());
+          alert("ลบหลักสูตรสำเร็จ");
+          if (selectedProgram?.id === program.id) {
+            setSelectedProgram(null);
+          }
+          closeDeleteModal();
+          fetchCurriculum();
+        } catch (error) {
+          console.error("Failed to delete program:", error);
+          alert(error.response?.data?.error || "เกิดข้อผิดพลาดในการลบหลักสูตร");
+          setDeleteModal(prev => ({ ...prev, isLoading: false }));
         }
-        fetchCurriculum();
-      } catch (error) {
-        console.error("Failed to delete program:", error);
-        alert("เกิดข้อผิดพลาดในการลบหลักสูตร");
       }
-    }
+    });
   };
 
   // Version Management
@@ -197,10 +285,12 @@ export default function ManageCurriculum() {
       setIsAddingVersion(true);
       await axios.post("/api/curriculum/versions", {
         programId: selectedProgram.id,
-        year: parseInt(newVersionYear)
+        year: parseInt(newVersionYear),
+        curriculum_code: newVersionCode.trim() || undefined
       }, getAuthHeaders());
       alert(`เพิ่มเวอร์ชันปี ${newVersionYear} สำเร็จ`);
       setNewVersionYear('');
+      setNewVersionCode('');
       await fetchCurriculum();
       setActiveVersionYear(parseInt(newVersionYear));
     } catch (error) {
@@ -211,17 +301,28 @@ export default function ManageCurriculum() {
     }
   };
 
-  const handleDeleteVersion = async (versionId, year) => {
-    if (window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบเวอร์ชันปี ${year} และเอกสารหมวดทั้งหมด?`)) {
-      try {
-        await axios.delete(`/api/curriculum/versions/${versionId}`, getAuthHeaders());
-        alert(`ลบเวอร์ชันปี ${year} สำเร็จ`);
-        await fetchCurriculum();
-      } catch (error) {
-        console.error("Delete version error:", error);
-        alert("ไม่สามารถลบเวอร์ชันได้");
+  const handleDeleteVersion = (versionId, year) => {
+    setDeleteModal({
+      isOpen: true,
+      title: "ยืนยันการลบเวอร์ชันปีหลักสูตร",
+      itemName: `หลักสูตร พ.ศ. ${year} (${selectedProgram?.name_th || ''})`,
+      description: `ข้อมูลเวอร์ชันปี ${year} และไฟล์เอกสาร มคอ.2 ทุกหมวดประจำปีนี้จะถูกลบถาวร`,
+      confirmWord: "delete",
+      isLoading: false,
+      onConfirm: async () => {
+        try {
+          setDeleteModal(prev => ({ ...prev, isLoading: true }));
+          await axios.delete(`/api/curriculum/versions/${versionId}`, getAuthHeaders());
+          alert(`ลบเวอร์ชันปี ${year} สำเร็จ`);
+          closeDeleteModal();
+          await fetchCurriculum();
+        } catch (error) {
+          console.error("Delete version error:", error);
+          alert(error.response?.data?.error || "ไม่สามารถลบเวอร์ชันได้");
+          setDeleteModal(prev => ({ ...prev, isLoading: false }));
+        }
       }
-    }
+    });
   };
 
   const currentActiveVersion = selectedProgram?.versions?.find(v => v.year === activeVersionYear);
@@ -311,17 +412,28 @@ export default function ManageCurriculum() {
   };
 
   // Delete Section
-  const handleDeleteSection = async (sectionId, title) => {
-    if (window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบหมวด "${title || 'หมวดนี้'}" รวมทั้งไฟล์ PDF ทั้งหมดของหมวดนี้ออกจากหลักสูตร?`)) {
-      try {
-        await axios.delete(`/api/curriculum/sections/${sectionId}`, getAuthHeaders());
-        alert("ลบหมวดหลักสูตรสำเร็จ");
-        await fetchCurriculum();
-      } catch (error) {
-        console.error("Delete section error:", error);
-        alert(error.response?.data?.error || "เกิดข้อผิดพลาดในการลบหมวดหลักสูตร");
+  const handleDeleteSection = (sectionId, title) => {
+    setDeleteModal({
+      isOpen: true,
+      title: "ยืนยันการลบหมวดหลักสูตร",
+      itemName: title || `หมวดที่ ${sectionId}`,
+      description: "ข้อมูลและไฟล์ PDF ทั้งหมดของหมวดนี้จะถูกลบออกจากเล่มหลักสูตร",
+      confirmWord: "delete",
+      isLoading: false,
+      onConfirm: async () => {
+        try {
+          setDeleteModal(prev => ({ ...prev, isLoading: true }));
+          await axios.delete(`/api/curriculum/sections/${sectionId}`, getAuthHeaders());
+          alert("ลบหมวดหลักสูตรสำเร็จ");
+          closeDeleteModal();
+          await fetchCurriculum();
+        } catch (error) {
+          console.error("Delete section error:", error);
+          alert(error.response?.data?.error || "เกิดข้อผิดพลาดในการลบหมวดหลักสูตร");
+          setDeleteModal(prev => ({ ...prev, isLoading: false }));
+        }
       }
-    }
+    });
   };
 
   // Seed Standard 1 - 9 Sections
@@ -384,17 +496,28 @@ export default function ManageCurriculum() {
     }
   };
 
-  const handleDeleteSectionPdf = async (sectionId, title) => {
-    if (window.confirm(`ต้องการลบไฟล์ PDF ของ "${title || 'หมวดนี้'}" ใช่หรือไม่?`)) {
-      try {
-        await axios.delete(`/api/curriculum/sections/${sectionId}/pdf`, getAuthHeaders());
-        alert("ลบไฟล์ PDF สำเร็จ");
-        await fetchCurriculum();
-      } catch (error) {
-        console.error("Delete PDF error:", error);
-        alert("ไม่สามารถลบไฟล์ PDF ได้");
+  const handleDeleteSectionPdf = (sectionId, title) => {
+    setDeleteModal({
+      isOpen: true,
+      title: "ยืนยันการลบไฟล์เอกสาร PDF",
+      itemName: title || `ไฟล์ PDF ของหมวด ${sectionId}`,
+      description: "ไฟล์เอกสาร PDF จะถูกลบถาวร ผู้เข้าชมจะไม่สามารถเปิดอ่านเอกสารของหมวดนี้ได้",
+      confirmWord: "delete",
+      isLoading: false,
+      onConfirm: async () => {
+        try {
+          setDeleteModal(prev => ({ ...prev, isLoading: true }));
+          await axios.delete(`/api/curriculum/sections/${sectionId}/pdf`, getAuthHeaders());
+          alert("ลบไฟล์ PDF สำเร็จ");
+          closeDeleteModal();
+          await fetchCurriculum();
+        } catch (error) {
+          console.error("Delete PDF error:", error);
+          alert(error.response?.data?.error || "ไม่สามารถลบไฟล์ PDF ได้");
+          setDeleteModal(prev => ({ ...prev, isLoading: false }));
+        }
       }
-    }
+    });
   };
 
   const filteredData = programs.filter(item => {
@@ -479,18 +602,41 @@ export default function ManageCurriculum() {
             return (
               <div key={item.id} className="bg-white p-6 md:p-7 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all group flex flex-col md:flex-row items-center justify-between gap-6">
                 <div className="flex items-center gap-5 w-full">
-                  <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-[#3F51B5] shrink-0 group-hover:scale-105 transition-transform">
-                    <BookOpen size={26} />
-                  </div>
-                  <div className="text-left flex-1">
+                  {/* Thumbnail / Icon */}
+                  {item.image_path ? (
+                    <div className="w-16 h-16 rounded-2xl overflow-hidden bg-slate-100 shrink-0 border border-slate-200 shadow-sm group-hover:scale-105 transition-transform">
+                      <img 
+                        src={item.image_path} 
+                        alt={item.name_th} 
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }} 
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center text-[#3F51B5] shrink-0 group-hover:scale-105 transition-transform">
+                      <BookOpen size={28} />
+                    </div>
+                  )}
+
+                  <div className="text-left flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2 mb-1">
                       <span className="px-2.5 py-0.5 bg-slate-100 text-slate-600 rounded-md text-[11px] font-black uppercase tracking-wider">{item.slug}</span>
                       <span className="text-[11px] font-bold text-[#3F51B5] bg-indigo-50/70 px-2 py-0.5 rounded-md">{item.degree?.name_th || 'หลักสูตร'}</span>
+                      {item.is_featured && (
+                        <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-md flex items-center gap-1">
+                          <Star size={11} className="fill-amber-500 text-amber-500" /> แนะนำหน้าแรก
+                        </span>
+                      )}
                     </div>
                     <h3 className="text-lg font-black text-slate-800 leading-tight">{item.name_th}</h3>
+                    {item.name_en && (
+                      <p className="text-xs text-slate-400 font-medium italic mt-0.5 uppercase tracking-wide truncate">{item.name_en}</p>
+                    )}
                     
                     {/* Version badges */}
-                    <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                    <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
                       <span className="text-xs text-slate-400 font-medium">ปีหลักสูตร:</span>
                       {versions.length > 0 ? (
                         versions.map(v => {
@@ -498,6 +644,11 @@ export default function ManageCurriculum() {
                           return (
                             <span key={v.id} className="px-2.5 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg border border-slate-200/60 flex items-center gap-1.5">
                               <Calendar size={12} className="text-[#3F51B5]" /> พ.ศ. {v.year}
+                              {v.curriculum_code && (
+                                <span className="font-mono text-[10px] bg-slate-200/80 text-slate-600 px-1.5 py-0.2 rounded font-bold">
+                                  {v.curriculum_code}
+                                </span>
+                              )}
                               <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${secCount > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
                                 {secCount}/{v.sections?.length || 9} หมวด (PDF)
                               </span>
@@ -522,12 +673,12 @@ export default function ManageCurriculum() {
                   <button 
                     onClick={() => openProgramModal(item)}
                     className="p-2.5 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-200 transition-all"
-                    title="แก้ไขชื่อหลักสูตร"
+                    title="แก้ไขข้อมูลหลักสูตร"
                   >
                     <Edit3 size={16} />
                   </button>
                   <button 
-                    onClick={() => handleDeleteProgram(item.id)}
+                    onClick={() => handleDeleteProgram(item)}
                     className="p-2.5 bg-slate-50 text-slate-400 rounded-xl hover:bg-rose-50 hover:text-rose-500 transition-all"
                     title="ลบหลักสูตร"
                   >
@@ -604,13 +755,20 @@ export default function ManageCurriculum() {
               </div>
 
               {/* Add New Version input */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <input
                   type="number"
-                  placeholder="เช่น 2574"
+                  placeholder="ปี พ.ศ. เช่น 2574"
                   value={newVersionYear}
                   onChange={(e) => setNewVersionYear(e.target.value)}
                   className="w-28 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs outline-none focus:border-[#3F51B5]"
+                />
+                <input
+                  type="text"
+                  placeholder="รหัส เช่น CS74"
+                  value={newVersionCode}
+                  onChange={(e) => setNewVersionCode(e.target.value)}
+                  className="w-28 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono outline-none focus:border-[#3F51B5]"
                 />
                 <button
                   onClick={handleAddVersion}
@@ -833,12 +991,17 @@ export default function ManageCurriculum() {
 
       {/* 📝 Modal เพิ่ม/แก้ไขข้อมูลหลักสูตร */}
       {isProgramModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl space-y-6">
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl p-8 max-w-xl w-full shadow-2xl space-y-6 my-8 max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <h2 className="text-xl font-bold text-slate-800">
-                {editingProgram ? "แก้ไขข้อมูลหลักสูตร" : "เพิ่มหลักสูตรใหม่"}
-              </h2>
+              <div>
+                <h2 className="text-xl font-bold text-slate-800">
+                  {editingProgram ? "แก้ไขข้อมูลหลักสูตร" : "เพิ่มหลักสูตรใหม่"}
+                </h2>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  ระบบจะเชื่อมโยงหลักสูตรเข้าสู่หน้าเล่มหลักสูตร มคอ.2 และการ์ดแนะนำหน้าแรกโดยอัตโนมัติ
+                </p>
+              </div>
               <button onClick={() => setIsProgramModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-xl text-slate-400">
                 <X size={20} />
               </button>
@@ -846,51 +1009,154 @@ export default function ManageCurriculum() {
 
             <form onSubmit={handleSaveProgram} className="space-y-4 text-left">
               <div>
-                <label className="text-xs font-bold text-slate-600 block mb-1">ชื่อหลักสูตร (ภาษาไทย)</label>
+                <label className="text-xs font-bold text-slate-600 block mb-1">
+                  ชื่อหลักสูตร (ภาษาไทย) <span className="text-rose-500">*</span>
+                </label>
                 <input 
                   type="text" 
                   value={programForm.name_th}
                   onChange={(e) => setProgramForm({ ...programForm, name_th: e.target.value })}
-                  placeholder="เช่น วิทยาการคอมพิวเตอร์ ภาคปกติ"
+                  placeholder="เช่น หลักสูตรวิทยาศาสตรบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์ (ปริญญาตรี ภาคปกติ)"
                   className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-[#3F51B5]"
                   required
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-600 block mb-1">Slug / รหัสกำกับ</label>
+                <label className="text-xs font-bold text-slate-600 block mb-1">
+                  ชื่อหลักสูตร (ภาษาอังกฤษ / SUBTITLE)
+                </label>
                 <input 
                   type="text" 
-                  value={programForm.slug}
-                  onChange={(e) => setProgramForm({ ...programForm, slug: e.target.value })}
-                  placeholder="เช่น cs-regular"
+                  value={programForm.name_en}
+                  onChange={(e) => setProgramForm({ ...programForm, name_en: e.target.value })}
+                  placeholder="เช่น BACHELOR OF SCIENCE PROGRAM IN COMPUTER SCIENCE"
                   className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-[#3F51B5]"
                 />
               </div>
 
-              <div>
-                <label className="text-xs font-bold text-slate-600 block mb-1">ระดับการศึกษา</label>
-                <select 
-                  value={programForm.degreeId}
-                  onChange={(e) => setProgramForm({ ...programForm, degreeId: e.target.value })}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-[#3F51B5] cursor-pointer"
-                >
-                  {degrees.map(d => (
-                    <option key={d.id} value={d.id}>{d.name_th}</option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-slate-600 block mb-1">Slug / รหัสกำกับ</label>
+                  <input 
+                    type="text" 
+                    value={programForm.slug}
+                    onChange={(e) => setProgramForm({ ...programForm, slug: e.target.value })}
+                    placeholder="เช่น regular หรือ csb"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-[#3F51B5]"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-600 block mb-1">ระดับการศึกษา</label>
+                  <select 
+                    value={programForm.degreeId}
+                    onChange={(e) => setProgramForm({ ...programForm, degreeId: e.target.value })}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-[#3F51B5] cursor-pointer"
+                  >
+                    {degrees.map(d => (
+                      <option key={d.id} value={d.id}>{d.name_th}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Featured toggle & Date Tag */}
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={programForm.is_featured}
+                    onChange={(e) => setProgramForm({ ...programForm, is_featured: e.target.checked })}
+                    className="w-4 h-4 text-[#3F51B5] rounded border-slate-300 focus:ring-[#3F51B5]"
+                  />
+                  <div>
+                    <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                      <Star size={14} className="fill-amber-500 text-amber-500" />
+                      แสดงเป็นการ์ดหลักสูตรแนะนำที่หน้าแรก (Featured Course)
+                    </span>
+                    <p className="text-[11px] text-slate-400">
+                      เมื่อติ๊กเลือก หลักสูตรนี้จะแสดงบนหน้าแรกทันทีโดยอัตโนมัติ
+                    </p>
+                  </div>
+                </label>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-500 block mb-1">
+                    ข้อความวันที่อัปเดต (Date Tag)
+                  </label>
+                  <input 
+                    type="text" 
+                    value={programForm.date_tag}
+                    onChange={(e) => setProgramForm({ ...programForm, date_tag: e.target.value })}
+                    placeholder="เช่น มีนาคม 2564"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs outline-none focus:border-[#3F51B5]"
+                  />
+                </div>
+              </div>
+
+              {/* Image URL & Upload */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-600 block">
+                  รูปภาพปกหลักสูตร (สำหรับการ์ดหน้าแรก)
+                </label>
+                <div className="flex items-center gap-3">
+                  <div className="w-20 h-14 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0 flex items-center justify-center">
+                    {programForm.image_path ? (
+                      <img src={programForm.image_path} alt="Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <ImageIcon size={20} className="text-slate-300" />
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-1.5">
+                    <input 
+                      type="text" 
+                      value={programForm.image_path}
+                      onChange={(e) => setProgramForm({ ...programForm, image_path: e.target.value })}
+                      placeholder="https://... หรือ /uploads/..."
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#3F51B5]"
+                    />
+                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:border-[#3F51B5] text-slate-700 text-[11px] font-bold rounded-xl cursor-pointer transition-colors">
+                      {uploadingProgramImage ? <Loader2 size={13} className="animate-spin text-[#3F51B5]" /> : <Upload size={13} />}
+                      <span>{uploadingProgramImage ? "กำลังอัปโหลด..." : "อัปโหลดรูปภาพจากเครื่อง"}</span>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        disabled={uploadingProgramImage}
+                        onChange={handleProgramImageUpload} 
+                      />
+                    </label>
+                  </div>
+                </div>
               </div>
 
               {!editingProgram && (
-                <div>
-                  <label className="text-xs font-bold text-slate-600 block mb-1">ปีหลักสูตรเริ่มต้น (พ.ศ.)</label>
-                  <input 
-                    type="number" 
-                    value={programForm.year}
-                    onChange={(e) => setProgramForm({ ...programForm, year: e.target.value })}
-                    placeholder="2569"
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-[#3F51B5]"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+                  <div>
+                    <label className="text-xs font-bold text-slate-600 block mb-1">
+                      ปีหลักสูตรเริ่มต้น (พ.ศ.)
+                    </label>
+                    <input 
+                      type="number" 
+                      value={programForm.year}
+                      onChange={(e) => setProgramForm({ ...programForm, year: e.target.value })}
+                      placeholder="2569"
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-[#3F51B5]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-600 block mb-1">
+                      รหัสหลักสูตร (Curriculum Code)
+                    </label>
+                    <input 
+                      type="text" 
+                      value={programForm.curriculum_code}
+                      onChange={(e) => setProgramForm({ ...programForm, curriculum_code: e.target.value })}
+                      placeholder="เช่น CS69, CSB64"
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono outline-none focus:border-[#3F51B5]"
+                    />
+                  </div>
                 </div>
               )}
 
@@ -1034,6 +1300,18 @@ export default function ManageCurriculum() {
           </div>
         </div>
       )}
+
+      {/* Universal Delete Confirm Modal */}
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        title={deleteModal.title}
+        itemName={deleteModal.itemName}
+        description={deleteModal.description}
+        confirmWord={deleteModal.confirmWord}
+        isLoading={deleteModal.isLoading}
+        onConfirm={deleteModal.onConfirm}
+        onClose={closeDeleteModal}
+      />
 
     </div>
   );

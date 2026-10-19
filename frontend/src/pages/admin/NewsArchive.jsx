@@ -3,11 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ChevronLeft, Search, Trash2, RotateCcw, FileText } from 'lucide-react';
 import { formatThaiDate } from '../../utils/thaiText';
+import DeleteConfirmModal from '../../components/admin/DeleteConfirmModal';
 
 export default function NewsArchive() {
   const navigate = useNavigate();
   const [archivedData, setArchivedData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Delete Confirm Modal
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    title: '',
+    itemName: '',
+    description: '',
+    onConfirm: null,
+    loading: false
+  });
 
   // 🟢 1. ดึงข้อมูลข่าวเฉพาะที่ถูกจัดเก็บแล้ว
   const fetchArchivedNews = async () => {
@@ -44,17 +55,28 @@ export default function NewsArchive() {
   };
 
   // 🟢 3. ฟังก์ชันลบถาวร
-  const handleDelete = async (id) => {
-    if (window.confirm("คำเตือน: คุณต้องการลบข่าวนี้ทิ้งถาวรใช่หรือไม่? (ไม่สามารถกู้คืนได้)")) {
-      try {
-        await axios.delete(`/api/news/${id}`);
-        alert("ลบข่าวสารเรียบร้อยแล้ว");
-        fetchArchivedNews();
-      } catch (error) {
-        console.error("Delete news error:", error);
-        alert("เกิดข้อผิดพลาดในการลบ");
+  const handleDelete = (item) => {
+    const newsId = typeof item === 'object' ? item.id : item;
+    const newsTitle = typeof item === 'object' ? item.title : 'ข่าวสารนี้';
+
+    setDeleteModal({
+      isOpen: true,
+      title: 'ยืนยันการลบข่าวสารทิ้งถาวร',
+      itemName: newsTitle,
+      description: 'คำเตือน: ข่าวนี้จะถูกลบออกจากระบบอย่างถาวรและไม่สามารถกู้คืนได้อีก',
+      onConfirm: async () => {
+        try {
+          setDeleteModal(prev => ({ ...prev, loading: true }));
+          await axios.delete(`/api/news/${newsId}`);
+          fetchArchivedNews();
+          setDeleteModal(prev => ({ ...prev, isOpen: false, loading: false }));
+        } catch (error) {
+          console.error("Delete news error:", error);
+          alert("เกิดข้อผิดพลาดในการลบ");
+          setDeleteModal(prev => ({ ...prev, loading: false }));
+        }
       }
-    }
+    });
   };
 
   const filteredData = archivedData.filter(item => 
@@ -126,7 +148,7 @@ export default function NewsArchive() {
                         </button>
                         {/* ปุ่มลบถาวร */}
                         <button
-                          onClick={() => handleDelete(item.id)}
+                          onClick={() => handleDelete(item)}
                           className="flex items-center gap-2 px-4 py-2 bg-rose-50 text-rose-500 rounded-xl text-[11px] font-black hover:bg-rose-500 hover:text-white transition-all cursor-pointer"
                         >
                           <Trash2 size={14} /> ลบ
@@ -146,6 +168,16 @@ export default function NewsArchive() {
           </table>
         </div>
       </div>
+
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={deleteModal.onConfirm}
+        title={deleteModal.title}
+        itemName={deleteModal.itemName}
+        description={deleteModal.description}
+        loading={deleteModal.loading}
+      />
     </div>
   );
 }

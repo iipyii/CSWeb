@@ -14,12 +14,28 @@ import {
   Globe,
   Link2
 } from 'lucide-react';
+import DeleteConfirmModal from '../../components/admin/DeleteConfirmModal';
 
 export default function ManageFiles() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [loading, setLoading] = useState(true);
+
+  // Universal Delete Confirm Modal State
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    title: 'ยืนยันการลบข้อมูล',
+    itemName: '',
+    description: 'การดำเนินการนี้ไม่สามารถย้อนกลับได้ ข้อมูลจะถูกลบออกจากระบบอย่างถาวร',
+    confirmWord: 'delete',
+    onConfirm: null,
+    isLoading: false
+  });
+
+  const closeDeleteModal = () => {
+    setDeleteModal(prev => ({ ...prev, isOpen: false, isLoading: false }));
+  };
 
   const [files, setFiles] = useState([]);
   const [stats, setStats] = useState({
@@ -48,17 +64,28 @@ export default function ManageFiles() {
     fetchData();
   }, []);
 
-  const handleDelete = async (id) => {
-    if (window.confirm("คุณต้องการลบเอกสารนี้ใช่หรือไม่?")) {
-      try {
-        await axios.delete(`/api/downloads/${id}`);
-        alert("ลบเอกสารสำเร็จ");
-        fetchData();
-      } catch (error) {
-        console.error("Failed to delete file:", error);
-        alert("เกิดข้อผิดพลาดในการลบเอกสาร");
+  const handleDelete = (file) => {
+    setDeleteModal({
+      isOpen: true,
+      title: "ยืนยันการลบไฟล์เอกสาร",
+      itemName: file.title || `เอกสาร ID ${file.id}`,
+      description: "ไฟล์เอกสารนี้จะถูกลบออกจากระบบอย่างถาวร ไม่สามารถกู้คืนได้",
+      confirmWord: "delete",
+      isLoading: false,
+      onConfirm: async () => {
+        try {
+          setDeleteModal(prev => ({ ...prev, isLoading: true }));
+          await axios.delete(`/api/downloads/${file.id}`);
+          alert("ลบเอกสารสำเร็จ");
+          closeDeleteModal();
+          fetchData();
+        } catch (error) {
+          console.error("Failed to delete file:", error);
+          alert("เกิดข้อผิดพลาดในการลบเอกสาร");
+          setDeleteModal(prev => ({ ...prev, isLoading: false }));
+        }
       }
-    }
+    });
   };
 
   const filteredFiles = files.filter((file) => {
@@ -224,7 +251,7 @@ export default function ManageFiles() {
                             <Edit3 size={18} />
                           </button>
                           <button 
-                            onClick={() => handleDelete(file.id)}
+                            onClick={() => handleDelete(file)}
                             className="p-2.5 text-slate-400 hover:text-rose-500 hover:bg-white hover:shadow-sm rounded-xl transition-all" 
                             title="ลบ"
                           >
@@ -246,6 +273,18 @@ export default function ManageFiles() {
           </table>
         </div>
       </div>
+
+      {/* Universal Delete Confirm Modal */}
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        title={deleteModal.title}
+        itemName={deleteModal.itemName}
+        description={deleteModal.description}
+        confirmWord={deleteModal.confirmWord}
+        isLoading={deleteModal.isLoading}
+        onConfirm={deleteModal.onConfirm}
+        onClose={closeDeleteModal}
+      />
     </div>
   );
 }
