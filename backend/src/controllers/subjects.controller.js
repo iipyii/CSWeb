@@ -476,7 +476,43 @@ export const getSubjects = async (req, res) => {
       });
     }
 
-    res.json(subjects);
+    // Enrich subjects with prerequisite course titles
+    const prereqCodes = new Set();
+    subjects.forEach(s => {
+      if (s.prereq1 && s.prereq1 !== "ไม่มี" && /^\d+$/.test(s.prereq1.trim())) {
+        prereqCodes.add(s.prereq1.trim());
+      }
+      if (s.prereq2 && s.prereq2 !== "ไม่มี" && /^\d+$/.test(s.prereq2.trim())) {
+        prereqCodes.add(s.prereq2.trim());
+      }
+    });
+
+    let prereqTitleMap = new Map();
+    if (prereqCodes.size > 0) {
+      const prereqSubjects = await prisma.subjects.findMany({
+        where: {
+          subject_code: { in: Array.from(prereqCodes) }
+        },
+        select: {
+          subject_code: true,
+          title_th: true,
+          curriculum_code: true
+        }
+      });
+      for (const ps of prereqSubjects) {
+        if (!prereqTitleMap.has(ps.subject_code)) {
+          prereqTitleMap.set(ps.subject_code, ps.title_th);
+        }
+      }
+    }
+
+    const enrichedSubjects = subjects.map(s => ({
+      ...s,
+      prereq1_title: prereqTitleMap.get((s.prereq1 || "").trim()) || null,
+      prereq2_title: prereqTitleMap.get((s.prereq2 || "").trim()) || null
+    }));
+
+    res.json(enrichedSubjects);
   } catch (error) {
     console.error("Error fetching subjects:", error);
     res.status(500).json({ error: "ไม่สามารถดึงข้อมูลรายวิชาได้" });
@@ -495,7 +531,24 @@ export const getSubjectById = async (req, res) => {
       return res.status(404).json({ error: "ไม่พบรายวิชานี้" });
     }
 
-    res.json(subject);
+    let prereq1_title = null;
+    let prereq2_title = null;
+    const prereqCodes = [subject.prereq1, subject.prereq2].filter(c => c && c !== "ไม่มี" && /^\d+$/.test(c.trim()));
+    if (prereqCodes.length > 0) {
+      const prereqs = await prisma.subjects.findMany({
+        where: { subject_code: { in: prereqCodes } },
+        select: { subject_code: true, title_th: true }
+      });
+      const map = new Map(prereqs.map(p => [p.subject_code, p.title_th]));
+      prereq1_title = map.get((subject.prereq1 || "").trim()) || null;
+      prereq2_title = map.get((subject.prereq2 || "").trim()) || null;
+    }
+
+    res.json({
+      ...subject,
+      prereq1_title,
+      prereq2_title
+    });
   } catch (error) {
     console.error("Error fetching subject:", error);
     res.status(500).json({ error: "เกิดข้อผิดพลาดในการดึงข้อมูลรายวิชา" });

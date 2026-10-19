@@ -346,6 +346,23 @@ export default function CourseDescription() {
     ? subjects 
     : subjects.filter(s => s.degree_level === activeDegreeTab);
 
+  // แผนที่จับคู่รหัสวิชา -> ชื่อวิชา เพื่อแสดงชื่อวิชาบังคับก่อนประกอบรหัสได้อย่างสมบูรณ์
+  const subjectCodeToTitleMap = useMemo(() => {
+    const map = new Map();
+    subjects.forEach(s => {
+      if (s.subject_code && s.title_th && !map.has(s.subject_code)) {
+        map.set(s.subject_code, s.title_th);
+      }
+    });
+    return map;
+  }, [subjects]);
+
+  const formatPrereqDisplay = (code, titleFromItem) => {
+    if (!code || code === "ไม่มี") return "ไม่มี";
+    const title = titleFromItem || subjectCodeToTitleMap.get(code);
+    return title ? `${code} ${title}` : code;
+  };
+
   return (
     <div className="bg-slate-50/50 min-h-screen flex flex-col text-left">
       {/* 🌟 Header Section */}
@@ -632,14 +649,40 @@ export default function CourseDescription() {
                       {/* วิชาบังคับก่อน */}
                       <td className="py-4 px-6 align-top">
                         {sub.prereq1 && sub.prereq1 !== "ไม่มี" ? (
-                          <div className="space-y-1">
-                            <span className="inline-block px-2.5 py-1 bg-amber-50 text-amber-800 border border-amber-200 rounded-lg text-xs font-bold font-mono">
-                              {sub.prereq1}
-                            </span>
-                            {sub.prereq2 && (
-                              <span className="inline-block px-2.5 py-1 bg-amber-50 text-amber-800 border border-amber-200 rounded-lg text-xs font-bold font-mono ml-1">
-                                {sub.prereq2}
+                          <div className="space-y-1.5">
+                            <div className="flex flex-col">
+                              <span 
+                                className="inline-block w-fit px-2.5 py-1 bg-amber-50 text-amber-800 border border-amber-200 rounded-lg text-xs font-bold font-mono"
+                                title={sub.prereq1_title || subjectCodeToTitleMap.get(sub.prereq1) || ""}
+                              >
+                                {sub.prereq1}
                               </span>
+                              {(sub.prereq1_title || subjectCodeToTitleMap.get(sub.prereq1)) && (
+                                <span 
+                                  className="text-[11px] text-slate-500 font-medium mt-0.5 line-clamp-1 max-w-[200px]" 
+                                  title={sub.prereq1_title || subjectCodeToTitleMap.get(sub.prereq1)}
+                                >
+                                  {sub.prereq1_title || subjectCodeToTitleMap.get(sub.prereq1)}
+                                </span>
+                              )}
+                            </div>
+                            {sub.prereq2 && sub.prereq2 !== "ไม่มี" && (
+                              <div className="flex flex-col pt-1">
+                                <span 
+                                  className="inline-block w-fit px-2.5 py-1 bg-amber-50 text-amber-800 border border-amber-200 rounded-lg text-xs font-bold font-mono"
+                                  title={sub.prereq2_title || subjectCodeToTitleMap.get(sub.prereq2) || ""}
+                                >
+                                  {sub.prereq2}
+                                </span>
+                                {(sub.prereq2_title || subjectCodeToTitleMap.get(sub.prereq2)) && (
+                                  <span 
+                                    className="text-[11px] text-slate-500 font-medium mt-0.5 line-clamp-1 max-w-[200px]" 
+                                    title={sub.prereq2_title || subjectCodeToTitleMap.get(sub.prereq2)}
+                                  >
+                                    {sub.prereq2_title || subjectCodeToTitleMap.get(sub.prereq2)}
+                                  </span>
+                                )}
+                              </div>
                             )}
                           </div>
                         ) : (
@@ -772,8 +815,10 @@ export default function CourseDescription() {
                 <div>
                   <p className="text-slate-400 font-bold uppercase text-[10px]">วิชาบังคับก่อน</p>
                   <p className="font-bold text-slate-700 mt-0.5">
-                    {activeModalSubject.prereq1 || "ไม่มี"}
-                    {activeModalSubject.prereq2 ? `, ${activeModalSubject.prereq2}` : ""}
+                    {formatPrereqDisplay(activeModalSubject.prereq1, activeModalSubject.prereq1_title)}
+                    {activeModalSubject.prereq2 && activeModalSubject.prereq2 !== "ไม่มี"
+                      ? `, ${formatPrereqDisplay(activeModalSubject.prereq2, activeModalSubject.prereq2_title)}`
+                      : ""}
                   </p>
                 </div>
                 <div>
