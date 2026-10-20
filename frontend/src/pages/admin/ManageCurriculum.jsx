@@ -84,6 +84,12 @@ export default function ManageCurriculum() {
   const [isAddingVersion, setIsAddingVersion] = useState(false);
   const [uploadingSection, setUploadingSection] = useState(null);
 
+  // Version Edit State
+  const [editingVersionId, setEditingVersionId] = useState(null);
+  const [editVersionYear, setEditVersionYear] = useState('');
+  const [editVersionCode, setEditVersionCode] = useState('');
+  const [isUpdatingVersion, setIsUpdatingVersion] = useState(false);
+
   // Section Add / Edit Modal State
   const [isSectionModalOpen, setIsSectionModalOpen] = useState(false);
   const [sectionModalMode, setSectionModalMode] = useState('create'); // 'create' | 'edit'
@@ -323,6 +329,54 @@ export default function ManageCurriculum() {
         }
       }
     });
+  };
+
+  const handleStartEditVersion = (version) => {
+    setEditingVersionId(version.id);
+    setEditVersionYear(version.year?.toString() || '');
+    setEditVersionCode(version.curriculum_code || '');
+  };
+
+  const handleCancelEditVersion = () => {
+    setEditingVersionId(null);
+    setEditVersionYear('');
+    setEditVersionCode('');
+  };
+
+  const handleSaveEditVersion = async (versionId) => {
+    if (!editVersionYear || isNaN(parseInt(editVersionYear))) {
+      alert("กรุณาระบุปี พ.ศ. ให้ถูกต้อง เช่น 2569");
+      return;
+    }
+
+    try {
+      setIsUpdatingVersion(true);
+      await axios.put(`/api/curriculum/versions/${versionId}`, {
+        year: parseInt(editVersionYear),
+        curriculum_code: editVersionCode.trim() || null
+      }, getAuthHeaders());
+
+      const updatedYear = parseInt(editVersionYear);
+      setActiveVersionYear(updatedYear);
+      setEditingVersionId(null);
+
+      // Update selectedProgram in state immediately
+      setSelectedProgram(prev => {
+        if (!prev) return prev;
+        const newVersions = (prev.versions || []).map(v => 
+          v.id === versionId ? { ...v, year: updatedYear, curriculum_code: editVersionCode.trim() || null } : v
+        );
+        return { ...prev, versions: newVersions };
+      });
+
+      await fetchCurriculum();
+      alert("บันทึกการแก้ไขเวอร์ชันหลักสูตรสำเร็จ");
+    } catch (error) {
+      console.error("Update version error:", error);
+      alert(error.response?.data?.error || "ไม่สามารถแก้ไขเวอร์ชันได้");
+    } finally {
+      setIsUpdatingVersion(false);
+    }
   };
 
   const currentActiveVersion = selectedProgram?.versions?.find(v => v.year === activeVersionYear);
@@ -725,60 +779,121 @@ export default function ManageCurriculum() {
             </div>
 
             {/* Version Tabs & Add Version Bar */}
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                <span className="text-xs font-bold text-slate-500 whitespace-nowrap mr-1">เลือกปีหลักสูตร:</span>
-                {selectedProgram.versions?.map((v) => (
-                  <div key={v.id} className="flex items-center">
-                    <button
-                      onClick={() => setActiveVersionYear(v.year)}
-                      className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                        activeVersionYear === v.year
-                          ? 'bg-[#3F51B5] text-white shadow-md'
-                          : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-                      }`}
-                    >
-                      <Calendar size={14} />
-                      พ.ศ. {v.year}
-                    </button>
-                    {activeVersionYear === v.year && selectedProgram.versions.length > 1 && (
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col gap-3">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                  <span className="text-xs font-bold text-slate-500 whitespace-nowrap mr-1">เลือกปีหลักสูตร:</span>
+                  {selectedProgram.versions?.map((v) => (
+                    <div key={v.id} className="flex items-center bg-white border border-slate-200 rounded-xl p-0.5 shadow-sm">
                       <button
-                        onClick={() => handleDeleteVersion(v.id, v.year)}
-                        title={`ลบเวอร์ชัน ${v.year}`}
-                        className="ml-1 p-1 text-slate-400 hover:text-rose-500 rounded-lg"
+                        onClick={() => setActiveVersionYear(v.year)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                          activeVersionYear === v.year
+                            ? 'bg-[#3F51B5] text-white shadow-sm'
+                            : 'text-slate-600 hover:bg-slate-100'
+                        }`}
                       >
-                        <X size={14} />
+                        <Calendar size={13} />
+                        <span>พ.ศ. {v.year}</span>
+                        {v.curriculum_code && (
+                          <span className={`text-[10px] font-mono px-1 rounded ${activeVersionYear === v.year ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                            {v.curriculum_code}
+                          </span>
+                        )}
                       </button>
-                    )}
-                  </div>
-                ))}
+                      <button
+                        onClick={() => handleStartEditVersion(v)}
+                        title={`แก้ไขปี/รหัสเวอร์ชัน ${v.year}`}
+                        className="p-1.5 text-slate-400 hover:text-[#3F51B5] hover:bg-slate-100 rounded-lg transition-colors ml-0.5"
+                      >
+                        <Edit3 size={13} />
+                      </button>
+                      {selectedProgram.versions.length > 1 && (
+                        <button
+                          onClick={() => handleDeleteVersion(v.id, v.year)}
+                          title={`ลบเวอร์ชัน ${v.year}`}
+                          className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-slate-100 rounded-lg transition-colors"
+                        >
+                          <X size={13} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Add New Version input */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <input
+                    type="number"
+                    placeholder="ปี พ.ศ. เช่น 2574"
+                    value={newVersionYear}
+                    onChange={(e) => setNewVersionYear(e.target.value)}
+                    className="w-28 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs outline-none focus:border-[#3F51B5]"
+                  />
+                  <input
+                    type="text"
+                    placeholder="รหัส เช่น CS74"
+                    value={newVersionCode}
+                    onChange={(e) => setNewVersionCode(e.target.value)}
+                    className="w-28 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono outline-none focus:border-[#3F51B5]"
+                  />
+                  <button
+                    onClick={handleAddVersion}
+                    disabled={isAddingVersion}
+                    className="px-4 py-2 bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-black transition-all flex items-center gap-1 disabled:opacity-50 shrink-0"
+                  >
+                    {isAddingVersion ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                    เพิ่มปีใหม่
+                  </button>
+                </div>
               </div>
 
-              {/* Add New Version input */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <input
-                  type="number"
-                  placeholder="ปี พ.ศ. เช่น 2574"
-                  value={newVersionYear}
-                  onChange={(e) => setNewVersionYear(e.target.value)}
-                  className="w-28 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs outline-none focus:border-[#3F51B5]"
-                />
-                <input
-                  type="text"
-                  placeholder="รหัส เช่น CS74"
-                  value={newVersionCode}
-                  onChange={(e) => setNewVersionCode(e.target.value)}
-                  className="w-28 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono outline-none focus:border-[#3F51B5]"
-                />
-                <button
-                  onClick={handleAddVersion}
-                  disabled={isAddingVersion}
-                  className="px-4 py-2 bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-black transition-all flex items-center gap-1 disabled:opacity-50 shrink-0"
-                >
-                  {isAddingVersion ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
-                  เพิ่มปีใหม่
-                </button>
-              </div>
+              {/* Edit Version Inline Box */}
+              {editingVersionId && (
+                <div className="bg-white border-2 border-indigo-200 p-3.5 rounded-xl flex flex-wrap items-center justify-between gap-3 shadow-sm animate-fadeIn">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="text-xs font-black text-indigo-950 flex items-center gap-1.5">
+                      <Edit3 size={14} className="text-[#3F51B5]" /> แก้ไขข้อมูลเวอร์ชันหลักสูตร:
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <label className="text-xs font-semibold text-slate-600">ปีหลักสูตร (พ.ศ.):</label>
+                      <input
+                        type="number"
+                        value={editVersionYear}
+                        onChange={(e) => setEditVersionYear(e.target.value)}
+                        className="w-24 px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-bold outline-none focus:border-[#3F51B5] focus:bg-white"
+                      />
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <label className="text-xs font-semibold text-slate-600">รหัสหลักสูตร:</label>
+                      <input
+                        type="text"
+                        value={editVersionCode}
+                        onChange={(e) => setEditVersionCode(e.target.value)}
+                        placeholder="เช่น CS64"
+                        className="w-28 px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono font-bold outline-none focus:border-[#3F51B5] focus:bg-white"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleSaveEditVersion(editingVersionId)}
+                      disabled={isUpdatingVersion}
+                      className="px-3.5 py-1.5 bg-[#3F51B5] text-white hover:bg-[#2D3B8E] rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+                    >
+                      {isUpdatingVersion ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+                      บันทึกการแก้ไข
+                    </button>
+                    <button
+                      onClick={handleCancelEditVersion}
+                      disabled={isUpdatingVersion}
+                      className="px-3 py-1.5 bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 rounded-lg text-xs font-bold transition-all"
+                    >
+                      ยกเลิก
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Sections List */}
@@ -1130,35 +1245,6 @@ export default function ManageCurriculum() {
                   </div>
                 </div>
               </div>
-
-              {!editingProgram && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
-                  <div>
-                    <label className="text-xs font-bold text-slate-600 block mb-1">
-                      ปีหลักสูตรเริ่มต้น (พ.ศ.)
-                    </label>
-                    <input 
-                      type="number" 
-                      value={programForm.year}
-                      onChange={(e) => setProgramForm({ ...programForm, year: e.target.value })}
-                      placeholder="2569"
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-[#3F51B5]"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-slate-600 block mb-1">
-                      รหัสหลักสูตร (Curriculum Code)
-                    </label>
-                    <input 
-                      type="text" 
-                      value={programForm.curriculum_code}
-                      onChange={(e) => setProgramForm({ ...programForm, curriculum_code: e.target.value })}
-                      placeholder="เช่น CS69, CSB64"
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono outline-none focus:border-[#3F51B5]"
-                    />
-                  </div>
-                </div>
-              )}
 
               <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
                 <button 

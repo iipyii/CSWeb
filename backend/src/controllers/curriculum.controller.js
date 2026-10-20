@@ -76,34 +76,46 @@ export const getDegrees = async (req, res) => {
 export const createProgram = async (req, res) => {
   try {
     const { name_th, name_en, slug, degreeId, year, curriculum_code, image_path, is_featured, date_tag, order_no } = req.body;
-    if (!name_th || !degreeId) {
-      return res.status(400).json({ error: "กรุณาระบุชื่อหลักสูตรและระดับการศึกษา" });
+    if (!name_th || !name_th.trim() || !degreeId) {
+      return res.status(400).json({ error: "กรุณาระบุชื่อหลักสูตร (ภาษาไทย) และระดับการศึกษา" });
     }
 
-    const generatedSlug = slug && slug.trim() 
-      ? slug.trim() 
+    const cleanSlug = slug && slug.trim() 
+      ? slug.trim().toLowerCase() 
       : `prog-${Date.now()}`;
+
+    // ตรวจสอบ Slug ซ้ำ
+    const existingSlug = await prisma.programs.findFirst({
+      where: { slug: cleanSlug },
+      include: { degree: true }
+    });
+    if (existingSlug) {
+      return res.status(400).json({ 
+        error: `Slug "${cleanSlug}" ซ้ำกับหลักสูตร "${existingSlug.name_th}" (${existingSlug.degree?.name_th || ''}) กรุณาใช้ Slug อื่น` 
+      });
+    }
 
     const program = await prisma.programs.create({
       data: {
         name_th: name_th.trim(),
         name_en: name_en ? name_en.trim() : null,
-        slug: generatedSlug,
+        slug: cleanSlug,
         degreeId: parseInt(degreeId),
         image_path: image_path || null,
         is_featured: is_featured !== undefined ? Boolean(is_featured) : true,
-        date_tag: date_tag ? date_tag.trim() : (year ? `พ.ศ. ${year}` : null),
+        date_tag: date_tag ? date_tag.trim() : null,
         order_no: order_no !== undefined ? parseInt(order_no) : 0
       },
       include: { degree: true, versions: true }
     });
 
-    if (year && !isNaN(parseInt(year))) {
-      const yr = parseInt(year);
-      const code = curriculum_code && curriculum_code.trim() 
-        ? curriculum_code.trim() 
-        : `${generatedSlug.toUpperCase()}${String(yr).slice(-2)}`;
+    // สร้างเวอร์ชันเริ่มต้นให้หลักสูตร (ปีปัจจุบัน 2569 หรือปีที่ระบุมา)
+    const yr = year && !isNaN(parseInt(year)) ? parseInt(year) : 2569;
+    const code = curriculum_code && curriculum_code.trim() 
+      ? curriculum_code.trim().toUpperCase() 
+      : `${cleanSlug.toUpperCase()}${String(yr).slice(-2)}`;
 
+    try {
       const version = await prisma.program_versions.create({
         data: {
           programId: program.id,
@@ -119,9 +131,16 @@ export const createProgram = async (req, res) => {
           data: { program_version_id: version.id }
         });
       } catch (e) {}
+    } catch (verErr) {
+      console.warn("Could not create initial version:", verErr);
     }
 
-    res.status(201).json(program);
+    const finalProgram = await prisma.programs.findUnique({
+      where: { id: program.id },
+      include: { degree: true, versions: { include: { sections: true } } }
+    });
+
+    res.status(201).json(finalProgram);
   } catch (error) {
     console.error("Create program error:", error);
     res.status(500).json({ error: "Failed to create program: " + error.message });
@@ -132,14 +151,36 @@ export const createProgram = async (req, res) => {
 export const updateProgram = async (req, res) => {
   try {
     const { id } = req.params;
+    const pId = parseInt(id);
     const { name_th, name_en, slug, degreeId, image_path, is_featured, date_tag, order_no } = req.body;
 
+    if (name_th !== undefined && !name_th.trim()) {
+      return res.status(400).json({ error: "กรุณาระบุชื่อหลักสูตร (ภาษาไทย)" });
+    }
+
+    // ตรวจสอบ Slug ซ้ำถ้ามีการเปลี่ยน
+    if (slug && slug.trim()) {
+      const cleanSlug = slug.trim().toLowerCase();
+      const existingSlug = await prisma.programs.findFirst({
+        where: { 
+          slug: cleanSlug,
+          NOT: { id: pId }
+        },
+        include: { degree: true }
+      });
+      if (existingSlug) {
+        return res.status(400).json({ 
+          error: `Slug "${cleanSlug}" ซ้ำกับหลักสูตร "${existingSlug.name_th}" (${existingSlug.degree?.name_th || ''}) กรุณาใช้ Slug อื่น` 
+        });
+      }
+    }
+
     const updated = await prisma.programs.update({
-      where: { id: parseInt(id) },
+      where: { id: pId },
       data: {
         name_th: name_th ? name_th.trim() : undefined,
         name_en: name_en !== undefined ? (name_en ? name_en.trim() : null) : undefined,
-        slug: slug ? slug.trim() : undefined,
+        slug: slug ? slug.trim().toLowerCase() : undefined,
         degreeId: degreeId ? parseInt(degreeId) : undefined,
         image_path: image_path !== undefined ? image_path : undefined,
         is_featured: is_featured !== undefined ? Boolean(is_featured) : undefined,
@@ -157,7 +198,7 @@ export const updateProgram = async (req, res) => {
     res.json(updated);
   } catch (error) {
     console.error("Update program error:", error);
-    res.status(500).json({ error: "Failed to update program" });
+    res.status(500).json({ error: "Failed to update program: " + error.message });
   }
 };
 
@@ -258,6 +299,63 @@ export const deleteProgramVersion = async (req, res) => {
   } catch (error) {
     console.error("Delete version error:", error);
     res.status(500).json({ error: "Failed to delete version" });
+  }
+};
+
+// แก้ไขเวอร์ชันปีหลักสูตร (ปี พ.ศ. และ curriculum_code)
+export const updateProgramVersion = async (req, res) => {
+  try {
+    const { versionId } = req.params;
+    const { year, curriculum_code } = req.body;
+    const vId = parseInt(versionId);
+
+    const oldVersion = await prisma.program_versions.findUnique({
+      where: { id: vId }
+    });
+    if (!oldVersion) {
+      return res.status(404).json({ error: "ไม่พบเวอร์ชันหลักสูตรนี้" });
+    }
+
+    const yr = year ? parseInt(year) : oldVersion.year;
+    const code = curriculum_code !== undefined ? (curriculum_code ? curriculum_code.trim().toUpperCase() : null) : oldVersion.curriculum_code;
+
+    // ตรวจสอบปีซ้ำในหลักสูตรเดียวกัน
+    if (year && yr !== oldVersion.year) {
+      const duplicateYear = await prisma.program_versions.findFirst({
+        where: {
+          programId: oldVersion.programId,
+          year: yr,
+          NOT: { id: vId }
+        }
+      });
+      if (duplicateYear) {
+        return res.status(400).json({ error: `ปีหลักสูตร พ.ศ. ${yr} มีอยู่แล้วในหลักสูตรนี้` });
+      }
+    }
+
+    const updated = await prisma.program_versions.update({
+      where: { id: vId },
+      data: {
+        year: yr,
+        curriculum_code: code
+      },
+      include: { sections: true }
+    });
+
+    // ถ้ามีการเปลี่ยนรหัสหลักสูตร ให้ผูกวิชาที่มีรหัสตรงกันให้อัตโนมัติ
+    if (code && code !== oldVersion.curriculum_code) {
+      try {
+        await prisma.subjects.updateMany({
+          where: { curriculum_code: code },
+          data: { program_version_id: updated.id }
+        });
+      } catch (e) {}
+    }
+
+    res.json(updated);
+  } catch (error) {
+    console.error("Update version error:", error);
+    res.status(500).json({ error: "Failed to update version: " + error.message });
   }
 };
 

@@ -245,11 +245,23 @@ export default function ManageInternship() {
   };
 
   const handleDeleteEvalItem = (idx) => {
-    const updated = (config.evaluation.items || []).filter((_, i) => i !== idx);
-    setConfig(prev => ({
-      ...prev,
-      evaluation: { ...prev.evaluation, items: updated }
-    }));
+    const item = config.evaluation.items?.[idx];
+    const itemTitle = item?.title || `หัวข้อที่ ${idx + 1}`;
+    setDeleteModal({
+      isOpen: true,
+      title: 'ยืนยันการลบเกณฑ์การประเมินคะแนน',
+      itemName: itemTitle,
+      description: 'หัวข้อการประเมินนี้จะถูกนำออกจากรายการ (อย่าลืมกดบันทึกเกณฑ์การประเมินเพื่ออัปเดต)',
+      onConfirm: () => {
+        const updated = (config.evaluation.items || []).filter((_, i) => i !== idx);
+        setConfig(prev => ({
+          ...prev,
+          evaluation: { ...prev.evaluation, items: updated }
+        }));
+        setDeleteModal(prev => ({ ...prev, isOpen: false }));
+        showAlert('success', `นำหัวข้อ "${itemTitle}" ออกเรียบร้อยแล้ว`);
+      }
+    });
   };
 
   const totalScore = config.evaluation.items?.reduce((sum, item) => sum + (Number(item.score) || 0), 0) || 0;

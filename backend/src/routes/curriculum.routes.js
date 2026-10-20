@@ -10,6 +10,7 @@ import {
   updateProgram,
   deleteProgram,
   addProgramVersion,
+  updateProgramVersion,
   deleteProgramVersion,
   createSection,
   updateSection,
@@ -63,6 +64,7 @@ router.put("/programs/:id", verifyToken, checkRole(["admin"]), updateProgram);
 router.delete("/programs/:id", verifyToken, checkRole(["admin"]), deleteProgram);
 
 router.post("/versions", verifyToken, checkRole(["admin"]), addProgramVersion);
+router.put("/versions/:versionId", verifyToken, checkRole(["admin"]), updateProgramVersion);
 router.delete("/versions/:versionId", verifyToken, checkRole(["admin"]), deleteProgramVersion);
 
 // Course Sections CRUD & PDF Uploads
