@@ -10,7 +10,8 @@ import {
   User,
   FileText,
   Download,
-  Info
+  Info,
+  Eye
 } from 'lucide-react';
 
 import Footer from '../components/Footer';
@@ -241,56 +242,84 @@ const NewsDetail = () => {
               <div className="mb-12 pt-8 border-t border-slate-100">
                 <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
                   <div className="w-1.5 h-6 bg-[#3F51B5] rounded-full"></div>
-                  {lang === 'EN' ? 'Download Attachments' : 'เอกสารดาวน์โหลด'}
+                  {lang === 'EN' ? 'Attachments' : 'เอกสารแนบ'}
                 </h3>
                 <div className="space-y-3">
                   {news.attachments.map((attItem, index) => {
                     let fileName = `เอกสารแนบที่ ${index + 1}`;
-                    let fileUrl = "";
-                    let downloadUrl = "";
+                    let rawPath = "";
 
                     if (typeof attItem === 'object' && attItem !== null) {
-                      const p = attItem.path || attItem.url || "";
-                      fileName = attItem.name || p.split('/').pop() || fileName;
-                      fileUrl = p.startsWith('http') ? p : `${p}`;
-                      downloadUrl = `/api/news/attachment/download?path=${encodeURIComponent(p)}&name=${encodeURIComponent(fileName)}`;
+                      rawPath = attItem.path || attItem.url || "";
+                      fileName = attItem.name || rawPath.split('/').pop() || fileName;
                     } else if (typeof attItem === 'string') {
                       if (attItem.trim().startsWith('{')) {
                         try {
                           const obj = JSON.parse(attItem);
-                          const p = obj.path || obj.url || "";
-                          fileName = obj.name || p.split('/').pop() || fileName;
-                          fileUrl = p.startsWith('http') ? p : `${p}`;
-                          downloadUrl = `/api/news/attachment/download?path=${encodeURIComponent(p)}&name=${encodeURIComponent(fileName)}`;
+                          rawPath = obj.path || obj.url || "";
+                          fileName = obj.name || rawPath.split('/').pop() || fileName;
                         } catch (e) {}
                       }
-                      if (!fileUrl) {
+                      if (!rawPath) {
+                        rawPath = attItem;
                         fileName = attItem.split('/').pop() || fileName;
-                        fileUrl = attItem.startsWith('http') ? attItem : `${attItem}`;
-                        downloadUrl = `/api/news/attachment/download?path=${encodeURIComponent(attItem)}&name=${encodeURIComponent(fileName)}`;
                       }
                     }
 
+                    // Format clean view and download URLs
+                    const viewUrl = rawPath.startsWith('http') ? rawPath : (rawPath.startsWith('/') ? rawPath : `/${rawPath}`);
+                    const downloadUrl = `/api/news/attachment/download?path=${encodeURIComponent(rawPath)}&name=${encodeURIComponent(fileName)}`;
+
                     return (
-                      <a
+                      <div
                         key={index}
-                        href={downloadUrl || fileUrl}
-                        download={fileName}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-4 p-4 md:px-6 bg-slate-50 hover:bg-indigo-50 rounded-2xl border border-slate-100 hover:border-indigo-100 transition-colors group"
+                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 md:px-6 bg-slate-50 hover:bg-indigo-50/50 rounded-2xl border border-slate-100 hover:border-indigo-100 transition-all group"
                       >
-                        <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-[#3F51B5] shadow-sm group-hover:scale-110 transition-transform shrink-0">
-                          <FileText size={24} />
+                        {/* คลิกที่การ์ด/ชื่อไฟล์ เพื่อเปิดดูเอกสาร */}
+                        <a
+                          href={viewUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-4 flex-1 min-w-0"
+                          title={lang === 'EN' ? 'Click to view document' : 'คลิกเพื่อเปิดดูเอกสาร'}
+                        >
+                          <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-[#3F51B5] shadow-xs group-hover:scale-105 transition-transform shrink-0 border border-slate-100">
+                            <FileText size={24} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-bold text-slate-700 group-hover:text-[#3F51B5] truncate transition-colors text-sm md:text-base">
+                              {fileName}
+                            </p>
+                            <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1.5">
+                              <Eye size={13} className="text-[#3F51B5] shrink-0" />
+                              <span>{lang === 'EN' ? 'Click to view file' : 'คลิกเพื่อเปิดดูไฟล์'}</span>
+                            </p>
+                          </div>
+                        </a>
+
+                        {/* ปุ่มเปิดดู และ ปุ่มดาวน์โหลด */}
+                        <div className="flex items-center gap-2 shrink-0 self-end sm:self-center pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/60 w-full sm:w-auto justify-end">
+                          <a
+                            href={viewUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-[#3F51B5] bg-white hover:bg-[#3F51B5] hover:text-white border border-indigo-100 transition-all shadow-xs"
+                            title={lang === 'EN' ? 'View file' : 'เปิดดูไฟล์'}
+                          >
+                            <Eye size={14} />
+                            <span>{lang === 'EN' ? 'View' : 'เปิดดู'}</span>
+                          </a>
+                          <a
+                            href={downloadUrl}
+                            download={fileName}
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 bg-white hover:bg-slate-800 hover:text-white border border-slate-200 transition-all shadow-xs"
+                            title={lang === 'EN' ? 'Download file' : 'ดาวน์โหลดไฟล์'}
+                          >
+                            <Download size={14} />
+                            <span>{lang === 'EN' ? 'Download' : 'ดาวน์โหลด'}</span>
+                          </a>
                         </div>
-                        <div className="flex-1 overflow-hidden">
-                          <p className="font-bold text-slate-700 group-hover:text-[#3F51B5] truncate transition-colors">{fileName}</p>
-                          <p className="text-xs text-slate-400 mt-0.5">คลิกเพื่อดาวน์โหลดหรือเปิดดูไฟล์</p>
-                        </div>
-                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-slate-300 group-hover:text-[#3F51B5] transition-colors shrink-0 shadow-sm">
-                          <Download size={18} />
-                        </div>
-                      </a>
+                      </div>
                     );
                   })}
                 </div>

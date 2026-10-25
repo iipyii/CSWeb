@@ -578,6 +578,9 @@ export const downloadAttachment = async (req, res) => {
     }
 
     const filenameToSend = downloadName || path.basename(absolutePath);
+    if (req.query.view === 'true' || req.query.view === '1') {
+      return res.sendFile(absolutePath);
+    }
     res.download(absolutePath, filenameToSend);
   } catch (error) {
     console.error("Download attachment error:", error);
