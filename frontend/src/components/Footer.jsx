@@ -122,11 +122,30 @@ export default function Footer() {
         </div>
 
         {/* เส้นคั่นกลาง */}
-        <div className="border-t border-white/20 pt-6 flex flex-col md:flex-row justify-between items-center text-[13px] opacity-70 font-light">
-          <p>© 2026 Department of Computer and Information Sciences, Faculty of Applied Science (KMUTNB)</p>
+        <div className="border-t border-white/20 pt-6 flex flex-col md:flex-row justify-between items-center text-[13px] opacity-80 gap-3 font-light">
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
+            <p>© 2026 Department of Computer and Information Sciences, Faculty of Applied Science (KMUTNB)</p>
+            <div className="flex items-center gap-3 text-xs opacity-90">
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new CustomEvent('open_cookie_consent', { detail: { tab: 'pdpa' } }))}
+                className="hover:underline hover:text-orange-300 transition cursor-pointer"
+              >
+                {t('pdpa_policy') || 'นโยบายความเป็นส่วนตัว (PDPA)'}
+              </button>
+              <span>•</span>
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new CustomEvent('open_cookie_consent', { detail: { tab: 'settings' } }))}
+                className="hover:underline hover:text-orange-300 transition cursor-pointer"
+              >
+                {t('cookie_settings') || 'การตั้งค่าคุกกี้ (Cookies)'}
+              </button>
+            </div>
+          </div>
           <button 
             onClick={scrollToTop}
-            className="flex items-center space-x-1 hover:text-white transition-colors mt-4 md:mt-0"
+            className="flex items-center space-x-1 hover:text-white transition-colors mt-2 md:mt-0"
           >
             <span>Back to top</span>
             <ChevronUp size={16} />

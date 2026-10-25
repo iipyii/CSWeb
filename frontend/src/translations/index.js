@@ -93,6 +93,8 @@ export const translations = {
     footer_quick_links: "ลิงก์ด่วน",
     footer_contact_info: "ข้อมูลติดต่อ",
     footer_copyright: "สงวนลิขสิทธิ์ ภาควิชาวิทยาการคอมพิวเตอร์และสารสนเทศ มจพ.",
+    pdpa_policy: "นโยบายความเป็นส่วนตัว (PDPA)",
+    cookie_settings: "การตั้งค่าคุกกี้ (Cookies)",
     
     // Additional Headers
     current_curriculum: "ข้อมูลหลักสูตรปัจจุบัน",
@@ -204,6 +206,8 @@ export const translations = {
     footer_quick_links: "Quick Links",
     footer_contact_info: "Contact Information",
     footer_copyright: "All Rights Reserved. CIS KMUTNB.",
+    pdpa_policy: "Privacy Policy (PDPA)",
+    cookie_settings: "Cookie Preferences",
     
     // Additional Headers
     current_curriculum: "Current Curriculum",

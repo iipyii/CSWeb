@@ -83,6 +83,8 @@ import { LanguageProvider } from './context/LanguageContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AuthCallback from './pages/AuthCallback';
 
+import CookieConsent, { COOKIE_CONSENT_KEY } from './components/CookieConsent';
+
 const MainLayout = () => {
   const location = useLocation();
 
@@ -91,6 +93,17 @@ const MainLayout = () => {
     if (location.pathname.startsWith('/admin')) return;
 
     try {
+      // เคารพการตั้งค่าคุกกี้: ถ้าผู้ใช้เลือกปฏิเสธ analytics จะไม่บันทึกสถิติ
+      const consentStr = localStorage.getItem(COOKIE_CONSENT_KEY);
+      if (consentStr) {
+        try {
+          const consent = JSON.parse(consentStr);
+          if (consent && consent.analytics === false) {
+            return;
+          }
+        } catch (e) {}
+      }
+
       const today = new Intl.DateTimeFormat('en-CA', { 
         timeZone: 'Asia/Bangkok', 
         year: 'numeric', 
@@ -130,6 +143,7 @@ const MainLayout = () => {
         <Outlet />
       </main>
       <AIChatbot />
+      <CookieConsent />
     </div>
   );
 };
