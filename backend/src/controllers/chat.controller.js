@@ -3,11 +3,10 @@ import { getLocalEmbedding } from "../services/embedding.service.js";
 import Fuse from 'fuse.js';
 
 const GEMINI_MODELS = [
-  "gemini-3.6-flash",         // อันดับ 1: เร็ว แม่นยำ และรองรับล่าสุด
-  "gemini-3.5-flash",         // อันดับ 2: สำรองคุณภาพสูง
-  "gemini-flash-lite-latest", // อันดับ 3: สำรองเบาและเร็ว
-  "gemini-flash-latest",      // อันดับ 4: fallback อัตโนมัติ
-  "gemini-2.5-flash"          // อันดับ 5: fallback
+  "gemini-flash-lite-latest", // อันดับ 1: เร็วมาก ตอบไวทันใจและโควตาสูง
+  "gemini-flash-latest",      // อันดับ 2: ฉลาด แม่นยำ และเสถียร
+  "gemini-2.5-flash",         // อันดับ 3: สำรอง
+  "gemini-3.5-flash"          // อันดับ 4: สำรองเพิ่มเติม
 ];
 
 const isOverloadedError = (err) => {
@@ -355,14 +354,41 @@ ${mastYears.length > 0 ? `- ระดับบัณฑิตศึกษา (�
 
     // 🎯 4.7 ข้อมูลทุนการศึกษา
     if (message.includes("ทุน") || message.includes("scholarship")) {
-      contextText += `[ทุนการศึกษาสำหรับนักศึกษา CS]
-ทุนการศึกษาสำหรับนักศึกษาภาควิชาวิทยาการคอมพิวเตอร์และสารสนเทศ (CS KMUTNB) มีดังนี้:
-1. ทุนการศึกษาขาดแคลนทุนทรัพย์: สนับสนุนค่าใช้จ่ายทางการศึกษาและค่าครองชีพ สำหรับนักศึกษาที่มีความประพฤติดีแต่ขาดแคลนทุนทรัพย์
-2. ทุนรางวัลเรียนดีเด่น: สำหรับนักศึกษาที่มีผลการเรียนยอดเยี่ยม GPA สูงสุดในแต่ละชั้นปี
-3. ทุนผู้ช่วยสอน (TA) และผู้ช่วยวิจัย (RA): สำหรับนักศึกษาช่วยงานในห้องปฏิบัติการคอมพิวเตอร์หรืองานวิจัยของคณาจารย์ในภาควิชา
-4. ทุนสนับสนุนกิจกรรมและการแข่งขัน: สนับสนุนทีมนักศึกษาที่เป็นตัวแทนแข่งขันทักษะวิชาการ เช่น การแข่งขันเขียนโปรแกรม ICPC, การแข่งขันความมั่นคงปลอดภัยไซเบอร์ หรือการประกวดนวัตกรรมซอฟต์แวร์
-5. ทุนการศึกษาจากองค์กรเอกชนและศิษย์เก่า: สนับสนุนโดยบริษัทพันธมิตรด้านไอทีและกองทุนศิษย์เก่า CS
-- นักศึกษาสามารถติดตามประกาศรับสมัครและยื่นแบบคำขอรับทุนได้ที่ งานกิจการนักศึกษา คณะวิทยาศาสตร์ประยุกต์ หรือเมนูข่าวสารทุนการศึกษาบนเว็บไซต์ภาควิชา\n\n`;
+      contextText += `[ข้อมูลประเภททุนการศึกษาของภาควิชา CS KMUTNB]
+ทุนการศึกษาสำหรับนักศึกษาภาควิชาวิทยาการคอมพิวเตอร์และสารสนเทศ มีดังนี้:
+1. ทุนยกเว้นค่าธรรมเนียมการศึกษา (ทุนยกเว้นค่าเทอม): สำหรับนักศึกษาโครงการสมทบพิเศษที่มีผลการเรียนดีหรือมีคุณสมบัติตามเกณฑ์ที่ภาควิชากำหนดในแต่ละภาคเรียน
+2. ทุนการศึกษาขาดแคลนทุนทรัพย์: สนับสนุนค่าใช้จ่ายทางการศึกษาและค่าครองชีพ สำหรับนักศึกษาที่มีความประพฤติดีแต่ขาดแคลนทุนทรัพย์
+3. ทุนรางวัลเรียนดีเด่น: สำหรับนักศึกษาที่มีผลการเรียนยอดเยี่ยม GPA สูงสุดในแต่ละชั้นปี
+4. ทุนผู้ช่วยสอน (TA) และผู้ช่วยวิจัย (RA): สำหรับนักศึกษาช่วยงานในห้องปฏิบัติการคอมพิวเตอร์หรืองานวิจัยของคณาจารย์ในภาควิชา
+5. ทุนสนับสนุนกิจกรรมและการแข่งขัน: สนับสนุนทีมนักศึกษาตัวแทนแข่งขันทักษะวิชาการ เช่น แข่งขันเขียนโปรแกรม ICPC หรือแข่ง Cyber Security
+6. ทุนการศึกษาจากองค์กรเอกชนและศิษย์เก่า: สนับสนุนโดยบริษัทพันธมิตรด้านไอที (เช่น ทุนบริษัทเอกชน, ทุนกวดวิชา, ทุนบุญรอดพัฒนา) และกองทุนศิษย์เก่า CS
+- ช่องทางการยื่นขอทุน: สามารถติดตามประกาศและยื่นแบบคำขอได้ที่ งานกิจการนักศึกษา คณะวิทยาศาสตร์ประยุกต์ หรือหน้าข่าวสารทุนการศึกษาบนเว็บไซต์ภาควิชา\n\n`;
+    }
+
+    // 🎯 4.7.1 ข้อมูลค่าธรรมเนียมการศึกษาและค่าเทอม (Tuition Fees & Expenses)
+    if (
+      message.includes("ค่าเทอม") || 
+      message.includes("ค่าธรรมเนียม") || 
+      message.includes("ค่าใช้จ่าย") || 
+      message.includes("ค่าเล่าเรียน") || 
+      message.includes("tuition") || 
+      message.includes("fee") ||
+      message.includes("การเงิน")
+    ) {
+      contextText += `[ข้อมูลอัตราค่าธรรมเนียมการศึกษา / ค่าเทอม ภาควิชาวิทยาการคอมพิวเตอร์และสารสนเทศ (CS KMUTNB)]
+อัตราค่าธรรมเนียมการศึกษาแบบเหมาจ่ายต่อภาคการศึกษา (ตามประกาศของมหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ):
+1. ระดับปริญญาตรี (วท.บ. วิทยาการคอมพิวเตอร์):
+   - ภาคปกติ (Regular Program): ประมาณ 19,000 - 24,000 บาท ต่อภาคการศึกษา
+   - โครงการสมทบพิเศษ / สองภาษา (Special / Bilingual Program): ประมาณ 35,000 - 45,000 บาท ต่อภาคการศึกษา
+2. ระดับบัณฑิตศึกษา:
+   - ปริญญาโท (วท.ม. วิทยาการคอมพิวเตอร์ / วิศวกรรมซอฟต์แวร์): 
+     • ภาคปกติ: ประมาณ 25,000 - 35,000 บาท ต่อภาคการศึกษา
+     • ภาคพิเศษ (เรียนนอกเวลาราชการ/เสาร์-อาทิตย์): ประมาณ 45,000 - 55,000 บาท ต่อภาคการศึกษา
+   - ปริญญาเอก (ปร.ด. วิทยาการคอมพิวเตอร์): ประมาณ 50,000 - 70,000 บาท ต่อภาคการศึกษา
+หมายเหตุและข้อมูลเพิ่มเติม:
+- ค่าธรรมเนียมข้างต้นเป็นอัตราเหมาจ่ายต่อภาคการศึกษา (ไม่รวมค่าธรรมเนียมแรกเข้า ค่าบำรุง หรือค่าประกันของมหาวิทยาลัย)
+- นักศึกษาที่มีความประพฤติดีและมีผลการเรียนตามเกณฑ์ สามารถสมัครรับ "ทุนยกเว้นค่าธรรมเนียมการศึกษา (ทุนยกเว้นค่าเทอม)" ของภาควิชาฯ ได้ในแต่ละภาคเรียน
+- ตรวจสอบระเบียบการเงินฉบับเต็มได้ที่เมนู "ระเบียบและประกาศ -> งานการเงิน" บนเว็บไซต์ภาควิชาฯ หรือติดต่อหน่วยงานการเงิน คณะวิทยาศาสตร์ประยุกต์\n\n`;
     }
 
     // 🎯 4.8 ค้นหาข้อมูลในคู่มือนักศึกษา (student_handbooks)
@@ -479,23 +505,80 @@ ${mastYears.length > 0 ? `- ระดับบัณฑิตศึกษา (�
       console.warn("Could not query projects:", err.message);
     }
 
-    // 🎯 4.8 ค้นหาข่าวสารและประกาศ (news)
+    // 🎯 4.8 ค้นหาข่าวสารและประกาศจริงจากระบบ (news)
     try {
-      if (message.includes("ข่าว") || message.includes("ประกาศ") || message.includes("ทุน") || message.includes("กิจกรรม")) {
+      if (
+        message.includes("ข่าว") || 
+        message.includes("ประกาศ") || 
+        message.includes("ทุน") || 
+        message.includes("กิจกรรม") ||
+        message.includes("ล่าสุด") ||
+        message.includes("รับสมัคร")
+      ) {
+        const isScholarship = message.includes("ทุน") || message.includes("scholarship");
+        const isJobOrAdmission = message.includes("รับสมัคร") || message.includes("tcas") || message.includes("งาน");
+        const isActivity = message.includes("กิจกรรม") || message.includes("อบรม") || message.includes("ค่าย") || message.includes("โอลิมปิก");
+
+        const orFilters = [];
+        if (isScholarship) {
+          orFilters.push({ category: { contains: "scholarship", mode: "insensitive" } });
+          orFilters.push({ category: { contains: "ทุน", mode: "insensitive" } });
+          orFilters.push({ title: { contains: "ทุน", mode: "insensitive" } });
+          orFilters.push({ content: { contains: "ทุน", mode: "insensitive" } });
+        }
+        if (isJobOrAdmission) {
+          orFilters.push({ category: { contains: "job", mode: "insensitive" } });
+          orFilters.push({ title: { contains: "รับสมัคร", mode: "insensitive" } });
+          orFilters.push({ title: { contains: "tcas", mode: "insensitive" } });
+        }
+        if (isActivity) {
+          orFilters.push({ category: { contains: "activity", mode: "insensitive" } });
+          orFilters.push({ title: { contains: "กิจกรรม", mode: "insensitive" } });
+          orFilters.push({ title: { contains: "ค่าย", mode: "insensitive" } });
+        }
+
+        // สกัดคำค้นหาสำคัญออกจากประโยค
+        const stopWords = ["ข่าว", "เกี่ยวกับ", "ล่าสุด", "มีอะไรบ้าง", "มีอะไร", "บ้าง", "หรือยัง", "ขอ", "ดู", "หน่อย", "มี", "ของ", "ใน", "ที่", "และ", "คือ"];
+        const keywords = message
+          .toLowerCase()
+          .replace(/[?.,!/]/g, ' ')
+          .split(/\s+/)
+          .filter(w => w.length >= 2 && !stopWords.includes(w));
+
+        keywords.forEach(k => {
+          orFilters.push({ title: { contains: k, mode: "insensitive" } });
+          orFilters.push({ category: { contains: k, mode: "insensitive" } });
+        });
+
         const newsItems = await prisma.news.findMany({
           where: {
-            OR: [
-              { title: { contains: message.trim(), mode: "insensitive" } },
-              { content: { contains: message.trim(), mode: "insensitive" } },
-              { category: { contains: message.trim(), mode: "insensitive" } }
-            ]
+            status: "active",
+            OR: orFilters.length > 0 ? orFilters : undefined
           },
+          orderBy: { created_at: "desc" },
           take: 5
         });
 
-        newsItems.forEach(n => {
-          contextText += `[ข่าวสาร/ประกาศ] หัวข้อ: ${n.title} หมวดหมู่: ${n.category} รายละเอียด: ${n.content ? n.content.substring(0, 150) + '...' : '-'}\n`;
-        });
+        if (newsItems.length > 0) {
+          contextText += `[รายการข่าวสารและประกาศจริงล่าสุดจากระบบ]\n`;
+          newsItems.forEach((n, idx) => {
+            const dateStr = new Date(n.created_at).toLocaleDateString("th-TH", {
+              year: "numeric",
+              month: "short",
+              day: "numeric"
+            });
+            const cleanContent = (n.summary || n.content || "")
+              .replace(/<[^>]*>/g, '')
+              .replace(/\s+/g, ' ')
+              .trim()
+              .substring(0, 180);
+
+            contextText += `${idx + 1}. หัวข้อ: "${n.title}"
+   - หมวดหมู่: ${n.category} | วันที่ประกาศ: ${dateStr}
+   - รายละเอียดโดยย่อ: ${cleanContent || '-'}
+   - ลิงก์อ่านข่าวฉบับเต็ม: /news/${n.id}\n\n`;
+          });
+        }
       }
     } catch (err) {
       console.warn("Could not query news:", err.message);
